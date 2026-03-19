@@ -1,0 +1,213 @@
+# Roadmap: Twinkle Locs
+
+## Overview
+
+Twinkle Locs is a full rebuild of twinklelocs.com — replacing the existing WordPress/WooCommerce store with a custom Next.js 15 + Supabase storefront. The build progresses from scaffold and design system through product catalog, transactional checkout, admin tooling, content pages, conversion features, and SEO — culminating in a staged Vercel deployment ready for DNS cutover. Every phase delivers a coherent, verifiable capability before the next begins.
+
+## Phases
+
+**Phase Numbering:**
+- Integer phases (1, 2, 3...): Planned milestone work
+- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+
+Decimal phases appear between their surrounding integers in numeric order.
+
+- [ ] **Phase 1: Foundation** - Scaffold, design tokens, Supabase, shared layout, WhatsApp button, URL conventions
+- [ ] **Phase 2: Homepage** - Brand-first entry point with hero, featured products, story, and testimonials
+- [ ] **Phase 3: Product Catalog** - Data migration from WooCommerce + browsable, filterable, searchable catalog page
+- [ ] **Phase 4: Product Detail** - Gallery, variant picker, reviews display, and upsell bundle suggestion
+- [ ] **Phase 5: Cart & Checkout** - Cart drawer + page, Paystack checkout, shipping logic, order confirmation
+- [ ] **Phase 6: Admin Panel** - Protected /admin with product CRUD, image upload, order management, review entry, dashboard
+- [ ] **Phase 7: Content Pages** - About/Founder, FAQ, Shipping Info, Blog listing and post pages
+- [ ] **Phase 8: Conversion** - Footer newsletter signup (email capture)
+- [ ] **Phase 9: SEO** - Metadata, OpenGraph, structured data, sitemap, URL slug enforcement
+- [ ] **Phase 10: Staging Deployment** - Vercel staging URL, smoke test, pre-DNS-cutover checklist
+
+## Phase Details
+
+### Phase 1: Foundation
+**Goal**: The project skeleton exists and every subsequent phase can build on it without revisiting infrastructure
+**Depends on**: Nothing (first phase)
+**Requirements**: FOUND-01, FOUND-02, FOUND-03, FOUND-04, FOUND-05, SEO-04
+**Success Criteria** (what must be TRUE):
+  1. The app runs locally with Next.js 15 App Router, TypeScript, and Tailwind CSS — no build errors
+  2. Afro-luxury colour palette and Halimun/Raleway/Inter fonts render correctly in a browser, sourced from self-hosted files
+  3. Header, footer, and mobile navigation drawer are visible and functional on a 375px mobile viewport
+  4. A WhatsApp floating button appears on every page and opens wa.me in a new tab when tapped
+  5. All application URLs are lowercase slugs — no uppercase letters in any route or link
+**Plans**: TBD
+
+Plans:
+- [ ] 01-01: TBD
+
+---
+
+### Phase 2: Homepage
+**Goal**: A visitor landing on the root URL sees a complete, on-brand homepage that communicates who Twinkle Locs is and drives them toward the catalog
+**Depends on**: Phase 1
+**Requirements**: CONT-01
+**Success Criteria** (what must be TRUE):
+  1. Visitor sees a hero section with headline, subheading, and a CTA button that links to the catalog
+  2. A "Featured Products" section displays at least three products pulled from Supabase
+  3. A brand story section and testimonials section are visible on the page
+  4. An Instagram link (to @twinklelocs) is present and opens in a new tab
+**Plans**: TBD
+
+Plans:
+- [ ] 02-01: TBD
+
+---
+
+### Phase 3: Product Catalog
+**Goal**: A visitor can browse, filter, search, and discover all loc bead products — with data migrated from WooCommerce into Supabase
+**Depends on**: Phase 2
+**Requirements**: PROD-01, PROD-02, PROD-03
+**Success Criteria** (what must be TRUE):
+  1. All 6 existing products (24K Gold Beads, Gold Beads, Silver Beads, Onyx Beads, Crystal Clear Beads, Shears) appear on /catalog in a grid layout
+  2. Visitor can filter the catalog by product category and results update without a full page reload
+  3. Visitor can sort products by price (low-to-high, high-to-low) and latest — results update correctly
+  4. Visitor can type a product name into a search field and see only matching products
+**Plans**: TBD
+
+Plans:
+- [ ] 03-01: TBD
+
+---
+
+### Phase 4: Product Detail
+**Goal**: A visitor on a product page has everything they need to understand the product and make a purchase decision — including variant selection, reviews, and an upsell prompt
+**Depends on**: Phase 3
+**Requirements**: PROD-04, PROD-05, CONV-02
+**Success Criteria** (what must be TRUE):
+  1. Visitor can view a scrollable image gallery on the product detail page
+  2. Visitor can select a size, quantity, and thread colour variant — price and availability update accordingly
+  3. Customer reviews (admin-entered) are visible below the product description
+  4. A "starter kit" bundle suggestion (beads + shears) is displayed as an upsell on relevant product pages
+**Plans**: TBD
+
+Plans:
+- [ ] 04-01: TBD
+
+---
+
+### Phase 5: Cart & Checkout
+**Goal**: A visitor can add products to a cart and complete a purchase — paying in Naira via Paystack — or be directed to request an international shipping quote
+**Depends on**: Phase 4
+**Requirements**: CART-01, CART-02, CART-03, CART-04, CART-05, CART-06, CART-07, CART-08
+**Success Criteria** (what must be TRUE):
+  1. Visitor can add a product variant to the cart and see it appear in the slide-out cart drawer immediately
+  2. Visitor can view the cart at /cart, adjust quantities, and remove items
+  3. Visitor can complete a guest checkout (no account required) by entering name, email, and a Nigerian delivery address
+  4. Checkout submits payment to Paystack in ₦ and a domestic shipping rate is included in the order total
+  5. A visitor selecting international delivery sees a "contact us for a shipping quote" message in place of a rate
+  6. After successful payment, visitor is redirected to an order confirmation page showing their order summary
+**Plans**: TBD
+
+Plans:
+- [ ] 05-01: TBD
+
+---
+
+### Phase 6: Admin Panel
+**Goal**: The site owner (Unoma) can manage all products, orders, and customer reviews from a protected /admin interface — without touching any code
+**Depends on**: Phase 5
+**Requirements**: ADMIN-01, ADMIN-02, ADMIN-03, ADMIN-04, ADMIN-05, CONV-03
+**Success Criteria** (what must be TRUE):
+  1. Admin can log in to /admin with email/password — unauthenticated visitors are redirected away
+  2. Admin can create a new product, edit its name/description/price/variants, and delete it — changes appear on the storefront immediately
+  3. Admin can upload product images directly in the admin panel — images are stored in Supabase Storage and visible on product pages
+  4. Admin can view all orders, see their details, and update each order's status to pending, shipped, or delivered
+  5. Admin can add a customer review to a product — the review appears on the product detail page
+  6. Admin dashboard shows recent orders and total sales figures at a glance
+**Plans**: TBD
+
+Plans:
+- [ ] 06-01: TBD
+
+---
+
+### Phase 7: Content Pages
+**Goal**: Visitors can learn about the brand, get answers to common questions, understand shipping options, and read blog content — all from purpose-built pages
+**Depends on**: Phase 6
+**Requirements**: CONT-02, CONT-03, CONT-04, CONT-05, CONT-06
+**Success Criteria** (what must be TRUE):
+  1. /about displays Unoma's story and the Twinkle Locs brand mission with appropriate imagery
+  2. /faq displays common questions in an accordion layout — each item expands/collapses on click
+  3. /shipping displays domestic delivery rates and timeframes, plus an explanation of the international inquiry process
+  4. /blog displays a listing of published blog posts pulled from Supabase
+  5. An individual blog post URL renders the full post content
+**Plans**: TBD
+
+Plans:
+- [ ] 07-01: TBD
+
+---
+
+### Phase 8: Conversion
+**Goal**: The site actively captures visitor email addresses for ongoing marketing
+**Depends on**: Phase 7
+**Requirements**: CONV-01
+**Success Criteria** (what must be TRUE):
+  1. Footer on every page contains an email input field and a subscribe button
+  2. A visitor who submits their email address sees a success confirmation — the email is recorded in Supabase
+**Plans**: TBD
+
+Plans:
+- [ ] 08-01: TBD
+
+---
+
+### Phase 9: SEO
+**Goal**: Every page is discoverable by search engines — with correct metadata, structured data, a sitemap, and clean URLs throughout
+**Depends on**: Phase 8
+**Requirements**: SEO-01, SEO-02, SEO-03
+**Success Criteria** (what must be TRUE):
+  1. Every page has a unique title tag and meta description — verified in browser DevTools or a head inspector
+  2. Every page has an OpenGraph image tag — link previews in WhatsApp/Twitter/Facebook render with the correct image
+  3. Product pages include Schema.org Product structured data — valid when tested with Google's Rich Results Test
+  4. /sitemap.xml is accessible and lists all public page URLs
+**Plans**: TBD
+
+Plans:
+- [ ] 09-01: TBD
+
+---
+
+### Phase 10: Staging Deployment
+**Goal**: The complete site is deployed to a Vercel staging URL and verified end-to-end — ready for DNS cutover to twinklelocs.com
+**Depends on**: Phase 9
+**Requirements**: SEO-05
+**Success Criteria** (what must be TRUE):
+  1. Site is accessible at a Vercel staging URL (not twinklelocs.com) without authentication gates
+  2. A full purchase flow (add to cart → checkout → Paystack payment → order confirmation) completes successfully on staging
+  3. Admin can log in and manage products/orders on the staging environment
+  4. No console errors, broken images, or broken links on the homepage, catalog, and a product detail page
+**Plans**: TBD
+
+Plans:
+- [ ] 10-01: TBD
+
+---
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Foundation | 0/TBD | Not started | - |
+| 2. Homepage | 0/TBD | Not started | - |
+| 3. Product Catalog | 0/TBD | Not started | - |
+| 4. Product Detail | 0/TBD | Not started | - |
+| 5. Cart & Checkout | 0/TBD | Not started | - |
+| 6. Admin Panel | 0/TBD | Not started | - |
+| 7. Content Pages | 0/TBD | Not started | - |
+| 8. Conversion | 0/TBD | Not started | - |
+| 9. SEO | 0/TBD | Not started | - |
+| 10. Staging Deployment | 0/TBD | Not started | - |
+
+---
+*Roadmap created: 2026-03-19*
+*Depth: Comprehensive (8-12 phases)*
+*Coverage: 35/35 v1 requirements mapped*
