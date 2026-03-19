@@ -1,1 +1,24 @@
 @import "tailwindcss";
+
+@theme {
+  /* =============================================
+     Afro-luxury colour palette
+     ============================================= */
+  --color-gold:       #C9A84C;   /* Deep gold — primary brand accent */
+  --color-cocoa:      #3B1F0E;   /* Rich cocoa brown — dark text, backgrounds */
+  --color-cream:      #FAF3E0;   /* Warm cream — light backgrounds */
+  --color-forest:     #2D5016;   /* Forest green — secondary accent */
+  --color-terracotta: #C1440E;   /* Terracotta — CTA / call-to-action */
+
+  /* Neutral shades */
+  --color-charcoal:   #1A1A1A;
+  --color-stone:      #F5F0E8;
+
+  /* =============================================
+     Typography — next/font injects the actual
+     font-family string via a CSS variable on <html>
+     ============================================= */
+  --font-display: var(--font-halimun), serif;
+  --font-heading: var(--font-raleway), sans-serif;
+  --font-body:    var(--font-inter), sans-serif;
+}
