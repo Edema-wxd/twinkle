@@ -1,0 +1,11 @@
+{
+  "mode": "interactive",
+  "depth": "comprehensive",
+  "parallelization": "enabled",
+  "phases": {
+    "count_range": "8-12",
+    "plans_per_phase": "5-10"
+  },
+  "project": "twinkle-locs",
+  "initialized": "2026-03-19"
+}
