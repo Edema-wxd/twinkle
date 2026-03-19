@@ -35,10 +35,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Header, footer, and mobile navigation drawer are visible and functional on a 375px mobile viewport
   4. A WhatsApp floating button appears on every page and opens wa.me in a new tab when tapped
   5. All application URLs are lowercase slugs — no uppercase letters in any route or link
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 01-01: TBD
+- [ ] 01-01-scaffold.md — Bootstrap Next.js 15, install Supabase packages, create folder structure
+- [ ] 01-02-design-tokens.md — Tailwind v4 @theme brand palette, self-hosted fonts (Halimun/Playfair + Raleway + Inter)
+- [ ] 01-03-supabase-middleware.md — Supabase SSR client pair, TypeScript types stub, combined middleware
+- [ ] 01-04-layout-components.md — Header, MobileDrawer, Footer, WhatsApp button wired into root layout
 
 ---
 
@@ -196,7 +199,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 0/4 | Not started | - |
 | 2. Homepage | 0/TBD | Not started | - |
 | 3. Product Catalog | 0/TBD | Not started | - |
 | 4. Product Detail | 0/TBD | Not started | - |
