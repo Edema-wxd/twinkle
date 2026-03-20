@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 2 of 10 (Homepage)
-Plan: 2 of TBD in current phase
-Status: In progress
-Last activity: 2026-03-20 — Completed 02-02 homepage static sections (Hero, BrandStory, InstagramCTA)
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-03-20 — Completed 02-03 interactive client islands (FeaturedProductsSection, TestimonialsSection) and full homepage assembly
 
-Progress: [█░░░░░░░░░] 12%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
+- Total plans completed: 6
 - Total execution time: 1 session + ongoing
 
 **By Phase:**
@@ -27,7 +27,7 @@ Progress: [█░░░░░░░░░] 12%
 | Phase | Plans | Status |
 |-------|-------|--------|
 | 1. Foundation | 4/4 | Complete |
-| 2. Homepage | 2/TBD | In progress |
+| 2. Homepage | 3/3 | Complete |
 
 ## Accumulated Context
 
@@ -50,6 +50,10 @@ Recent decisions affecting current work:
 - **bg-linear-to-br (Tailwind v4 gradient)**: Use `bg-linear-to-br` not `bg-gradient-to-br` — v3 syntax does not work with Tailwind v4
 - **Server Components default**: Homepage sections have no interactivity — no `use client`; keep all homepage sections as Server Components unless interactivity required
 - **External links**: Use `<a>` not `Link` for external URLs; always add `target="_blank" rel="noopener noreferrer"`
+- **Client island pattern**: FeaturedProductsSection and TestimonialsSection are `'use client'` leaf islands; page.tsx remains a Server Component importing mock data and passing as props
+- **Props-down data flow**: page.tsx owns data imports and passes as typed props — FeaturedProductsSection and TestimonialsSection accept props (not direct imports), enabling Phase 3 one-line swap to Supabase data
+- **Functional updater in interval**: useEffect intervals use `setIdx(i => (i + 1) % n)` functional updater with `n` (not `idx`) in deps — avoids stale closure without unnecessary interval teardown
+- **AddToCartModal Phase 2 no-op**: "Add to cart" button calls onClose() in Phase 2 — TODO comment in place for Phase 5 cart context wiring
 
 ### Pending Todos
 
@@ -63,5 +67,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Completed 02-02-PLAN.md — homepage static sections (HeroSection, BrandStorySection, InstagramCTASection)
+Stopped at: Completed 02-03-PLAN.md — interactive islands (FeaturedProductsSection, AddToCartModal, TestimonialsSection) and full homepage assembly at src/app/page.tsx
 Resume file: None
