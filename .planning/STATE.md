@@ -10,23 +10,24 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 2 of 10 (Homepage)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-20 — Phase 1 Foundation complete (4/4 plans)
+Plan: 1 of TBD in current phase
+Status: In progress
+Last activity: 2026-03-20 — Completed 02-01 mock data layer (products + testimonials)
 
-Progress: [█░░░░░░░░░] 10%
+Progress: [█░░░░░░░░░] 11%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Total execution time: 1 session
+- Total plans completed: 5
+- Total execution time: 1 session + ongoing
 
 **By Phase:**
 
 | Phase | Plans | Status |
 |-------|-------|--------|
 | 1. Foundation | 4/4 | Complete |
+| 2. Homepage | 1/TBD | In progress |
 
 ## Accumulated Context
 
@@ -43,6 +44,9 @@ Recent decisions affecting current work:
 - **Halimun font**: Commercial licence purchased, using Halimun.ttf (not Playfair Display placeholder)
 - **Tailwind v4**: Using @import "tailwindcss" + @theme (no tailwind.config.js)
 - **middleware.ts**: getClaims() used for auth (not getSession()), lowercase redirect runs before Supabase client
+- **Mock data in src/lib/mock/**: Phase 2 homepage data lives here until Phase 3 Supabase tables exist; MockProduct interface mirrors Phase 3 schema for one-line swap
+- **SVG placeholder image**: public/images/products/placeholder-bead.svg with brand colours; next.config.ts updated with dangerouslyAllowSVG + CSP
+- **Large variant out of stock**: All 4 featured products have Large (8mm) variant in_stock: false, exercises out-of-stock UI state in size picker modal
 
 ### Pending Todos
 
@@ -56,5 +60,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Phase 1 complete — all 4 plans executed and verified
+Stopped at: Completed 02-01-PLAN.md — mock data layer (products + testimonials + placeholder image)
 Resume file: None
