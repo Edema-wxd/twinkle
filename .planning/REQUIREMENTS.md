@@ -7,10 +7,10 @@
 
 ### Foundation
 
-- [ ] **FOUND-01**: Project scaffolded with Next.js 15 (App Router), TypeScript, Tailwind CSS, and folder structure
-- [ ] **FOUND-02**: Design tokens configured — Afro-luxury colour palette (deep gold, cocoa, cream, forest green, terracotta), Halimun/Raleway/Inter fonts self-hosted
-- [ ] **FOUND-03**: Shared layout components built — header, footer, mobile navigation drawer
-- [ ] **FOUND-04**: WhatsApp floating button rendered on every page
+- [x] **FOUND-01**: Project scaffolded with Next.js 15 (App Router), TypeScript, Tailwind CSS, and folder structure
+- [x] **FOUND-02**: Design tokens configured — Afro-luxury colour palette (deep gold, cocoa, cream, forest green, terracotta), Halimun/Raleway/Inter fonts self-hosted
+- [x] **FOUND-03**: Shared layout components built — header, footer, mobile navigation drawer
+- [x] **FOUND-04**: WhatsApp floating button rendered on every page
 - [ ] **FOUND-05**: Supabase project configured — PostgreSQL schema, Storage buckets for images, Auth for admin, typed API client
 
 ### Products
@@ -60,7 +60,7 @@
 - [ ] **SEO-01**: Every page has unique title, meta description, and OpenGraph image
 - [ ] **SEO-02**: Product pages include Schema.org Product structured data for Google Shopping
 - [ ] **SEO-03**: XML sitemap is auto-generated and accessible at /sitemap.xml
-- [ ] **SEO-04**: All URLs use lowercase slugs (no capitalisation)
+- [x] **SEO-04**: All URLs use lowercase slugs (no capitalisation)
 - [ ] **SEO-05**: Site is deployed to Vercel with a staging URL before DNS cutover to twinklelocs.com
 
 ---

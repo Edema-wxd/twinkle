@@ -12,7 +12,7 @@ Twinkle Locs is a full rebuild of twinklelocs.com — replacing the existing Wor
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - Scaffold, design tokens, Supabase, shared layout, WhatsApp button, URL conventions
+- [x] **Phase 1: Foundation** - Scaffold, design tokens, Supabase, shared layout, WhatsApp button, URL conventions
 - [ ] **Phase 2: Homepage** - Brand-first entry point with hero, featured products, story, and testimonials
 - [ ] **Phase 3: Product Catalog** - Data migration from WooCommerce + browsable, filterable, searchable catalog page
 - [ ] **Phase 4: Product Detail** - Gallery, variant picker, reviews display, and upsell bundle suggestion
@@ -38,10 +38,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 4 plans
 
 Plans:
-- [ ] 01-01-scaffold.md — Bootstrap Next.js 15, install Supabase packages, create folder structure
-- [ ] 01-02-design-tokens.md — Tailwind v4 @theme brand palette, self-hosted fonts (Halimun/Playfair + Raleway + Inter)
-- [ ] 01-03-supabase-middleware.md — Supabase SSR client pair, TypeScript types stub, combined middleware
-- [ ] 01-04-layout-components.md — Header, MobileDrawer, Footer, WhatsApp button wired into root layout
+- [x] 01-01-scaffold.md — Bootstrap Next.js 15, install Supabase packages, create folder structure
+- [x] 01-02-design-tokens.md — Tailwind v4 @theme brand palette, self-hosted fonts (Halimun/Playfair + Raleway + Inter)
+- [x] 01-03-supabase-middleware.md — Supabase SSR client pair, TypeScript types stub, combined middleware
+- [x] 01-04-layout-components.md — Header, MobileDrawer, Footer, WhatsApp button wired into root layout
 
 ---
 
@@ -199,7 +199,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/4 | Not started | - |
+| 1. Foundation | 4/4 | Complete | 2026-03-20 |
 | 2. Homepage | 0/TBD | Not started | - |
 | 3. Product Catalog | 0/TBD | Not started | - |
 | 4. Product Detail | 0/TBD | Not started | - |
