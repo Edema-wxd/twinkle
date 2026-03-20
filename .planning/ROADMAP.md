@@ -72,10 +72,13 @@ Plans:
   2. Visitor can filter the catalog by product category and results update without a full page reload
   3. Visitor can sort products by price (low-to-high, high-to-low) and latest — results update correctly
   4. Visitor can type a product name into a search field and see only matching products
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 03-01: TBD
+- [ ] 03-01-PLAN.md — Product type + mock data: canonical Product type, extend mock to 6 products, update homepage components
+- [ ] 03-02-PLAN.md — Catalog UI components: CatalogProductCard, FilterBar, FilterDrawer, SearchInput
+- [ ] 03-03-PLAN.md — CatalogClient island + /catalog page + /catalog/[slug] stub
+- [ ] 03-04-PLAN.md — Supabase products table + seed + mock-to-Supabase swap in page.tsx
 
 ---
 
@@ -203,7 +206,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete | 2026-03-20 |
 | 2. Homepage | 3/3 | Complete | 2026-03-20 |
-| 3. Product Catalog | 0/TBD | Not started | - |
+| 3. Product Catalog | 0/4 | Not started | - |
 | 4. Product Detail | 0/TBD | Not started | - |
 | 5. Cart & Checkout | 0/TBD | Not started | - |
 | 6. Admin Panel | 0/TBD | Not started | - |
