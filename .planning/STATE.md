@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 2 of 10 (Homepage)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-03-20 — Completed 02-01 mock data layer (products + testimonials)
+Last activity: 2026-03-20 — Completed 02-02 homepage static sections (Hero, BrandStory, InstagramCTA)
 
-Progress: [█░░░░░░░░░] 11%
+Progress: [█░░░░░░░░░] 12%
 
 ## Performance Metrics
 
@@ -27,7 +27,7 @@ Progress: [█░░░░░░░░░] 11%
 | Phase | Plans | Status |
 |-------|-------|--------|
 | 1. Foundation | 4/4 | Complete |
-| 2. Homepage | 1/TBD | In progress |
+| 2. Homepage | 2/TBD | In progress |
 
 ## Accumulated Context
 
@@ -47,6 +47,9 @@ Recent decisions affecting current work:
 - **Mock data in src/lib/mock/**: Phase 2 homepage data lives here until Phase 3 Supabase tables exist; MockProduct interface mirrors Phase 3 schema for one-line swap
 - **SVG placeholder image**: public/images/products/placeholder-bead.svg with brand colours; next.config.ts updated with dangerouslyAllowSVG + CSP
 - **Large variant out of stock**: All 4 featured products have Large (8mm) variant in_stock: false, exercises out-of-stock UI state in size picker modal
+- **bg-linear-to-br (Tailwind v4 gradient)**: Use `bg-linear-to-br` not `bg-gradient-to-br` — v3 syntax does not work with Tailwind v4
+- **Server Components default**: Homepage sections have no interactivity — no `use client`; keep all homepage sections as Server Components unless interactivity required
+- **External links**: Use `<a>` not `Link` for external URLs; always add `target="_blank" rel="noopener noreferrer"`
 
 ### Pending Todos
 
@@ -60,5 +63,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Completed 02-01-PLAN.md — mock data layer (products + testimonials + placeholder image)
+Stopped at: Completed 02-02-PLAN.md — homepage static sections (HeroSection, BrandStorySection, InstagramCTASection)
 Resume file: None
