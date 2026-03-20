@@ -13,7 +13,7 @@ Twinkle Locs is a full rebuild of twinklelocs.com — replacing the existing Wor
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Scaffold, design tokens, Supabase, shared layout, WhatsApp button, URL conventions
-- [ ] **Phase 2: Homepage** - Brand-first entry point with hero, featured products, story, and testimonials
+- [x] **Phase 2: Homepage** - Brand-first entry point with hero, featured products, story, and testimonials
 - [ ] **Phase 3: Product Catalog** - Data migration from WooCommerce + browsable, filterable, searchable catalog page
 - [ ] **Phase 4: Product Detail** - Gallery, variant picker, reviews display, and upsell bundle suggestion
 - [ ] **Phase 5: Cart & Checkout** - Cart drawer + page, Paystack checkout, shipping logic, order confirmation
@@ -202,7 +202,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete | 2026-03-20 |
-| 2. Homepage | 0/3 | Not started | - |
+| 2. Homepage | 3/3 | Complete | 2026-03-20 |
 | 3. Product Catalog | 0/TBD | Not started | - |
 | 4. Product Detail | 0/TBD | Not started | - |
 | 5. Cart & Checkout | 0/TBD | Not started | - |

@@ -42,7 +42,7 @@
 
 ### Content Pages
 
-- [ ] **CONT-01**: Homepage displays hero section with CTA, featured products, brand story, testimonials, and link to Instagram
+- [x] **CONT-01**: Homepage displays hero section with CTA, featured products, brand story, testimonials, and link to Instagram
 - [ ] **CONT-02**: About/Founder page tells Unoma's story and the brand mission
 - [ ] **CONT-03**: FAQ page presents common questions in an accordion layout
 - [ ] **CONT-04**: Shipping Info page details domestic delivery rates and timeframes, and explains the international inquiry process
