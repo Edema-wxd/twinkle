@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 3 of 10 (Product Catalog)
-Plan: 2 of TBD in current phase
+Plan: 3 of TBD in current phase
 Status: In progress
-Last activity: 2026-03-20 — Completed 03-02-PLAN.md (Catalog UI sub-components)
+Last activity: 2026-03-20 — Completed 03-03-PLAN.md (CatalogClient + route wiring)
 
-Progress: [███░░░░░░░] 23%
+Progress: [████░░░░░░] 26%
 
 ## Performance Metrics
 
@@ -28,7 +28,7 @@ Progress: [███░░░░░░░] 23%
 |-------|-------|--------|
 | 1. Foundation | 4/4 | Complete |
 | 2. Homepage | 3/3 | Complete |
-| 3. Product Catalog | 2/TBD | In progress |
+| 3. Product Catalog | 3/TBD | In progress |
 
 ## Accumulated Context
 
@@ -62,6 +62,9 @@ Recent decisions affecting current work:
 - **CatalogProductCard Server Component**: No 'use client' — uses only Link + Image; safe for RSC trees without hydration overhead
 - **Category/SortOrder types in FilterBar.tsx**: Co-located with the component that defines them; CatalogClient imports from './FilterBar' (not a separate types file)
 - **FilterDrawer wraps MobileDrawer**: Reuses existing drawer behaviour (body-scroll lock, Escape key) — not reimplemented
+- **CatalogClient search-takes-priority**: useMemo bypasses category filter when searchQuery non-empty — no setActiveCategory('All') call; FilterBar chips retain visual state
+- **Empty search fallback to all products**: showEmptyMessage renders message + full products prop (not empty filteredProducts array) — no blank grid
+- **Next.js 15 async params**: /catalog/[slug]/page.tsx uses `params: Promise<{ slug: string }>` + `await params` per Next.js 15 dynamic route contract
 
 ### Pending Todos
 
@@ -75,5 +78,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Completed 03-02-PLAN.md — CatalogProductCard, FilterBar, FilterDrawer, SearchInput all built and committed
+Stopped at: Completed 03-03-PLAN.md — CatalogClient, /catalog page, /catalog/[slug] stub all built and committed
 Resume file: None
