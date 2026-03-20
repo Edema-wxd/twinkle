@@ -51,13 +51,15 @@ Plans:
 **Requirements**: CONT-01
 **Success Criteria** (what must be TRUE):
   1. Visitor sees a hero section with headline, subheading, and a CTA button that links to the catalog
-  2. A "Featured Products" section displays at least three products pulled from Supabase
+  2. A "Featured Products" section displays at least three products (mock data — Supabase not yet set up)
   3. A brand story section and testimonials section are visible on the page
   4. An Instagram link (to @twinklelocs) is present and opens in a new tab
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
+- [ ] 02-01-PLAN.md — Mock data layer: typed products + testimonials arrays, placeholder product image
+- [ ] 02-02-PLAN.md — Server section components: HeroSection, BrandStorySection, InstagramCTASection
+- [ ] 02-03-PLAN.md — Client islands + page assembly: FeaturedProductsSection, AddToCartModal, TestimonialsSection, page.tsx
 
 ---
 
@@ -200,7 +202,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete | 2026-03-20 |
-| 2. Homepage | 0/TBD | Not started | - |
+| 2. Homepage | 0/3 | Not started | - |
 | 3. Product Catalog | 0/TBD | Not started | - |
 | 4. Product Detail | 0/TBD | Not started | - |
 | 5. Cart & Checkout | 0/TBD | Not started | - |
