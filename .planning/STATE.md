@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 3 of 10 (Product Catalog)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-20 — Phase 2 Homepage complete (3/3 plans, verification passed 4/4)
+Plan: 1 of TBD in current phase
+Status: In progress
+Last activity: 2026-03-20 — Completed 03-01-PLAN.md (Product types and full catalog mock data)
 
-Progress: [██░░░░░░░░] 20%
+Progress: [██░░░░░░░░] 21%
 
 ## Performance Metrics
 
@@ -28,6 +28,7 @@ Progress: [██░░░░░░░░] 20%
 |-------|-------|--------|
 | 1. Foundation | 4/4 | Complete |
 | 2. Homepage | 3/3 | Complete |
+| 3. Product Catalog | 1/TBD | In progress |
 
 ## Accumulated Context
 
@@ -54,6 +55,10 @@ Recent decisions affecting current work:
 - **Props-down data flow**: page.tsx owns data imports and passes as typed props — FeaturedProductsSection and TestimonialsSection accept props (not direct imports), enabling Phase 3 one-line swap to Supabase data
 - **Functional updater in interval**: useEffect intervals use `setIdx(i => (i + 1) % n)` functional updater with `n` (not `idx`) in deps — avoids stale closure without unnecessary interval teardown
 - **AddToCartModal Phase 2 no-op**: "Add to cart" button calls onClose() in Phase 2 — TODO comment in place for Phase 5 cart context wiring
+- **Canonical Product type**: src/lib/types/product.ts is single source of truth — Product, ProductVariant, ProductMaterial; mock and Supabase layers both import from here
+- **FEATURED_PRODUCTS derived**: FEATURED_PRODUCTS = CATALOG_PRODUCTS.filter(p => p.is_featured) — no duplication
+- **MockProduct backward-compat re-export**: products.ts exports `type { Product as MockProduct }` — safe migration path
+- **Crystal Clear Beads all in_stock**: All 3 variants (4mm/6mm/8mm) in_stock: true; Shears single Standard variant ₦3500
 
 ### Pending Todos
 
@@ -67,5 +72,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Completed 02-03-PLAN.md — interactive islands (FeaturedProductsSection, AddToCartModal, TestimonialsSection) and full homepage assembly at src/app/page.tsx
+Stopped at: Completed 03-01-PLAN.md — canonical Product type, 6-product CATALOG_PRODUCTS, homepage components migrated to types/product
 Resume file: None
