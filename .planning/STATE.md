@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 3 of 10 (Product Catalog)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-03-20 — Completed 03-01-PLAN.md (Product types and full catalog mock data)
+Last activity: 2026-03-20 — Completed 03-02-PLAN.md (Catalog UI sub-components)
 
-Progress: [██░░░░░░░░] 21%
+Progress: [███░░░░░░░] 23%
 
 ## Performance Metrics
 
@@ -28,7 +28,7 @@ Progress: [██░░░░░░░░] 21%
 |-------|-------|--------|
 | 1. Foundation | 4/4 | Complete |
 | 2. Homepage | 3/3 | Complete |
-| 3. Product Catalog | 1/TBD | In progress |
+| 3. Product Catalog | 2/TBD | In progress |
 
 ## Accumulated Context
 
@@ -59,6 +59,9 @@ Recent decisions affecting current work:
 - **FEATURED_PRODUCTS derived**: FEATURED_PRODUCTS = CATALOG_PRODUCTS.filter(p => p.is_featured) — no duplication
 - **MockProduct backward-compat re-export**: products.ts exports `type { Product as MockProduct }` — safe migration path
 - **Crystal Clear Beads all in_stock**: All 3 variants (4mm/6mm/8mm) in_stock: true; Shears single Standard variant ₦3500
+- **CatalogProductCard Server Component**: No 'use client' — uses only Link + Image; safe for RSC trees without hydration overhead
+- **Category/SortOrder types in FilterBar.tsx**: Co-located with the component that defines them; CatalogClient imports from './FilterBar' (not a separate types file)
+- **FilterDrawer wraps MobileDrawer**: Reuses existing drawer behaviour (body-scroll lock, Escape key) — not reimplemented
 
 ### Pending Todos
 
@@ -72,5 +75,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Completed 03-01-PLAN.md — canonical Product type, 6-product CATALOG_PRODUCTS, homepage components migrated to types/product
+Stopped at: Completed 03-02-PLAN.md — CatalogProductCard, FilterBar, FilterDrawer, SearchInput all built and committed
 Resume file: None
