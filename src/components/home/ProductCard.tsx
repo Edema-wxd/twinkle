@@ -1,8 +1,8 @@
 import Image from 'next/image'
-import { MockProduct } from '@/lib/mock/products'
+import { Product } from '@/lib/types/product'
 
 interface ProductCardProps {
-  product: MockProduct
+  product: Product
   onAddToCart: () => void
 }
 

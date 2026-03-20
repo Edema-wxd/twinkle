@@ -4,14 +4,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ProductCard } from './ProductCard'
 import { AddToCartModal } from './AddToCartModal'
-import { MockProduct } from '@/lib/mock/products'
+import { Product } from '@/lib/types/product'
 
 interface FeaturedProductsSectionProps {
-  products: MockProduct[]
+  products: Product[]
 }
 
 export function FeaturedProductsSection({ products }: FeaturedProductsSectionProps) {
-  const [selectedProduct, setSelectedProduct] = useState<MockProduct | null>(null)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
 
   return (
     <section className="bg-cream py-20 px-4">

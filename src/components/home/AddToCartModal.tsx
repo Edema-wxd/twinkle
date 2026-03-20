@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { MockProduct } from '@/lib/mock/products'
+import { Product } from '@/lib/types/product'
 
 interface AddToCartModalProps {
-  product: MockProduct
+  product: Product
   onClose: () => void
 }
 
