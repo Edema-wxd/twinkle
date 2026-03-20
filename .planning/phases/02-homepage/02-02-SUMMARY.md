@@ -76,7 +76,7 @@ Each task was committed atomically:
 1. **Task 1: HeroSection — gradient hero with CTAs** - `14d6651` (feat)
 2. **Task 2: BrandStorySection and InstagramCTASection** - `fffcc73` (feat)
 
-**Plan metadata:** _(to be added by final commit)_ (docs: complete plan)
+**Plan metadata:** `15630b9` (docs: complete plan)
 
 ## Files Created/Modified
 
