@@ -155,3 +155,48 @@ values (
   ]'::jsonb,
   '2024-01-01T10:00:00.000Z'
 );
+
+-- =============================================================================
+-- Phase 4 additions — Product Detail
+-- Run AFTER the Phase 3 products table + seed already exists
+-- =============================================================================
+
+-- Add images column to products table
+alter table public.products
+  add column if not exists images text[] not null default '{}';
+
+-- Reviews table
+create table public.reviews (
+  id          uuid primary key default gen_random_uuid(),
+  product_id  uuid not null references public.products(id) on delete cascade,
+  author_name text not null,
+  body        text not null,
+  rating      integer not null check (rating between 1 and 5),
+  created_at  timestamptz not null default now()
+);
+
+alter table public.reviews enable row level security;
+
+create policy "Reviews are publicly readable"
+  on public.reviews
+  for select
+  using (true);
+
+create policy "Service role can insert reviews"
+  on public.reviews
+  for insert
+  with check (true);
+
+-- Seed: 3 reviews for 24K Gold Beads
+-- IMPORTANT: Run AFTER products table is seeded (slug '24k-gold-beads' must exist)
+insert into public.reviews (product_id, author_name, body, rating)
+select id, 'Adaeze O.', 'These are absolutely stunning — got so many compliments at my cousin''s wedding.', 5
+from public.products where slug = '24k-gold-beads';
+
+insert into public.reviews (product_id, author_name, body, rating)
+select id, 'Funmi A.', 'Fast delivery and beautiful packaging. The 4mm size is perfect for thin locs.', 5
+from public.products where slug = '24k-gold-beads';
+
+insert into public.reviews (product_id, author_name, body, rating)
+select id, 'Chiamaka B.', 'Good quality but the Large size was out of stock — hoping it comes back soon.', 4
+from public.products where slug = '24k-gold-beads';
