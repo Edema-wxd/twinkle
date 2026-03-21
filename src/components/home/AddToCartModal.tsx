@@ -13,9 +13,9 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
+    function handleKeyDown(event: KeyboardEvent) { if (event.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
   useEffect(() => {

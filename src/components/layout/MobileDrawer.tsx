@@ -19,11 +19,11 @@ export function MobileDrawer({ isOpen, onClose, children }: MobileDrawerProps) {
 
   // Close on Escape key
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
     }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
   return (
