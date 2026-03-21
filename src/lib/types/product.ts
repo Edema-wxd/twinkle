@@ -13,6 +13,8 @@ export interface Product {
   slug: string;
   description: string;
   image: string;
+  /** Full gallery URLs — if absent, gallery uses [image] as fallback */
+  images?: string[];
   material: ProductMaterial;
   is_featured: boolean;
   variants: ProductVariant[];
