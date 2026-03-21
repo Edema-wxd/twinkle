@@ -91,10 +91,13 @@ Plans:
   2. Visitor can select a size, quantity, and thread colour variant — price and availability update accordingly
   3. Customer reviews (admin-entered) are visible below the product description
   4. A "starter kit" bundle suggestion (beads + shears) is displayed as an upsell on relevant product pages
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 04-01: TBD
+- [ ] 04-01-PLAN.md — Type extensions + Supabase reviews table DDL/seed + data fetching layer
+- [ ] 04-02-PLAN.md — Page layout + image gallery (Server Component shell, breadcrumbs, product info, not-found page)
+- [ ] 04-03-PLAN.md — Variant picker + Add to Cart (ProductDetailClient island: size/quantity/thread colour placeholder)
+- [ ] 04-04-PLAN.md — Reviews display + upsell block + page assembly (wire Supabase data to ProductReviews and UpsellBlock)
 
 ---
 
@@ -207,7 +210,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 1. Foundation | 4/4 | Complete | 2026-03-20 |
 | 2. Homepage | 3/3 | Complete | 2026-03-20 |
 | 3. Product Catalog | 0/4 | Not started | - |
-| 4. Product Detail | 0/TBD | Not started | - |
+| 4. Product Detail | 0/4 | Not started | - |
 | 5. Cart & Checkout | 0/TBD | Not started | - |
 | 6. Admin Panel | 0/TBD | Not started | - |
 | 7. Content Pages | 0/TBD | Not started | - |
