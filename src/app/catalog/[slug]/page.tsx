@@ -2,17 +2,10 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Product, ProductMaterial, ProductVariant } from '@/lib/types/product'
-import { ProductImageGallery } from '@/components/product/ProductImageGallery'
+import { ProductDetailClient } from '@/components/product/ProductDetailClient'
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>
-}
-
-const MATERIAL_BADGE: Record<ProductMaterial, string> = {
-  Gold: 'bg-gold/20 text-cocoa',
-  Silver: 'bg-stone border border-charcoal/20 text-charcoal',
-  Crystal: 'bg-cream border border-charcoal/20 text-charcoal',
-  Tools: 'bg-forest/20 text-forest',
 }
 
 export default async function ProductDetailPage({
@@ -45,9 +38,6 @@ export default async function ProductDetailPage({
     images: row.images?.length ? row.images : undefined,
   }
 
-  const galleryImages = product.images ?? [product.image]
-  const badgeClasses = MATERIAL_BADGE[product.material]
-
   return (
     <main className="bg-cream min-h-screen">
       {/* Breadcrumb */}
@@ -62,34 +52,9 @@ export default async function ProductDetailPage({
         <span className="font-body text-sm text-charcoal/70">{product.name}</span>
       </nav>
 
-      {/* Main content grid */}
+      {/* Main content grid — ProductDetailClient renders two children: gallery + info */}
       <div className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-2 gap-12">
-        {/* Left: Gallery */}
-        <ProductImageGallery images={galleryImages} alt={product.name} />
-
-        {/* Right: Product info — placeholder for ProductDetailClient */}
-        <div>
-          <span
-            className={`inline-block text-xs font-body font-medium px-2 py-0.5 rounded-full mb-4 ${badgeClasses}`}
-          >
-            {product.material}
-          </span>
-          <h1 className="font-display text-3xl md:text-4xl text-cocoa mb-2">
-            {product.name}
-          </h1>
-          <p className="font-heading text-2xl text-gold mb-4">
-            {product.price_min === product.price_max
-              ? `₦${product.price_min.toLocaleString()}`
-              : `₦${product.price_min.toLocaleString()} – ₦${product.price_max.toLocaleString()}`}
-          </p>
-          <p className="font-body text-charcoal/80 leading-relaxed mb-8">
-            {product.description}
-          </p>
-          {/* TODO Plan 04-03: replace this section with <ProductDetailClient product={product} /> */}
-          <p className="font-body text-charcoal/50 text-sm italic">
-            Variant picker coming in next plan
-          </p>
-        </div>
+        <ProductDetailClient product={product} />
       </div>
     </main>
   )
