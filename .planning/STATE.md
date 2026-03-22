@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** A Nigerian customer on mobile can discover, customise, and buy loc beads in under 2 minutes — and a diaspora customer anywhere in the world can do the same.
-**Current focus:** Phase 4 — Product Detail
+**Current focus:** Phase 5 — Cart
 
 ## Current Position
 
 Phase: 4 of 10 (Product Detail)
 Plan: 4 of 4 in current phase
-Status: Phase complete — awaiting human verification checkpoint
-Last activity: 2026-03-22 — Completed 04-04-PLAN.md (ProductReviews, UpsellBlock, wired into page.tsx)
+Status: Phase complete
+Last activity: 2026-03-22 — Phase 4 fully approved; fix(04-04): hide thread colour swatches on Tools products applied post-verification
 
-Progress: [████░░░░░░] 36%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -28,8 +28,8 @@ Progress: [████░░░░░░] 36%
 |-------|-------|--------|
 | 1. Foundation | 4/4 | Complete |
 | 2. Homepage | 3/3 | Complete |
-| 3. Product Catalog | 3/TBD | In progress |
-| 4. Product Detail | 1/TBD | In progress |
+| 3. Product Catalog | 3/3 | Complete |
+| 4. Product Detail | 4/4 | Complete |
 
 ## Accumulated Context
 
@@ -78,6 +78,8 @@ Recent decisions affecting current work:
 - **First-in-stock initialisation**: variant picker pre-selects `product.variants.find(v => v.in_stock)?.id` in useState — skips disabled variants on first render
 - **UpsellBlock max-w-xs constraint**: CatalogProductCard in UpsellBlock wrapped in max-w-xs div to prevent card stretching full section width
 - **Conditional upsell guard**: product.material !== 'Tools' check in page.tsx controls whether shears fetch runs — no unnecessary Supabase query for Tools products
+- **UpsellBlock max-w-xs constraint**: CatalogProductCard in UpsellBlock wrapped in max-w-xs div to prevent card stretching full section width
+- **Thread colour swatches hidden for Tools**: ProductDetailClient suppresses colour swatch section when product.material === 'Tools' — shears page has no colour variants
 
 ### Pending Todos
 
@@ -91,5 +93,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-22
-Stopped at: 04-04-PLAN.md — checkpoint:human-verify (Phase 4 complete, awaiting visual verification)
+Stopped at: 04-04-PLAN.md — Phase 4 fully complete and verified
 Resume file: None
