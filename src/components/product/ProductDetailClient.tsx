@@ -112,23 +112,25 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           </div>
         </div>
 
-        {/* Thread colour swatches — decorative placeholder */}
+        {/* Thread colour swatches — decorative placeholder, not shown for Tools (e.g. Shears) */}
         {/* TODO Phase 5: wire thread colour to cart line item */}
-        <div className="mb-8">
-          <p className="font-heading text-sm font-semibold text-cocoa mb-3 uppercase tracking-wide">
-            Thread Colour
-          </p>
-          <div className="flex gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#1A1A1A]" title="Black" />
-            <div className="w-8 h-8 rounded-full bg-gold" title="Gold" />
-            <div className="w-8 h-8 rounded-full bg-terracotta" title="Red" />
-            <div className="w-8 h-8 rounded-full bg-cream border border-charcoal/20" title="White" />
-            <div className="w-8 h-8 rounded-full bg-forest" title="Forest" />
+        {product.material !== 'Tools' && (
+          <div className="mb-8">
+            <p className="font-heading text-sm font-semibold text-cocoa mb-3 uppercase tracking-wide">
+              Thread Colour
+            </p>
+            <div className="flex gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#1A1A1A]" title="Black" />
+              <div className="w-8 h-8 rounded-full bg-gold" title="Gold" />
+              <div className="w-8 h-8 rounded-full bg-terracotta" title="Red" />
+              <div className="w-8 h-8 rounded-full bg-cream border border-charcoal/20" title="White" />
+              <div className="w-8 h-8 rounded-full bg-forest" title="Forest" />
+            </div>
+            <p className="text-xs text-charcoal/50 mt-2 font-body">
+              Colour selection coming soon
+            </p>
           </div>
-          <p className="text-xs text-charcoal/50 mt-2 font-body">
-            Colour selection coming soon
-          </p>
-        </div>
+        )}
 
         {/* Add to Cart button — Phase 5 no-op */}
         <button
