@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** A Nigerian customer on mobile can discover, customise, and buy loc beads in under 2 minutes — and a diaspora customer anywhere in the world can do the same.
-**Current focus:** Phase 3 — Product Catalog
+**Current focus:** Phase 4 — Product Detail
 
 ## Current Position
 
-Phase: 3 of 10 (Product Catalog)
-Plan: 3 of TBD in current phase
+Phase: 4 of 10 (Product Detail)
+Plan: 1 of TBD in current phase
 Status: In progress
-Last activity: 2026-03-20 — Completed 03-03-PLAN.md (CatalogClient + route wiring)
+Last activity: 2026-03-22 — Completed 04-01-PLAN.md (data foundation: types + schema + supabase.ts)
 
-Progress: [████░░░░░░] 26%
+Progress: [████░░░░░░] 30%
 
 ## Performance Metrics
 
@@ -29,6 +29,7 @@ Progress: [████░░░░░░] 26%
 | 1. Foundation | 4/4 | Complete |
 | 2. Homepage | 3/3 | Complete |
 | 3. Product Catalog | 3/TBD | In progress |
+| 4. Product Detail | 1/TBD | In progress |
 
 ## Accumulated Context
 
@@ -65,6 +66,9 @@ Recent decisions affecting current work:
 - **CatalogClient search-takes-priority**: useMemo bypasses category filter when searchQuery non-empty — no setActiveCategory('All') call; FilterBar chips retain visual state
 - **Empty search fallback to all products**: showEmptyMessage renders message + full products prop (not empty filteredProducts array) — no blank grid
 - **Next.js 15 async params**: /catalog/[slug]/page.tsx uses `params: Promise<{ slug: string }>` + `await params` per Next.js 15 dynamic route contract
+- **images field optional on Product**: `images?: string[]` added to Product type — CatalogProductCard uses `image` (thumbnail); gallery falls back to `[image]` when images absent
+- **Manual supabase.ts**: hand-maintained Database type until Supabase CLI gen is configured; regenerate command in header comment of src/types/supabase.ts
+- **reviews RLS**: public SELECT, service-role INSERT — reviews table readable without auth; writes require service role
 
 ### Pending Todos
 
@@ -77,6 +81,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-20
-Stopped at: Completed 03-03-PLAN.md — CatalogClient, /catalog page, /catalog/[slug] stub all built and committed
+Last session: 2026-03-22
+Stopped at: Completed 04-01-PLAN.md — Product type extended, Review type created, schema.sql updated, supabase.ts fully typed
 Resume file: None

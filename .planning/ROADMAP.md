@@ -88,7 +88,7 @@ Plans:
 **Requirements**: PROD-04, PROD-05, CONV-02
 **Success Criteria** (what must be TRUE):
   1. Visitor can view a scrollable image gallery on the product detail page
-  2. Visitor can select a size, quantity, and thread colour variant — price and availability update accordingly
+  2. Visitor can select a size and quantity variant — price and availability update accordingly (thread colour deferred to Phase 5: requires cart line item schema)
   3. Customer reviews (admin-entered) are visible below the product description
   4. A "starter kit" bundle suggestion (beads + shears) is displayed as an upsell on relevant product pages
 **Plans**: 4 plans
