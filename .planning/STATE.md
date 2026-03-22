@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 4 of 10 (Product Detail)
-Plan: 2 of TBD in current phase
+Plan: 3 of TBD in current phase
 Status: In progress
-Last activity: 2026-03-22 — Completed 04-02-PLAN.md (product detail page skeleton: ProductImageGallery + page.tsx + not-found.tsx)
+Last activity: 2026-03-22 — Completed 04-03-PLAN.md (ProductDetailClient island: variant picker, quantity stepper, thread colour swatches, Add to Cart)
 
-Progress: [████░░░░░░] 30%
+Progress: [████░░░░░░] 33%
 
 ## Performance Metrics
 
@@ -73,6 +73,9 @@ Recent decisions affecting current work:
 - **Supabase GenericTable Relationships**: Database type must include `Relationships: []` per table; empty dicts must be `{ [_ in never]: never }` not `Record<string, never>` to satisfy GenericSchema
 - **ProductImageGallery thumbnail rail**: only rendered when `images.length > 1`; all current products have single image so rail is always hidden
 - **object-contain in gallery**: SVG placeholder has transparent bg; use object-contain not object-cover to preserve aspect ratio inside bg-stone container
+- **Fragment-as-grid-children**: ProductDetailClient returns `<>` with gallery + info div as two direct grid children — no wrapper div needed; CSS grid places them in two columns automatically
+- **Gallery internal to ProductDetailClient**: ProductImageGallery co-located inside ProductDetailClient (single 'use client' boundary) — eliminates second client island
+- **First-in-stock initialisation**: variant picker pre-selects `product.variants.find(v => v.in_stock)?.id` in useState — skips disabled variants on first render
 
 ### Pending Todos
 
@@ -86,5 +89,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-22
-Stopped at: Completed 04-02-PLAN.md — ProductImageGallery, product detail page, not-found page, supabase.ts type fix
+Stopped at: Completed 04-03-PLAN.md — ProductDetailClient island, variant picker wired into page.tsx
 Resume file: None
