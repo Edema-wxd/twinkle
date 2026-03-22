@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 4 of 10 (Product Detail)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-03-22 — Completed 04-01-PLAN.md (data foundation: types + schema + supabase.ts)
+Last activity: 2026-03-22 — Completed 04-02-PLAN.md (product detail page skeleton: ProductImageGallery + page.tsx + not-found.tsx)
 
 Progress: [████░░░░░░] 30%
 
@@ -69,6 +69,10 @@ Recent decisions affecting current work:
 - **images field optional on Product**: `images?: string[]` added to Product type — CatalogProductCard uses `image` (thumbnail); gallery falls back to `[image]` when images absent
 - **Manual supabase.ts**: hand-maintained Database type until Supabase CLI gen is configured; regenerate command in header comment of src/types/supabase.ts
 - **reviews RLS**: public SELECT, service-role INSERT — reviews table readable without auth; writes require service role
+- **Supabase result.data pattern**: `const result = await supabase...single(); if (result.error || !result.data) return notFound(); const row = result.data` — destructuring before guard kills TS narrowing
+- **Supabase GenericTable Relationships**: Database type must include `Relationships: []` per table; empty dicts must be `{ [_ in never]: never }` not `Record<string, never>` to satisfy GenericSchema
+- **ProductImageGallery thumbnail rail**: only rendered when `images.length > 1`; all current products have single image so rail is always hidden
+- **object-contain in gallery**: SVG placeholder has transparent bg; use object-contain not object-cover to preserve aspect ratio inside bg-stone container
 
 ### Pending Todos
 
@@ -82,5 +86,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-22
-Stopped at: Completed 04-01-PLAN.md — Product type extended, Review type created, schema.sql updated, supabase.ts fully typed
+Stopped at: Completed 04-02-PLAN.md — ProductImageGallery, product detail page, not-found page, supabase.ts type fix
 Resume file: None
