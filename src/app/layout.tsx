@@ -3,6 +3,7 @@ import { halimun, raleway, inter } from "@/lib/fonts";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,10 +22,12 @@ export default function RootLayout({
       className={`${halimun.variable} ${raleway.variable} ${inter.variable}`}
     >
       <body className="font-body bg-cream text-charcoal antialiased">
-        <Header />
-        <main>{children}</main>
-        <Footer />
-        <WhatsAppButton />
+        <Providers>
+          <Header />
+          <main>{children}</main>
+          <Footer />
+          <WhatsAppButton />
+        </Providers>
       </body>
     </html>
   );
