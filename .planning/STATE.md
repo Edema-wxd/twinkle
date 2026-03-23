@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 
 ## Current Position
 
-Phase: 4.1 (CSV Price Import)
-Plan: 2 of 2 in current phase
-Status: Phase complete — both plans done
-Last activity: 2026-03-23 — Completed 04.1-02-PLAN.md (UI layer: pack-size tier picker replaces integer stepper)
+Phase: 5 (Cart & Checkout)
+Plan: 2 of N in current phase
+Status: In progress — plan 02 done
+Last activity: 2026-03-23 — Completed 05-02-PLAN.md (orders/order_items schema + TypeScript types)
 
 Progress: [█████░░░░░] 50%
 
@@ -31,6 +31,7 @@ Progress: [█████░░░░░] 50%
 | 3. Product Catalog | 3/3 | Complete |
 | 4. Product Detail | 4/4 | Complete |
 | 4.1. CSV Price Import | 2/2 | Complete |
+| 5. Cart & Checkout | 2/N | In progress |
 
 ## Accumulated Context
 
@@ -87,6 +88,11 @@ Recent decisions affecting current work:
 - **selectedTierQty state**: ProductDetailClient tracks selectedTierQty alongside selectedVariantId; handleVariantChange resets tier to new variant's first tier on size switch — Phase 5 reads both for cart wiring
 - **Pack-size picker conditional render**: only shown when price_tiers.length > 1; Shears (single tier) gets no picker and no "Pack of N beads" label
 - **displayPrice fallback chain**: selectedTier?.price ?? selectedVariant?.price ?? product.price_min
+- **orders/order_items no RLS**: service-role access only — all reads/writes via server-side API routes
+- **order_items denormalized snapshot**: product_name, variant_name, unit_price, tier_qty captured at purchase time — history immutable if products change
+- **thread_colour nullable on order_items**: Tools products (Shears) have no thread colour; consistent with Phase 4 suppression
+- **order status defaults to 'paid'**: webhook sets this explicitly; admin advances through processing/shipped/delivered in Phase 6
+- **Order convenience types**: Order, OrderInsert, OrderItem, OrderItemInsert exported from src/types/supabase.ts
 
 ### Roadmap Evolution
 
@@ -104,5 +110,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-23
-Stopped at: Completed 04.1-02-PLAN.md — UI layer (pack-size tier picker, price driven by variant + tier selection)
+Stopped at: Completed 05-02-PLAN.md — orders/order_items SQL migration + TypeScript types
 Resume file: None
