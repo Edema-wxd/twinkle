@@ -115,8 +115,8 @@
 | PROD-01 | Phase 3 | Pending |
 | PROD-02 | Phase 3 | Pending |
 | PROD-03 | Phase 3 | Pending |
-| PROD-04 | Phase 4 | Pending |
-| PROD-05 | Phase 4 | Pending |
+| PROD-04 | Phase 4 | Complete |
+| PROD-05 | Phase 4 | Complete |
 | CART-01 | Phase 5 | Pending |
 | CART-02 | Phase 5 | Pending |
 | CART-03 | Phase 5 | Pending |
@@ -137,7 +137,7 @@
 | CONT-05 | Phase 7 | Pending |
 | CONT-06 | Phase 7 | Pending |
 | CONV-01 | Phase 8 | Pending |
-| CONV-02 | Phase 4 | Pending |
+| CONV-02 | Phase 4 | Complete |
 | CONV-03 | Phase 6 | Pending |
 | SEO-01 | Phase 9 | Pending |
 | SEO-02 | Phase 9 | Pending |
