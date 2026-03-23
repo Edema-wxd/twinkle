@@ -93,6 +93,11 @@ Recent decisions affecting current work:
 - **thread_colour nullable on order_items**: Tools products (Shears) have no thread colour; consistent with Phase 4 suppression
 - **order status defaults to 'paid'**: webhook sets this explicitly; admin advances through processing/shipped/delivered in Phase 6
 - **Order convenience types**: Order, OrderInsert, OrderItem, OrderItemInsert exported from src/types/supabase.ts
+- **CartProvider HYDRATE after mount**: localStorage read dispatched in useEffect([]) — avoids SSR/hydration mismatch; initial render always uses empty state
+- **isDrawerOpen not persisted**: only state.items written to localStorage; drawer always closed on fresh page load
+- **ADD_ITEM opens drawer**: isDrawerOpen set true on every ADD_ITEM — cart drawer auto-opens per spec
+- **lineKey includes threadColour**: same size+pack but different thread colour = separate line items; identical size+pack+colour merges quantity
+- **Providers pattern**: src/components/providers.tsx is 'use client'; layout.tsx imports Providers and wraps body content — layout remains a Server Component
 
 ### Roadmap Evolution
 
@@ -110,5 +115,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-23
-Stopped at: Completed 05-02-PLAN.md — orders/order_items SQL migration + TypeScript types
+Stopped at: Completed 05-01-PLAN.md — cart state layer (types, reducer, localStorage context, Providers wrapper)
 Resume file: None
