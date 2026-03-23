@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 4.1 (CSV Price Import)
-Plan: 1 of 2 in current phase
-Status: In progress — data layer complete, UI layer next
-Last activity: 2026-03-23 — Completed 04.1-01-PLAN.md (data layer: PriceTier type + mock + Supabase migration)
+Plan: 2 of 2 in current phase
+Status: Phase complete — both plans done
+Last activity: 2026-03-23 — Completed 04.1-02-PLAN.md (UI layer: pack-size tier picker replaces integer stepper)
 
-Progress: [████░░░░░░] 43%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -30,7 +30,7 @@ Progress: [████░░░░░░] 43%
 | 2. Homepage | 3/3 | Complete |
 | 3. Product Catalog | 3/3 | Complete |
 | 4. Product Detail | 4/4 | Complete |
-| 4.1. CSV Price Import | 1/2 | In progress |
+| 4.1. CSV Price Import | 2/2 | Complete |
 
 ## Accumulated Context
 
@@ -84,6 +84,9 @@ Recent decisions affecting current work:
 - **PriceTier required on ProductVariant**: `price_tiers: PriceTier[]` is required (not optional); variant.price = lowest tier for display/sort; full tiers in price_tiers array
 - **PriceTier shape**: `{ qty: number; price: number }` — matches Supabase JSONB shape exactly; Shears uses `[{qty:1,price:3500}]` for consistent shape without special-casing
 - **24K Gold 2mm has 5 tiers from qty 25**: all other 2mm/4mm start at qty 50; all 6mm start at qty 25
+- **selectedTierQty state**: ProductDetailClient tracks selectedTierQty alongside selectedVariantId; handleVariantChange resets tier to new variant's first tier on size switch — Phase 5 reads both for cart wiring
+- **Pack-size picker conditional render**: only shown when price_tiers.length > 1; Shears (single tier) gets no picker and no "Pack of N beads" label
+- **displayPrice fallback chain**: selectedTier?.price ?? selectedVariant?.price ?? product.price_min
 
 ### Roadmap Evolution
 
@@ -101,5 +104,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-23
-Stopped at: Completed 04.1-01-PLAN.md — data layer (PriceTier type, mock data, Supabase migration applied)
+Stopped at: Completed 04.1-02-PLAN.md — UI layer (pack-size tier picker, price driven by variant + tier selection)
 Resume file: None
