@@ -50,6 +50,53 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['reviews']['Insert']>
         Relationships: []
       }
+      orders: {
+        Row: {
+          id: string
+          created_at: string
+          paystack_reference: string
+          paystack_payload: Json
+          status: string
+          customer_name: string
+          customer_email: string
+          customer_phone: string
+          customer_ip: string | null
+          delivery_address: string
+          delivery_state: string
+          shipping_cost: number
+          subtotal: number
+          total: number
+        }
+        Insert: Omit<Database['public']['Tables']['orders']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+          status?: string
+        }
+        Update: Partial<Database['public']['Tables']['orders']['Insert']>
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          id: string
+          order_id: string
+          created_at: string
+          product_id: string
+          product_name: string
+          variant_id: string
+          variant_name: string
+          tier_qty: number
+          thread_colour: string | null
+          unit_price: number
+          quantity: number
+          line_total: number
+        }
+        Insert: Omit<Database['public']['Tables']['order_items']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['order_items']['Insert']>
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -68,3 +115,8 @@ export interface Database {
 
 export type Tables<T extends keyof Database['public']['Tables']> =
   Database['public']['Tables'][T]['Row']
+
+export type Order = Database['public']['Tables']['orders']['Row']
+export type OrderInsert = Database['public']['Tables']['orders']['Insert']
+export type OrderItem = Database['public']['Tables']['order_items']['Row']
+export type OrderItemInsert = Database['public']['Tables']['order_items']['Insert']
