@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** A Nigerian customer on mobile can discover, customise, and buy loc beads in under 2 minutes — and a diaspora customer anywhere in the world can do the same.
-**Current focus:** Phase 5 — Cart
+**Current focus:** Phase 4.1 — CSV Price Import
 
 ## Current Position
 
-Phase: 4 of 10 (Product Detail)
-Plan: 4 of 4 in current phase
-Status: Phase complete
-Last activity: 2026-03-22 — Phase 4 fully approved; fix(04-04): hide thread colour swatches on Tools products applied post-verification
+Phase: 4.1 (CSV Price Import)
+Plan: 1 of 2 in current phase
+Status: In progress — data layer complete, UI layer next
+Last activity: 2026-03-23 — Completed 04.1-01-PLAN.md (data layer: PriceTier type + mock + Supabase migration)
 
-Progress: [████░░░░░░] 40%
+Progress: [████░░░░░░] 43%
 
 ## Performance Metrics
 
@@ -30,6 +30,7 @@ Progress: [████░░░░░░] 40%
 | 2. Homepage | 3/3 | Complete |
 | 3. Product Catalog | 3/3 | Complete |
 | 4. Product Detail | 4/4 | Complete |
+| 4.1. CSV Price Import | 1/2 | In progress |
 
 ## Accumulated Context
 
@@ -80,6 +81,13 @@ Recent decisions affecting current work:
 - **Conditional upsell guard**: product.material !== 'Tools' check in page.tsx controls whether shears fetch runs — no unnecessary Supabase query for Tools products
 - **UpsellBlock max-w-xs constraint**: CatalogProductCard in UpsellBlock wrapped in max-w-xs div to prevent card stretching full section width
 - **Thread colour swatches hidden for Tools**: ProductDetailClient suppresses colour swatch section when product.material === 'Tools' — shears page has no colour variants
+- **PriceTier required on ProductVariant**: `price_tiers: PriceTier[]` is required (not optional); variant.price = lowest tier for display/sort; full tiers in price_tiers array
+- **PriceTier shape**: `{ qty: number; price: number }` — matches Supabase JSONB shape exactly; Shears uses `[{qty:1,price:3500}]` for consistent shape without special-casing
+- **24K Gold 2mm has 5 tiers from qty 25**: all other 2mm/4mm start at qty 50; all 6mm start at qty 25
+
+### Roadmap Evolution
+
+- Phase 4.1 inserted after Phase 4: CSV Price Import (URGENT) — import real pricing from 'Twinke Locs Prices .csv' into Supabase before Cart phase begins
 
 ### Pending Todos
 
@@ -92,6 +100,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-22
-Stopped at: 04-04-PLAN.md — Phase 4 fully complete and verified
+Last session: 2026-03-23
+Stopped at: Completed 04.1-01-PLAN.md — data layer (PriceTier type, mock data, Supabase migration applied)
 Resume file: None
