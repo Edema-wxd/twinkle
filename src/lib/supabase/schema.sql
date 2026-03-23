@@ -48,12 +48,10 @@ values (
   '/images/products/placeholder-bead.svg',
   'Gold',
   true,
-  2500,
-  4000,
+  19500,
+  19500,
   '[
-    {"id": "var_001a", "name": "Small (4mm)", "price": 2500, "in_stock": true},
-    {"id": "var_001b", "name": "Medium (6mm)", "price": 3200, "in_stock": true},
-    {"id": "var_001c", "name": "Large (8mm)", "price": 4000, "in_stock": false}
+    {"id": "var_001a", "name": "2mm", "price": 19500, "in_stock": true}
   ]'::jsonb,
   '2024-06-01T10:00:00.000Z'
 );
@@ -68,12 +66,12 @@ values (
   '/images/products/placeholder-bead.svg',
   'Gold',
   true,
-  1800,
-  3000,
+  13590,
+  18435,
   '[
-    {"id": "var_002a", "name": "Small (4mm)", "price": 1800, "in_stock": true},
-    {"id": "var_002b", "name": "Medium (6mm)", "price": 2400, "in_stock": true},
-    {"id": "var_002c", "name": "Large (8mm)", "price": 3000, "in_stock": false}
+    {"id": "var_002a", "name": "2mm", "price": 18435, "in_stock": true},
+    {"id": "var_002b", "name": "4mm", "price": 13590, "in_stock": true},
+    {"id": "var_002c", "name": "6mm", "price": 15885, "in_stock": true}
   ]'::jsonb,
   '2024-05-15T10:00:00.000Z'
 );
@@ -88,12 +86,12 @@ values (
   '/images/products/placeholder-bead.svg',
   'Silver',
   true,
-  1800,
-  3000,
+  13590,
+  18350,
   '[
-    {"id": "var_003a", "name": "Small (4mm)", "price": 1800, "in_stock": true},
-    {"id": "var_003b", "name": "Medium (6mm)", "price": 2400, "in_stock": true},
-    {"id": "var_003c", "name": "Large (8mm)", "price": 3000, "in_stock": false}
+    {"id": "var_003a", "name": "2mm", "price": 18350, "in_stock": true},
+    {"id": "var_003b", "name": "4mm", "price": 13590, "in_stock": true},
+    {"id": "var_003c", "name": "6mm", "price": 15885, "in_stock": true}
   ]'::jsonb,
   '2024-04-20T10:00:00.000Z'
 );
@@ -108,12 +106,12 @@ values (
   '/images/products/placeholder-bead.svg',
   'Crystal',
   true,
-  2000,
-  3200,
+  13590,
+  16225,
   '[
-    {"id": "var_004a", "name": "Small (4mm)", "price": 2000, "in_stock": true},
-    {"id": "var_004b", "name": "Medium (6mm)", "price": 2600, "in_stock": true},
-    {"id": "var_004c", "name": "Large (8mm)", "price": 3200, "in_stock": false}
+    {"id": "var_004a", "name": "2mm", "price": 16225, "in_stock": true},
+    {"id": "var_004b", "name": "4mm", "price": 13590, "in_stock": true},
+    {"id": "var_004c", "name": "6mm", "price": 15885, "in_stock": true}
   ]'::jsonb,
   '2024-03-10T10:00:00.000Z'
 );
@@ -128,12 +126,12 @@ values (
   '/images/products/placeholder-bead.svg',
   'Crystal',
   false,
-  1600,
-  2800,
+  13590,
+  15885,
   '[
-    {"id": "var_005a", "name": "Small (4mm)", "price": 1600, "in_stock": true},
-    {"id": "var_005b", "name": "Medium (6mm)", "price": 2200, "in_stock": true},
-    {"id": "var_005c", "name": "Large (8mm)", "price": 2800, "in_stock": true}
+    {"id": "var_005a", "name": "2mm", "price": 14950, "in_stock": true},
+    {"id": "var_005b", "name": "4mm", "price": 13590, "in_stock": true},
+    {"id": "var_005c", "name": "6mm", "price": 15885, "in_stock": true}
   ]'::jsonb,
   '2024-02-14T10:00:00.000Z'
 );
@@ -198,5 +196,35 @@ select id, 'Funmi A.', 'Fast delivery and beautiful packaging. The 4mm size is p
 from public.products where slug = '24k-gold-beads';
 
 insert into public.reviews (product_id, author_name, body, rating)
-select id, 'Chiamaka B.', 'Good quality but the Large size was out of stock — hoping it comes back soon.', 4
+select id, 'Chiamaka B.', 'Good quality, love how delicate the 2mm size looks on my locs.', 4
 from public.products where slug = '24k-gold-beads';
+
+-- =============================================================================
+-- Price update migration — run against existing seeded Supabase instance
+-- Run this in: Supabase Dashboard → SQL Editor → New query
+-- =============================================================================
+
+update public.products set
+  price_min = 19500, price_max = 19500,
+  variants = '[{"id":"var_001a","name":"2mm","price":19500,"in_stock":true}]'::jsonb
+where slug = '24k-gold-beads';
+
+update public.products set
+  price_min = 13590, price_max = 18435,
+  variants = '[{"id":"var_002a","name":"2mm","price":18435,"in_stock":true},{"id":"var_002b","name":"4mm","price":13590,"in_stock":true},{"id":"var_002c","name":"6mm","price":15885,"in_stock":true}]'::jsonb
+where slug = 'gold-beads';
+
+update public.products set
+  price_min = 13590, price_max = 18350,
+  variants = '[{"id":"var_003a","name":"2mm","price":18350,"in_stock":true},{"id":"var_003b","name":"4mm","price":13590,"in_stock":true},{"id":"var_003c","name":"6mm","price":15885,"in_stock":true}]'::jsonb
+where slug = 'silver-beads';
+
+update public.products set
+  price_min = 13590, price_max = 16225,
+  variants = '[{"id":"var_004a","name":"2mm","price":16225,"in_stock":true},{"id":"var_004b","name":"4mm","price":13590,"in_stock":true},{"id":"var_004c","name":"6mm","price":15885,"in_stock":true}]'::jsonb
+where slug = 'onyx-beads';
+
+update public.products set
+  price_min = 13590, price_max = 15885,
+  variants = '[{"id":"var_005a","name":"2mm","price":14950,"in_stock":true},{"id":"var_005b","name":"4mm","price":13590,"in_stock":true},{"id":"var_005c","name":"6mm","price":15885,"in_stock":true}]'::jsonb
+where slug = 'crystal-clear-beads';
