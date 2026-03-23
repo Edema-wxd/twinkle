@@ -16,14 +16,27 @@ const MATERIAL_BADGE: Record<ProductMaterial, string> = {
 }
 
 export function ProductDetailClient({ product }: ProductDetailClientProps) {
-  const [selectedVariantId, setSelectedVariantId] = useState(
-    product.variants.find((v) => v.in_stock)?.id ?? product.variants[0]?.id ?? ''
+  const initialVariant = product.variants.find((v) => v.in_stock) ?? product.variants[0]
+
+  const [selectedVariantId, setSelectedVariantId] = useState(initialVariant?.id ?? '')
+  const [selectedTierQty, setSelectedTierQty] = useState(
+    initialVariant?.price_tiers[0]?.qty ?? 0
   )
-  const [quantity, setQuantity] = useState(1)
 
   const selectedVariant = product.variants.find((v) => v.id === selectedVariantId)
+  const selectedTier = selectedVariant?.price_tiers.find((t) => t.qty === selectedTierQty)
+  const displayPrice = selectedTier?.price ?? selectedVariant?.price ?? product.price_min
+
   const galleryImages = product.images?.length ? product.images : [product.image]
   const badgeClasses = MATERIAL_BADGE[product.material]
+
+  const hasMultipleTiers = (selectedVariant?.price_tiers.length ?? 0) > 1
+
+  function handleVariantChange(variantId: string) {
+    setSelectedVariantId(variantId)
+    const newVariant = product.variants.find((v) => v.id === variantId)
+    setSelectedTierQty(newVariant?.price_tiers[0]?.qty ?? 0)
+  }
 
   return (
     <>
@@ -44,10 +57,18 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           {product.name}
         </h1>
 
-        {/* Price — updates on variant selection */}
-        <p className="font-heading text-2xl text-gold mb-6">
-          ₦{(selectedVariant?.price ?? product.price_min).toLocaleString()}
+        {/* Price — updates on variant + tier selection */}
+        <p className="font-heading text-2xl text-gold mb-1">
+          ₦{displayPrice.toLocaleString()}
         </p>
+
+        {/* Pack label — hidden for single-tier products (e.g. Shears) */}
+        {hasMultipleTiers && (
+          <p className="font-body text-sm text-charcoal/60 mb-5">
+            Pack of {selectedTierQty} beads
+          </p>
+        )}
+        {!hasMultipleTiers && <div className="mb-5" />}
 
         {/* Description */}
         <p className="font-body text-charcoal/80 leading-relaxed mb-8">
@@ -64,7 +85,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               <button
                 key={variant.id}
                 onClick={() => {
-                  if (variant.in_stock) setSelectedVariantId(variant.id)
+                  if (variant.in_stock) handleVariantChange(variant.id)
                 }}
                 disabled={!variant.in_stock}
                 className={`rounded-lg px-4 py-2 font-body text-sm border-2 transition-all ${
@@ -84,33 +105,29 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           </div>
         </div>
 
-        {/* Quantity stepper */}
-        <div className="mb-6">
-          <p className="font-heading text-sm font-semibold text-cocoa mb-3 uppercase tracking-wide">
-            Quantity
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              aria-label="Decrease quantity"
-              className={`w-10 h-10 rounded-lg border-2 border-charcoal/20 font-body text-lg flex items-center justify-center transition-all hover:border-gold ${
-                quantity === 1 ? 'opacity-40' : ''
-              }`}
-            >
-              −
-            </button>
-            <span className="w-12 text-center font-body text-lg">{quantity}</span>
-            <button
-              onClick={() => setQuantity((q) => Math.min(10, q + 1))}
-              aria-label="Increase quantity"
-              className={`w-10 h-10 rounded-lg border-2 border-charcoal/20 font-body text-lg flex items-center justify-center transition-all hover:border-gold ${
-                quantity === 10 ? 'opacity-40' : ''
-              }`}
-            >
-              +
-            </button>
+        {/* Pack-size picker — only shown when variant has more than 1 tier */}
+        {hasMultipleTiers && selectedVariant && (
+          <div className="mb-6">
+            <p className="font-heading text-sm font-semibold text-cocoa mb-3 uppercase tracking-wide">
+              Pack Size
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {selectedVariant.price_tiers.map((tier) => (
+                <button
+                  key={tier.qty}
+                  onClick={() => setSelectedTierQty(tier.qty)}
+                  className={`rounded-lg px-4 py-2 font-body text-sm border-2 transition-all ${
+                    selectedTierQty === tier.qty
+                      ? 'border-gold bg-gold/10 text-cocoa font-semibold'
+                      : 'border-charcoal/20 text-charcoal hover:border-gold'
+                  }`}
+                >
+                  {tier.qty} beads
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Thread colour swatches — decorative placeholder, not shown for Tools (e.g. Shears) */}
         {/* TODO Phase 5: wire thread colour to cart line item */}
@@ -135,7 +152,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         {/* Add to Cart button — Phase 5 no-op */}
         <button
           onClick={() => {
-            /* TODO Phase 5: wire to cart context */
+            /* TODO Phase 5: wire selectedVariantId + selectedTierQty to cart context */
           }}
           className="w-full bg-gold text-cocoa font-heading font-semibold py-4 rounded-lg hover:bg-terracotta hover:text-cream transition-colors mt-8"
         >
