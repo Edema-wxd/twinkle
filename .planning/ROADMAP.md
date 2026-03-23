@@ -127,10 +127,18 @@ CSV pricing modelled as price_tiers on each variant (qty+price pairs). Sizes 2mm
   4. Checkout submits payment to Paystack in ₦ and a domestic shipping rate is included in the order total
   5. A visitor selecting international delivery sees a "contact us for a shipping quote" message in place of a rate
   6. After successful payment, visitor is redirected to an order confirmation page showing their order summary
-**Plans**: TBD
+**Plans**: 9 plans
 
 Plans:
-- [ ] 05-01: TBD
+- [ ] 05-01-PLAN.md — Cart types, reducer, threadColours constants, CartContext + localStorage persistence, Providers wrapper
+- [ ] 05-02-PLAN.md — Supabase orders/order_items schema (SQL migration) + TypeScript types
+- [ ] 05-03-PLAN.md — Thread colour picker + Add to Cart wiring in ProductDetailClient
+- [ ] 05-04-PLAN.md — CartDrawer component + CartLineItem + Header cart badge
+- [ ] 05-05-PLAN.md — /cart page (dedicated cart page with quantity controls)
+- [ ] 05-06-PLAN.md — Paystack webhook handler + middleware exclusion
+- [ ] 05-07-PLAN.md — Two-step checkout: CheckoutForm, OrderReview, PaystackButton, shipping logic
+- [ ] 05-08-PLAN.md — Order confirmation page: server-side fetch + OrderPoller (Realtime + 30s timeout)
+- [ ] 05-09-PLAN.md — End-to-end verification checkpoint
 
 ---
 
@@ -227,7 +235,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Product Catalog | 4/4 | Complete | 2026-03-20 |
 | 4. Product Detail | 4/4 | Complete | 2026-03-22 |
 | 4.1. CSV Price Import (INSERTED) | 2/2 | Complete | 2026-03-23 |
-| 5. Cart & Checkout | 0/TBD | Not started | - |
+| 5. Cart & Checkout | 0/9 | Not started | - |
 | 6. Admin Panel | 0/TBD | Not started | - |
 | 7. Content Pages | 0/TBD | Not started | - |
 | 8. Conversion | 0/TBD | Not started | - |
