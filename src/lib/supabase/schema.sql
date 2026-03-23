@@ -228,3 +228,73 @@ update public.products set
   price_min = 13590, price_max = 15885,
   variants = '[{"id":"var_005a","name":"2mm","price":14950,"in_stock":true},{"id":"var_005b","name":"4mm","price":13590,"in_stock":true},{"id":"var_005c","name":"6mm","price":15885,"in_stock":true}]'::jsonb
 where slug = 'crystal-clear-beads';
+
+-- =============================================================================
+-- Phase 4.1 — CSV Price Import: add price_tiers to all product variants
+-- Run in: Supabase Dashboard → SQL Editor → New query
+-- Run AFTER Phase 3 + Phase 4 migrations have been applied
+-- =============================================================================
+
+-- 24K Gold Beads (2mm only, all 5 quantity tiers)
+update public.products set
+  variants = '[
+    {"id":"var_001a","name":"2mm","price":19500,"in_stock":true,
+     "price_tiers":[{"qty":25,"price":19500},{"qty":50,"price":26000},{"qty":100,"price":58000},{"qty":150,"price":84000},{"qty":200,"price":91800}]}
+  ]'::jsonb
+where slug = '24k-gold-beads';
+
+-- Gold Beads (2mm/4mm start at qty 50; 6mm starts at qty 25)
+update public.products set
+  variants = '[
+    {"id":"var_002a","name":"2mm","price":18435,"in_stock":true,
+     "price_tiers":[{"qty":50,"price":18435},{"qty":100,"price":27140},{"qty":150,"price":33481},{"qty":200,"price":36229}]},
+    {"id":"var_002b","name":"4mm","price":13590,"in_stock":true,
+     "price_tiers":[{"qty":50,"price":13590},{"qty":100,"price":18903},{"qty":150,"price":22774},{"qty":200,"price":24451}]},
+    {"id":"var_002c","name":"6mm","price":15885,"in_stock":true,
+     "price_tiers":[{"qty":25,"price":15885},{"qty":50,"price":22805},{"qty":100,"price":34568},{"qty":150,"price":43138},{"qty":200,"price":46852}]}
+  ]'::jsonb
+where slug = 'gold-beads';
+
+-- Silver Beads (same tier structure as Gold Beads)
+update public.products set
+  variants = '[
+    {"id":"var_003a","name":"2mm","price":18350,"in_stock":true,
+     "price_tiers":[{"qty":50,"price":18350},{"qty":100,"price":26995},{"qty":150,"price":33294},{"qty":200,"price":36023}]},
+    {"id":"var_003b","name":"4mm","price":13590,"in_stock":true,
+     "price_tiers":[{"qty":50,"price":13590},{"qty":100,"price":18903},{"qty":150,"price":22774},{"qty":200,"price":24451}]},
+    {"id":"var_003c","name":"6mm","price":15885,"in_stock":true,
+     "price_tiers":[{"qty":25,"price":15885},{"qty":50,"price":22805},{"qty":100,"price":34568},{"qty":150,"price":43138},{"qty":200,"price":46852}]}
+  ]'::jsonb
+where slug = 'silver-beads';
+
+-- Onyx Beads (CSV: "Black"; 2mm starts at qty 50, 6mm starts at qty 25)
+update public.products set
+  variants = '[
+    {"id":"var_004a","name":"2mm","price":16225,"in_stock":true,
+     "price_tiers":[{"qty":50,"price":16225},{"qty":100,"price":23383},{"qty":150,"price":28597},{"qty":200,"price":30857}]},
+    {"id":"var_004b","name":"4mm","price":13590,"in_stock":true,
+     "price_tiers":[{"qty":50,"price":13590},{"qty":100,"price":18903},{"qty":150,"price":22774},{"qty":200,"price":24451}]},
+    {"id":"var_004c","name":"6mm","price":15885,"in_stock":true,
+     "price_tiers":[{"qty":25,"price":15885},{"qty":50,"price":22805},{"qty":100,"price":34568},{"qty":150,"price":43138},{"qty":200,"price":46852}]}
+  ]'::jsonb
+where slug = 'onyx-beads';
+
+-- Crystal Clear Beads (CSV: "Clear"; 2mm starts at qty 50, 6mm starts at qty 25)
+update public.products set
+  variants = '[
+    {"id":"var_005a","name":"2mm","price":14950,"in_stock":true,
+     "price_tiers":[{"qty":50,"price":14950},{"qty":100,"price":21215},{"qty":150,"price":25780},{"qty":200,"price":27757}]},
+    {"id":"var_005b","name":"4mm","price":13590,"in_stock":true,
+     "price_tiers":[{"qty":50,"price":13590},{"qty":100,"price":18903},{"qty":150,"price":22774},{"qty":200,"price":24451}]},
+    {"id":"var_005c","name":"6mm","price":15885,"in_stock":true,
+     "price_tiers":[{"qty":25,"price":15885},{"qty":50,"price":22805},{"qty":100,"price":34568},{"qty":150,"price":43138},{"qty":200,"price":46852}]}
+  ]'::jsonb
+where slug = 'crystal-clear-beads';
+
+-- Shears (flat price, single tier)
+update public.products set
+  variants = '[
+    {"id":"var_006a","name":"Standard","price":3500,"in_stock":true,
+     "price_tiers":[{"qty":1,"price":3500}]}
+  ]'::jsonb
+where slug = 'shears';
