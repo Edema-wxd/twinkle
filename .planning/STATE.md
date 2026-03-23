@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** A Nigerian customer on mobile can discover, customise, and buy loc beads in under 2 minutes — and a diaspora customer anywhere in the world can do the same.
-**Current focus:** Phase 4.1 — CSV Price Import
+**Current focus:** Phase 5 — Cart & Checkout
 
 ## Current Position
 
@@ -19,7 +19,7 @@ Progress: [█████░░░░░] 50%
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 8
 - Total execution time: 1 session + ongoing
 
 **By Phase:**

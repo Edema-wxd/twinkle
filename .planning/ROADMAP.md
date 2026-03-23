@@ -101,6 +101,21 @@ Plans:
 
 ---
 
+### Phase 4.1: CSV Price Import (INSERTED)
+
+**Goal**: Import real product pricing from the CSV file into Supabase — ensuring all product variants reflect accurate prices before checkout is built
+**Depends on**: Phase 4
+**Plans:** 2 plans
+
+Plans:
+- [ ] 04.1-01-PLAN.md — Extend ProductVariant with price_tiers + update mock data + SQL migration for Supabase
+- [ ] 04.1-02-PLAN.md — Replace integer quantity stepper with pack-size tier picker in ProductDetailClient
+
+**Details:**
+CSV pricing modelled as price_tiers on each variant (qty+price pairs). Sizes 2mm/4mm start at 50-bead packs; 6mm and 24K Gold 2mm start at 25-bead packs. Shears has a single flat tier.
+
+---
+
 ### Phase 5: Cart & Checkout
 **Goal**: A visitor can add products to a cart and complete a purchase — paying in Naira via Paystack — or be directed to request an international shipping quote
 **Depends on**: Phase 4
@@ -211,6 +226,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Homepage | 3/3 | Complete | 2026-03-20 |
 | 3. Product Catalog | 4/4 | Complete | 2026-03-20 |
 | 4. Product Detail | 4/4 | Complete | 2026-03-22 |
+| 4.1. CSV Price Import (INSERTED) | 2/2 | Complete | 2026-03-23 |
 | 5. Cart & Checkout | 0/TBD | Not started | - |
 | 6. Admin Panel | 0/TBD | Not started | - |
 | 7. Content Pages | 0/TBD | Not started | - |
