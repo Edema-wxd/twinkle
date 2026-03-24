@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 5 (Cart & Checkout)
-Plan: 3 of N in current phase
-Status: In progress — plan 03 done
-Last activity: 2026-03-24 — Completed 05-03-PLAN.md (thread colour picker + Add to Cart wiring in ProductDetailClient)
+Plan: 5 of N in current phase
+Status: In progress — plan 05 done
+Last activity: 2026-03-24 — Completed 05-05-PLAN.md (dedicated /cart page)
 
-Progress: [██████░░░░] 60%
+Progress: [███████░░░] 70%
 
 ## Performance Metrics
 
@@ -100,6 +100,8 @@ Recent decisions affecting current work:
 - **ADD_ITEM opens drawer**: isDrawerOpen set true on every ADD_ITEM — cart drawer auto-opens per spec
 - **lineKey includes threadColour**: same size+pack but different thread colour = separate line items; identical size+pack+colour merges quantity
 - **Providers pattern**: src/components/providers.tsx is 'use client'; layout.tsx imports Providers and wraps body content — layout remains a Server Component
+- **Cart page 'use client'**: /cart is a client component (reads CartContext); metadata export omitted — client components cannot export metadata in Next.js App Router
+- **Cart page two-column grid**: md:grid-cols-3 with items md:col-span-2 + summary md:col-span-1; subtotal derived inline from items.reduce
 
 ### Roadmap Evolution
 
@@ -117,5 +119,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-24
-Stopped at: Completed 05-03-PLAN.md — thread colour picker + Add to Cart wired in ProductDetailClient
+Stopped at: Completed 05-05-PLAN.md — dedicated /cart page with order summary panel
 Resume file: None
