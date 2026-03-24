@@ -7,7 +7,7 @@ export const BUSINESS = {
 
   whatsapp: {
     /** E.164 without the + prefix — used in wa.me links */
-    number: '2348000000000',
+    number: '2349118888010',
     url(message?: string) {
       const base = `https://wa.me/${BUSINESS.whatsapp.number}`;
       return message ? `${base}?text=${encodeURIComponent(message)}` : base;
