@@ -100,6 +100,10 @@ Recent decisions affecting current work:
 - **ADD_ITEM opens drawer**: isDrawerOpen set true on every ADD_ITEM — cart drawer auto-opens per spec
 - **lineKey includes threadColour**: same size+pack but different thread colour = separate line items; identical size+pack+colour merges quantity
 - **Providers pattern**: src/components/providers.tsx is 'use client'; layout.tsx imports Providers and wraps body content — layout remains a Server Component
+- **CartDrawer globally mounted in Providers**: CartDrawer is a sibling of children inside CartProvider in providers.tsx — always mounted, always responds to OPEN_DRAWER regardless of current route
+- **Header Cart button dispatches OPEN_DRAWER**: Cart text in header replaced with button that dispatches OPEN_DRAWER (not Link to /cart) — drawer-first UX; /cart still accessible from mobile nav
+- **Header badge capped at 9+**: totalItems > 9 renders '9+' label in badge — standard e-commerce convention
+- **Checkout CTA disabled div when empty**: renders as aria-hidden div with pointer-events-none when cart empty — consistent footer height, no layout shift
 - **Cart page 'use client'**: /cart is a client component (reads CartContext); metadata export omitted — client components cannot export metadata in Next.js App Router
 - **Cart page two-column grid**: md:grid-cols-3 with items md:col-span-2 + summary md:col-span-1; subtotal derived inline from items.reduce
 - **Webhook await-before-return**: handleChargeSuccess awaited before 200 response — Paystack allows 10s and 2 DB inserts are fast; guarantees order is persisted before acknowledgement
