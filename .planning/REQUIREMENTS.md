@@ -23,14 +23,14 @@
 
 ### Cart & Checkout
 
-- [ ] **CART-01**: Visitor can add a product variant to the cart
-- [ ] **CART-02**: Visitor can view and edit the cart in a slide-out drawer
-- [ ] **CART-03**: Visitor can view and edit the cart on a dedicated /cart page
-- [ ] **CART-04**: Visitor can complete a guest checkout (no account required) entering name, email, and delivery address
-- [ ] **CART-05**: Checkout processes payment via Paystack in Nigerian Naira (₦)
-- [ ] **CART-06**: Nigerian domestic shipping rate is calculated at checkout
-- [ ] **CART-07**: Visitor selecting international delivery is directed to a "contact us for a shipping quote" flow
-- [ ] **CART-08**: Visitor sees an order confirmation page after successful payment with order summary
+- [x] **CART-01**: Visitor can add a product variant to the cart
+- [x] **CART-02**: Visitor can view and edit the cart in a slide-out drawer
+- [x] **CART-03**: Visitor can view and edit the cart on a dedicated /cart page
+- [x] **CART-04**: Visitor can complete a guest checkout (no account required) entering name, email, and delivery address
+- [x] **CART-05**: Checkout processes payment via Paystack in Nigerian Naira (₦)
+- [x] **CART-06**: Nigerian domestic shipping rate is calculated at checkout
+- [x] **CART-07**: Visitor selecting international delivery is directed to a "contact us for a shipping quote" flow
+- [x] **CART-08**: Visitor sees an order confirmation page after successful payment with order summary
 
 ### Admin Panel
 

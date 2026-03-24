@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Homepage** - Brand-first entry point with hero, featured products, story, and testimonials
 - [ ] **Phase 3: Product Catalog** - Data migration from WooCommerce + browsable, filterable, searchable catalog page
 - [ ] **Phase 4: Product Detail** - Gallery, variant picker, reviews display, and upsell bundle suggestion
-- [ ] **Phase 5: Cart & Checkout** - Cart drawer + page, Paystack checkout, shipping logic, order confirmation
+- [x] **Phase 5: Cart & Checkout** - Cart drawer + page, Paystack checkout, shipping logic, order confirmation
 - [ ] **Phase 6: Admin Panel** - Protected /admin with product CRUD, image upload, order management, review entry, dashboard
 - [ ] **Phase 7: Content Pages** - About/Founder, FAQ, Shipping Info, Blog listing and post pages
 - [ ] **Phase 8: Conversion** - Footer newsletter signup (email capture)
@@ -235,7 +235,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Product Catalog | 4/4 | Complete | 2026-03-20 |
 | 4. Product Detail | 4/4 | Complete | 2026-03-22 |
 | 4.1. CSV Price Import (INSERTED) | 2/2 | Complete | 2026-03-23 |
-| 5. Cart & Checkout | 0/9 | Not started | - |
+| 5. Cart & Checkout | 9/9 | Complete | 2026-03-24 |
 | 6. Admin Panel | 0/TBD | Not started | - |
 | 7. Content Pages | 0/TBD | Not started | - |
 | 8. Conversion | 0/TBD | Not started | - |
