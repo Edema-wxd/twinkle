@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@paystack/inline-js": "^2.22.8",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "next": "^15.0.0",
@@ -19,6 +20,7 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/paystack__inline-js": "^1.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
