@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 5 (Cart & Checkout)
-Plan: 6 of N in current phase
-Status: In progress — plan 06 done
-Last activity: 2026-03-24 — Completed 05-06-PLAN.md (Paystack webhook handler + middleware exclusion)
+Plan: 8 of N in current phase
+Status: In progress — plan 08 done
+Last activity: 2026-03-24 — Completed 05-08-PLAN.md (Order confirmation page with Realtime polling)
 
-Progress: [████████░░] 80%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
@@ -110,6 +110,10 @@ Recent decisions affecting current work:
 - **Webhook idempotency via maybeSingle()**: orders queried by paystack_reference using maybeSingle (not single) — returns null data on no match without error; prevents duplicate order on repeat webhook delivery
 - **Webhook service-role client inline**: createClient with auth.persistSession:false, no cookie adapter — distinct from cookie-based server.ts helper; no session management needed for service-role writes
 - **Middleware api/webhooks exclusion**: api/webhooks added to negative lookahead in config.matcher — Paystack webhook bypasses Supabase session refresh and lowercase redirect
+- **Order confirmation server-first**: /orders/[reference] page.tsx uses service-role client server-side; renders OrderConfirmationView directly when order exists — zero client JS for post-webhook loads
+- **OrderPoller immediate fetch + Realtime**: immediate fetch on mount covers race window; Realtime postgres_changes INSERT subscription covers delayed webhook; follow-up full fetch on Realtime event (payload.new lacks order_items)
+- **No notFound() on unknown reference**: unrecognised paystack_reference is a valid pending state (webhook in flight), not a 404 — OrderPoller handles gracefully with 30s timeout
+- **unknown cast for nested Supabase select**: select('*, order_items(*)') returns SelectQueryError when Relationships: [] — cast via unknown to FullOrder is standard workaround for manual supabase.ts
 
 ### Roadmap Evolution
 
@@ -127,5 +131,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-24
-Stopped at: Completed 05-06-PLAN.md — Paystack webhook handler with HMAC verification and order persistence
+Stopped at: Completed 05-08-PLAN.md — Order confirmation page with server-side fetch, Realtime polling, and 30s timeout
 Resume file: None
