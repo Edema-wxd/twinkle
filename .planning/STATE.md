@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 5 (Cart & Checkout)
-Plan: 5 of N in current phase
-Status: In progress — plan 05 done
-Last activity: 2026-03-24 — Completed 05-05-PLAN.md (dedicated /cart page)
+Plan: 6 of N in current phase
+Status: In progress — plan 06 done
+Last activity: 2026-03-24 — Completed 05-06-PLAN.md (Paystack webhook handler + middleware exclusion)
 
-Progress: [███████░░░] 70%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -102,6 +102,10 @@ Recent decisions affecting current work:
 - **Providers pattern**: src/components/providers.tsx is 'use client'; layout.tsx imports Providers and wraps body content — layout remains a Server Component
 - **Cart page 'use client'**: /cart is a client component (reads CartContext); metadata export omitted — client components cannot export metadata in Next.js App Router
 - **Cart page two-column grid**: md:grid-cols-3 with items md:col-span-2 + summary md:col-span-1; subtotal derived inline from items.reduce
+- **Webhook await-before-return**: handleChargeSuccess awaited before 200 response — Paystack allows 10s and 2 DB inserts are fast; guarantees order is persisted before acknowledgement
+- **Webhook idempotency via maybeSingle()**: orders queried by paystack_reference using maybeSingle (not single) — returns null data on no match without error; prevents duplicate order on repeat webhook delivery
+- **Webhook service-role client inline**: createClient with auth.persistSession:false, no cookie adapter — distinct from cookie-based server.ts helper; no session management needed for service-role writes
+- **Middleware api/webhooks exclusion**: api/webhooks added to negative lookahead in config.matcher — Paystack webhook bypasses Supabase session refresh and lowercase redirect
 
 ### Roadmap Evolution
 
@@ -119,5 +123,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-24
-Stopped at: Completed 05-05-PLAN.md — dedicated /cart page with order summary panel
+Stopped at: Completed 05-06-PLAN.md — Paystack webhook handler with HMAC verification and order persistence
 Resume file: None
