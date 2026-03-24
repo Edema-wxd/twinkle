@@ -6,6 +6,7 @@ import { useCart } from '@/lib/cart/CartContext';
 import { CheckoutForm } from '@/components/checkout/CheckoutForm';
 import type { CustomerDetails } from '@/components/checkout/CheckoutForm';
 import { OrderReview } from '@/components/checkout/OrderReview';
+import { BUSINESS } from '@/lib/config/business';
 import Link from 'next/link';
 
 export default function CheckoutPage() {
@@ -67,7 +68,7 @@ export default function CheckoutPage() {
 
       {/* Step 1: Customer details form */}
       {step === 1 && !isInternational && (
-        <CheckoutForm onSubmit={handleFormSubmit} />
+        <CheckoutForm onSubmit={handleFormSubmit} defaultValues={customerDetails ?? undefined} />
       )}
 
       {/* International path: WhatsApp CTA */}
@@ -78,9 +79,8 @@ export default function CheckoutPage() {
             <p className="mb-4">
               For international orders, please contact us on WhatsApp to get a shipping quote.
             </p>
-            {/* TODO: Replace placeholder number with actual Twinkle Locs WhatsApp business number */}
             <a
-              href="https://wa.me/2348000000000?text=Hi%2C+I%27d+like+a+shipping+quote+for+my+Twinkle+Locs+order"
+              href={BUSINESS.whatsapp.url("Hi, I'd like a shipping quote for my Twinkle Locs order")}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-[#25D366] text-white font-heading font-semibold py-3 px-6 rounded-lg hover:bg-[#1da851] transition-colors"

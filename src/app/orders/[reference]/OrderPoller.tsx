@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Order, OrderItem } from '@/types/supabase';
 import { OrderConfirmationView } from './OrderConfirmationView';
+import { BUSINESS } from '@/lib/config/business';
 
 interface OrderPollerProps {
   reference: string;
@@ -98,7 +99,7 @@ export function OrderPoller({ reference }: OrderPollerProps) {
         </p>
         <div className="mt-6">
           <a
-            href={`https://wa.me/2348000000000?text=Hi%2C+I+just+placed+an+order+with+reference+${encodeURIComponent(reference)}+and+need+help+confirming+it.`}
+            href={BUSINESS.whatsapp.url(`Hi, I just placed an order with reference ${reference} and need help confirming it.`)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block bg-gold text-cocoa font-heading font-semibold py-3 px-6 rounded-lg hover:bg-terracotta hover:text-cream transition-colors text-sm"

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { NIGERIAN_STATES } from '@/lib/checkout/shipping';
+import { BUSINESS } from '@/lib/config/business';
 
 export interface CustomerDetails {
   firstName: string;
@@ -15,6 +16,7 @@ export interface CustomerDetails {
 
 interface CheckoutFormProps {
   onSubmit: (details: CustomerDetails) => void;
+  defaultValues?: CustomerDetails;
 }
 
 interface FormErrors {
@@ -26,14 +28,14 @@ interface FormErrors {
   state?: string;
 }
 
-export function CheckoutForm({ onSubmit }: CheckoutFormProps) {
-  const [deliveryType, setDeliveryType] = useState<'nigeria' | 'international'>('nigeria');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [state, setState] = useState('');
+export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
+  const [deliveryType, setDeliveryType] = useState<'nigeria' | 'international'>(defaultValues?.deliveryType ?? 'nigeria');
+  const [firstName, setFirstName] = useState(defaultValues?.firstName ?? '');
+  const [lastName, setLastName] = useState(defaultValues?.lastName ?? '');
+  const [email, setEmail] = useState(defaultValues?.email ?? '');
+  const [phone, setPhone] = useState(defaultValues?.phone ?? '');
+  const [deliveryAddress, setDeliveryAddress] = useState(defaultValues?.deliveryAddress ?? '');
+  const [state, setState] = useState(defaultValues?.state ?? '');
   const [errors, setErrors] = useState<FormErrors>({});
 
   function validate(): FormErrors {
@@ -106,9 +108,8 @@ export function CheckoutForm({ onSubmit }: CheckoutFormProps) {
           <p className="mb-4">
             For international orders, please contact us on WhatsApp to get a shipping quote.
           </p>
-          {/* TODO: Replace placeholder number with actual Twinkle Locs WhatsApp business number */}
           <a
-            href="https://wa.me/2348000000000?text=Hi%2C+I%27d+like+a+shipping+quote+for+my+Twinkle+Locs+order"
+            href={BUSINESS.whatsapp.url("Hi, I'd like a shipping quote for my Twinkle Locs order")}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-[#25D366] text-white font-heading font-semibold py-3 px-6 rounded-lg hover:bg-[#1da851] transition-colors"

@@ -1,10 +1,9 @@
-export function WhatsAppButton() {
-  const phoneNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '234000000000'
-  const message = encodeURIComponent("Hi, I'm interested in your loc beads")
+import { BUSINESS } from '@/lib/config/business'
 
+export function WhatsAppButton() {
   return (
     <a
-      href={`https://wa.me/${phoneNumber}?text=${message}`}
+      href={BUSINESS.whatsapp.url("Hi, I'm interested in your loc beads")}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp"

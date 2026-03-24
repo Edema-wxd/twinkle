@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { BUSINESS } from '@/lib/config/business'
 
 const footerLinks = [
   { href: '/catalog', label: 'Shop' },
@@ -48,17 +49,17 @@ export function Footer() {
             <ul className="flex flex-col gap-2">
               <li>
                 <a
-                  href="https://instagram.com/twinklelocs"
+                  href={BUSINESS.instagram.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-body text-sm text-cream/80 hover:text-gold transition-colors"
                 >
-                  Instagram @twinklelocs
+                  Instagram @{BUSINESS.instagram.handle}
                 </a>
               </li>
               <li>
                 <a
-                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '234000000000'}`}
+                  href={BUSINESS.whatsapp.url()}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-body text-sm text-cream/80 hover:text-gold transition-colors"

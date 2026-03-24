@@ -1,3 +1,5 @@
+import { BUSINESS } from '@/lib/config/business';
+
 export function InstagramCTASection() {
   return (
     <section className="bg-cocoa py-20 px-4">
@@ -14,11 +16,11 @@ export function InstagramCTASection() {
         </p>
 
         <span className="font-heading font-semibold text-gold text-lg mb-8 block">
-          @twinklelocs
+          @{BUSINESS.instagram.handle}
         </span>
 
         <a
-          href="https://www.instagram.com/twinklelocs"
+          href={BUSINESS.instagram.url}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block bg-gold text-cocoa font-heading font-semibold px-10 py-4 rounded-lg hover:bg-terracotta hover:text-cream transition-colors text-base"

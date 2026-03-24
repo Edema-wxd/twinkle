@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BUSINESS } from '@/lib/config/business';
 
 export function HeroSection() {
   return (
@@ -22,9 +23,8 @@ export function HeroSection() {
         Explore Beads
       </Link>
 
-      {/* TODO: Replace with real WhatsApp number from NEXT_PUBLIC_WHATSAPP_NUMBER env var */}
       <a
-        href="https://wa.me/2348000000000"
+        href={BUSINESS.whatsapp.url("Hi, I'd like to place an order")}
         className="mt-4 font-body text-sm text-cream/50 hover:text-cream/80 transition-colors underline underline-offset-4"
       >
         or order directly on WhatsApp
