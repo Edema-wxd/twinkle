@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { MobileDrawer } from './MobileDrawer'
+import { useCart } from '@/lib/cart/CartContext'
 
 const navLinks = [
   { href: '/catalog', label: 'Shop' },
@@ -15,6 +16,9 @@ const navLinks = [
 export function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const closeDrawer = useCallback(() => setDrawerOpen(false), [])
+  const { state, dispatch } = useCart()
+  const totalItems = state.items.reduce((sum, i) => sum + i.quantity, 0)
+  const badgeLabel = totalItems > 9 ? '9+' : String(totalItems)
 
   return (
     <>
@@ -44,13 +48,22 @@ export function Header() {
 
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-4">
-              <Link
-                href="/cart"
-                aria-label="View cart"
-                className="font-heading text-sm font-medium text-charcoal hover:text-gold transition-colors"
+              <button
+                type="button"
+                onClick={() => dispatch({ type: 'OPEN_DRAWER' })}
+                aria-label={`Open cart${totalItems > 0 ? `, ${totalItems} item${totalItems === 1 ? '' : 's'}` : ''}`}
+                className="relative font-heading text-sm font-medium text-charcoal hover:text-gold transition-colors"
               >
                 Cart
-              </Link>
+                {totalItems > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-2 -right-4 bg-gold text-cocoa rounded-full text-xs font-heading font-semibold w-5 h-5 flex items-center justify-center"
+                  >
+                    {badgeLabel}
+                  </span>
+                )}
+              </button>
             </div>
 
             {/* Mobile: hamburger button */}
