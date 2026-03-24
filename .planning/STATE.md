@@ -110,6 +110,11 @@ Recent decisions affecting current work:
 - **Webhook idempotency via maybeSingle()**: orders queried by paystack_reference using maybeSingle (not single) — returns null data on no match without error; prevents duplicate order on repeat webhook delivery
 - **Webhook service-role client inline**: createClient with auth.persistSession:false, no cookie adapter — distinct from cookie-based server.ts helper; no session management needed for service-role writes
 - **Middleware api/webhooks exclusion**: api/webhooks added to negative lookahead in config.matcher — Paystack webhook bypasses Supabase session refresh and lowercase redirect
+- **Paystack dynamic import in click handler**: `const PaystackPop = (await import('@paystack/inline-js')).default` inside handlePay — avoids SSR crash; SDK manipulates window/document at import time
+- **Paystack metadata cast as any**: @types restricts metadata to custom_fields[] but runtime accepts arbitrary JSON; cast with comment to pass cart+shipping data
+- **Checkout shipping zones**: Lagos ₦3,000 / all others ₦4,500 — NIGERIAN_STATES constant (37) drives dropdown; getShippingCost pure function
+- **WhatsApp placeholder 2348000000000**: TODO comment in CheckoutForm and checkout/page.tsx — replace with real business number before launch
+- **Checkout reference via useState initialiser**: `useState(() => 'TW-' + Date.now() + ...)` — stable across re-renders, avoids undefined on first render
 - **Order confirmation server-first**: /orders/[reference] page.tsx uses service-role client server-side; renders OrderConfirmationView directly when order exists — zero client JS for post-webhook loads
 - **OrderPoller immediate fetch + Realtime**: immediate fetch on mount covers race window; Realtime postgres_changes INSERT subscription covers delayed webhook; follow-up full fetch on Realtime event (payload.new lacks order_items)
 - **No notFound() on unknown reference**: unrecognised paystack_reference is a valid pending state (webhook in flight), not a 404 — OrderPoller handles gracefully with 30s timeout
