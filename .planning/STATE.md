@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 
 ## Current Position
 
-Phase: 5 (Cart & Checkout) — COMPLETE
-Plan: 9 of 9 in Phase 5
-Status: Phase complete — all 9/9 plans done
-Last activity: 2026-03-24 — Completed 05-09-PLAN.md (End-to-end verification checkpoint, all 8 tests passed)
+Phase: 6 (Admin Panel) — In progress
+Plan: 1 of 7 in Phase 6
+Status: In progress
+Last activity: 2026-03-25 — Completed 06-01-PLAN.md (Admin foundation: auth guard, login/logout, admin shell)
 
-Progress: [██████████] 100% (Phase 5)
+Progress: [█░░░░░░] 1/7 plans (Phase 6)
 
 ## Performance Metrics
 
@@ -32,6 +32,7 @@ Progress: [██████████] 100% (Phase 5)
 | 4. Product Detail | 4/4 | Complete |
 | 4.1. CSV Price Import | 2/2 | Complete |
 | 5. Cart & Checkout | 9/9 | Complete |
+| 6. Admin Panel | 1/7 | In progress |
 
 ## Accumulated Context
 
@@ -119,6 +120,10 @@ Recent decisions affecting current work:
 - **OrderPoller immediate fetch + Realtime**: immediate fetch on mount covers race window; Realtime postgres_changes INSERT subscription covers delayed webhook; follow-up full fetch on Realtime event (payload.new lacks order_items)
 - **No notFound() on unknown reference**: unrecognised paystack_reference is a valid pending state (webhook in flight), not a 404 — OrderPoller handles gracefully with 30s timeout
 - **unknown cast for nested Supabase select**: select('*, order_items(*)') returns SelectQueryError when Relationships: [] — cast via unknown to FullOrder is standard workaround for manual supabase.ts
+- **getUser() not getClaims() for admin guard**: middleware uses getUser() for admin paths — validates against auth server, not just local JWT (CVE-2025-29927)
+- **Double auth check (belt-and-braces)**: middleware guard + per-page layout.tsx check + individual page check — admin routes always verify at every layer
+- **loginAction uses cookie client, not admin client**: auth sessions are user-scoped (cookies); service-role admin client is for data operations only, never for auth flows
+- **Admin route group (admin) isolated**: own layout.tsx that never imports CartProvider/Header/Footer — storefront and admin shells are fully separate
 
 ### Roadmap Evolution
 
@@ -135,6 +140,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-24
-Stopped at: Completed 05-09-PLAN.md — End-to-end verification checkpoint; all 8 tests passed; Phase 5 complete
+Last session: 2026-03-25
+Stopped at: Completed 06-01-PLAN.md — Admin foundation: auth guard, login/logout, admin layout shell
 Resume file: None
