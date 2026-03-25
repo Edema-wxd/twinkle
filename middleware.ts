@@ -45,6 +45,28 @@ export async function middleware(request: NextRequest) {
   // getClaims() validates the JWT signature (unlike getSession() which does not).
   await supabase.auth.getClaims()
 
+  // ── Step 3: Admin route guard ──────────────────────────────────────────────
+  // For any /admin path that is NOT /admin/login, require an authenticated user.
+  // Use getUser() (not getClaims) — validates against the auth server, not just
+  // the local JWT, which satisfies CVE-2025-29927 guidance for admin routes.
+  const isAdminPath = pathname.startsWith('/admin')
+  const isLoginPage = pathname === '/admin/login'
+
+  if (isAdminPath && !isLoginPage) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.redirect(new URL('/admin/login', request.url))
+    }
+  }
+
+  // ── Step 4: Redirect authenticated users away from login page ─────────────
+  if (isLoginPage) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      return NextResponse.redirect(new URL('/admin', request.url))
+    }
+  }
+
   return supabaseResponse
 }
 
