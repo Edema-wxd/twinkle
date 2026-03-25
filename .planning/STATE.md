@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 
 ## Current Position
 
-Phase: 6 (Admin Panel) — In progress
-Plan: 3 of 7 in Phase 6
-Status: In progress
-Last activity: 2026-03-25 — Completed 06-03-PLAN.md (Admin product list with search, filter, archive toggle)
+Phase: 6 (Admin Panel) — Complete
+Plan: 7 of 7 in Phase 6
+Status: Phase complete
+Last activity: 2026-03-25 — Completed 06-07-PLAN.md (Admin reviews entry + business settings form)
 
-Progress: [███░░░░] 3/7 plans (Phase 6)
+Progress: [███████] 7/7 plans (Phase 6)
 
 ## Performance Metrics
 
@@ -32,7 +32,7 @@ Progress: [███░░░░] 3/7 plans (Phase 6)
 | 4. Product Detail | 4/4 | Complete |
 | 4.1. CSV Price Import | 2/2 | Complete |
 | 5. Cart & Checkout | 9/9 | Complete |
-| 6. Admin Panel | 3/7 | In progress |
+| 6. Admin Panel | 7/7 | Complete |
 
 ## Accumulated Context
 
@@ -131,6 +131,10 @@ Recent decisions affecting current work:
 - **Catalog migrated to Supabase in 06-03**: /catalog now uses Supabase with .eq('is_active', true); mock data replaced
 - **Optimistic toggle pattern**: ProductListTable uses Record<id,boolean> state initialised from server props; PATCH updates locally on success
 - **Admin product list fetches all products**: createAdminClient() with no is_active filter — admin sees active + archived
+- **Admin reviews fetches active products only**: product picker in ReviewForm only shows is_active=true products
+- **Settings upsert batched**: all settings fields sent in single PUT; server builds array + .upsert(rows, { onConflict: 'key' }) once
+- **Admin form pattern**: Server Component page fetches data via createAdminClient(), passes as props to 'use client' form component; form POSTs/PUTs to /api/admin/*
+- **Toast pattern across admin**: useState<{type,message}|null> + setTimeout(3000) — consistent in ReviewForm, SettingsForm, ProductForm
 
 ### Roadmap Evolution
 
@@ -148,5 +152,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 06-03-PLAN.md — Admin product list: search, filter, archive toggle + catalog is_active filter
+Stopped at: Completed 06-07-PLAN.md — Admin reviews entry form + business settings form; Phase 6 complete
 Resume file: None
