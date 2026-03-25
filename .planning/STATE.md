@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 6 (Admin Panel) — In progress
-Plan: 1 of 7 in Phase 6
+Plan: 2 of 7 in Phase 6
 Status: In progress
-Last activity: 2026-03-25 — Completed 06-01-PLAN.md (Admin foundation: auth guard, login/logout, admin shell)
+Last activity: 2026-03-25 — Completed 06-02-PLAN.md (Admin dashboard: stats panel + recent orders table)
 
-Progress: [█░░░░░░] 1/7 plans (Phase 6)
+Progress: [██░░░░░] 2/7 plans (Phase 6)
 
 ## Performance Metrics
 
@@ -32,7 +32,7 @@ Progress: [█░░░░░░] 1/7 plans (Phase 6)
 | 4. Product Detail | 4/4 | Complete |
 | 4.1. CSV Price Import | 2/2 | Complete |
 | 5. Cart & Checkout | 9/9 | Complete |
-| 6. Admin Panel | 1/7 | In progress |
+| 6. Admin Panel | 2/7 | In progress |
 
 ## Accumulated Context
 
@@ -124,6 +124,10 @@ Recent decisions affecting current work:
 - **Double auth check (belt-and-braces)**: middleware guard + per-page layout.tsx check + individual page check — admin routes always verify at every layer
 - **loginAction uses cookie client, not admin client**: auth sessions are user-scoped (cookies); service-role admin client is for data operations only, never for auth flows
 - **Admin route group (admin) isolated**: own layout.tsx that never imports CartProvider/Header/Footer — storefront and admin shells are fully separate
+- **Dashboard stats in page.tsx**: date range computation (today/weekStart/monthStart) done in Server Component page; passes pre-computed { count, totalSales } to StatsPanel — no separate utils file
+- **StatsPanel 'use client' only**: tab state needs client; RecentOrdersTable is Server Component (no interactivity) — minimal hydration footprint
+- **Naira format pattern**: '₦' + amount.toLocaleString('en-NG') used consistently in admin components
+- **Short paystack_reference**: .slice(-8).toUpperCase() for table Order # display
 
 ### Roadmap Evolution
 
@@ -141,5 +145,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 06-01-PLAN.md — Admin foundation: auth guard, login/logout, admin layout shell
+Stopped at: Completed 06-02-PLAN.md — Admin dashboard: StatsPanel + RecentOrdersTable with live Supabase data
 Resume file: None
