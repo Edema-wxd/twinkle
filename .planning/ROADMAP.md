@@ -153,10 +153,16 @@ Plans:
   4. Admin can view all orders, see their details, and update each order's status to pending, shipped, or delivered
   5. Admin can add a customer review to a product — the review appears on the product detail page
   6. Admin dashboard shows recent orders and total sales figures at a glance
-**Plans**: TBD
+**Plans**: 7 plans
 
 Plans:
-- [ ] 06-01: TBD
+- [ ] 06-01-PLAN.md — Foundation & Auth: schema migrations, admin client, middleware guard, login/logout, admin layout shell
+- [ ] 06-02-PLAN.md — Dashboard: stats panel (Today/Week/Month tabs), recent orders table
+- [ ] 06-03-PLAN.md — Product list: search, category filter, archive toggle, is_active storefront filter
+- [ ] 06-04-PLAN.md — Product form core: name, slug, description (Tiptap), variants inline table with price_tiers
+- [ ] 06-05-PLAN.md — Product form images: drag-drop upload, Supabase Storage, dnd-kit reorder thumbnails
+- [ ] 06-06-PLAN.md — Orders: list with status filter tabs, inline status dropdown, order detail view
+- [ ] 06-07-PLAN.md — Reviews & Settings: add review form, business settings key-value form
 
 ---
 
@@ -236,7 +242,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 4. Product Detail | 4/4 | Complete | 2026-03-22 |
 | 4.1. CSV Price Import (INSERTED) | 2/2 | Complete | 2026-03-23 |
 | 5. Cart & Checkout | 9/9 | Complete | 2026-03-24 |
-| 6. Admin Panel | 0/TBD | Not started | - |
+| 6. Admin Panel | 0/7 | Not started | - |
 | 7. Content Pages | 0/TBD | Not started | - |
 | 8. Conversion | 0/TBD | Not started | - |
 | 9. SEO | 0/TBD | Not started | - |
