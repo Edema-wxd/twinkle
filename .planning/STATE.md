@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 6 (Admin Panel) — In progress
-Plan: 2 of 7 in Phase 6
+Plan: 3 of 7 in Phase 6
 Status: In progress
-Last activity: 2026-03-25 — Completed 06-02-PLAN.md (Admin dashboard: stats panel + recent orders table)
+Last activity: 2026-03-25 — Completed 06-03-PLAN.md (Admin product list with search, filter, archive toggle)
 
-Progress: [██░░░░░] 2/7 plans (Phase 6)
+Progress: [███░░░░] 3/7 plans (Phase 6)
 
 ## Performance Metrics
 
@@ -32,7 +32,7 @@ Progress: [██░░░░░] 2/7 plans (Phase 6)
 | 4. Product Detail | 4/4 | Complete |
 | 4.1. CSV Price Import | 2/2 | Complete |
 | 5. Cart & Checkout | 9/9 | Complete |
-| 6. Admin Panel | 2/7 | In progress |
+| 6. Admin Panel | 3/7 | In progress |
 
 ## Accumulated Context
 
@@ -128,6 +128,9 @@ Recent decisions affecting current work:
 - **StatsPanel 'use client' only**: tab state needs client; RecentOrdersTable is Server Component (no interactivity) — minimal hydration footprint
 - **Naira format pattern**: '₦' + amount.toLocaleString('en-NG') used consistently in admin components
 - **Short paystack_reference**: .slice(-8).toUpperCase() for table Order # display
+- **Catalog migrated to Supabase in 06-03**: /catalog now uses Supabase with .eq('is_active', true); mock data replaced
+- **Optimistic toggle pattern**: ProductListTable uses Record<id,boolean> state initialised from server props; PATCH updates locally on success
+- **Admin product list fetches all products**: createAdminClient() with no is_active filter — admin sees active + archived
 
 ### Roadmap Evolution
 
@@ -145,5 +148,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 06-02-PLAN.md — Admin dashboard: StatsPanel + RecentOrdersTable with live Supabase data
+Stopped at: Completed 06-03-PLAN.md — Admin product list: search, filter, archive toggle + catalog is_active filter
 Resume file: None
