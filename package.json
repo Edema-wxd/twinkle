@@ -12,6 +12,9 @@
     "@paystack/inline-js": "^2.22.8",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
+    "@tiptap/pm": "^2.27.2",
+    "@tiptap/react": "^2.27.2",
+    "@tiptap/starter-kit": "^2.27.2",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
