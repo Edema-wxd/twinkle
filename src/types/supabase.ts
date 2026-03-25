@@ -22,6 +22,7 @@ export interface Database {
           images: string[]
           material: string
           is_featured: boolean
+          is_active: boolean
           price_min: number
           price_max: number
           variants: Json
@@ -97,6 +98,21 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['order_items']['Insert']>
         Relationships: []
       }
+      settings: {
+        Row: {
+          key: string
+          value: string
+        }
+        Insert: {
+          key: string
+          value: string
+        }
+        Update: {
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -120,3 +136,5 @@ export type Order = Database['public']['Tables']['orders']['Row']
 export type OrderInsert = Database['public']['Tables']['orders']['Insert']
 export type OrderItem = Database['public']['Tables']['order_items']['Row']
 export type OrderItemInsert = Database['public']['Tables']['order_items']['Insert']
+export type Product = Database['public']['Tables']['products']['Row']
+export type Setting = Database['public']['Tables']['settings']['Row']
