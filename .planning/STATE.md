@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** A Nigerian customer on mobile can discover, customise, and buy loc beads in under 2 minutes — and a diaspora customer anywhere in the world can do the same.
-**Current focus:** Phase 7 — Content Pages
+**Current focus:** Phase 7 — Content Pages (COMPLETE)
 
 ## Current Position
 
-Phase: 7 (Content Pages) — In progress
-Plan: 5 of 5 in Phase 7
-Status: In progress
-Last activity: 2026-03-26 — Completed 07-05-PLAN.md (/admin/blog CRUD with Tiptap + image upload)
+Phase: 7 (Content Pages) — Complete
+Plan: 6 of 6 in Phase 7
+Status: Phase complete
+Last activity: 2026-03-26 — Completed 07-06-PLAN.md (public /blog listing + /blog/[slug] post pages)
 
-Progress: [█████] 5/5 plans (Phase 7)
+Progress: [██████] 6/6 plans (Phase 7)
 
 ## Performance Metrics
 
@@ -33,7 +33,7 @@ Progress: [█████] 5/5 plans (Phase 7)
 | 4.1. CSV Price Import | 2/2 | Complete |
 | 5. Cart & Checkout | 9/9 | Complete |
 | 6. Admin Panel | 8/8 | Complete |
-| 7. Content Pages | 5/5 | Complete |
+| 7. Content Pages | 6/6 | Complete |
 
 ## Accumulated Context
 
@@ -162,6 +162,10 @@ Recent decisions affecting current work:
 - **BlogPostForm single-file upload**: inline click-to-upload handler (not ImageUploader) for featured image — one image only, no DnD complexity
 - **published_at transition guard**: PUT /api/admin/blog/[id] fetches current post first, only auto-sets published_at when transitioning from false to true — no overwrite on subsequent saves
 - **Slug conflict as 409**: Postgres unique constraint violation code 23505 mapped to HTTP 409 for blog posts (same pattern as products)
+- **BlogCategoryFilter Suspense wrapper**: useSearchParams() requires Suspense boundary when parent page is Server Component in Next.js 15 App Router — BlogCategoryFilter wrapped in <Suspense> in blog/page.tsx
+- **Server-constructed canonical URL for share buttons**: BlogShareButtons receives canonicalUrl string prop built in Server Component from NEXT_PUBLIC_SITE_URL — avoids window.location.href SSR crash in client component
+- **Draft blog posts are 404**: /blog/[slug] uses .eq('published', true) in query; notFound() on error or null — draft posts are never accessible on public pages (not a pending state like orders)
+- **WhatsApp share wa.me/?text= (no phone)**: blog share opens contact picker; distinct from checkout WhatsApp CTA which dials the business number
 
 ### Roadmap Evolution
 
@@ -179,5 +183,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 07-05-PLAN.md — /admin/blog CRUD with Tiptap editor, featured image upload, published toggle
+Stopped at: Completed 07-06-PLAN.md — public /blog listing + /blog/[slug] post pages; Phase 7 Content Pages complete
 Resume file: None
