@@ -113,6 +113,72 @@ export interface Database {
         }
         Relationships: []
       }
+      // DDL: CREATE TABLE about_sections (id text PRIMARY KEY, title text NOT NULL, body text NOT NULL,
+      //   image_url text, display_order integer NOT NULL, updated_at timestamptz NOT NULL DEFAULT now());
+      // RLS: public SELECT; service-role INSERT/UPDATE/DELETE
+      about_sections: {
+        Row: {
+          id: string                  // text PK — 'founder-story' | 'brand-mission' | 'why-loc-beads' | 'contact'
+          title: string
+          body: string                // Tiptap HTML
+          image_url: string | null
+          display_order: number
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['about_sections']['Row'], 'updated_at'> & {
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['about_sections']['Insert']>
+        Relationships: []
+      }
+      // DDL: CREATE TABLE faqs (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), category text NOT NULL,
+      //   question text NOT NULL, answer text NOT NULL, display_order integer NOT NULL,
+      //   created_at timestamptz NOT NULL DEFAULT now());
+      // RLS: public SELECT; service-role INSERT/UPDATE/DELETE
+      faqs: {
+        Row: {
+          id: string                  // uuid
+          category: string
+          question: string
+          answer: string              // plain text
+          display_order: number
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['faqs']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['faqs']['Insert']>
+        Relationships: []
+      }
+      // DDL: CREATE TABLE blog_posts (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), title text NOT NULL,
+      //   slug text NOT NULL UNIQUE, body text NOT NULL, excerpt text NOT NULL,
+      //   featured_image text, tag text, published boolean NOT NULL DEFAULT false,
+      //   published_at timestamptz, created_at timestamptz NOT NULL DEFAULT now(),
+      //   updated_at timestamptz NOT NULL DEFAULT now());
+      // RLS: public SELECT WHERE published = true; service-role full access
+      blog_posts: {
+        Row: {
+          id: string                  // uuid
+          title: string
+          slug: string
+          body: string                // Tiptap HTML
+          excerpt: string
+          featured_image: string | null
+          tag: string | null          // freeform, no separate categories table
+          published: boolean
+          published_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['blog_posts']['Row'], 'id' | 'created_at' | 'updated_at'> & {
+          id?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['blog_posts']['Insert']>
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -138,3 +204,8 @@ export type OrderItem = Database['public']['Tables']['order_items']['Row']
 export type OrderItemInsert = Database['public']['Tables']['order_items']['Insert']
 export type Product = Database['public']['Tables']['products']['Row']
 export type Setting = Database['public']['Tables']['settings']['Row']
+export type AboutSection = Database['public']['Tables']['about_sections']['Row']
+export type Faq = Database['public']['Tables']['faqs']['Row']
+export type FaqInsert = Database['public']['Tables']['faqs']['Insert']
+export type BlogPost = Database['public']['Tables']['blog_posts']['Row']
+export type BlogPostInsert = Database['public']['Tables']['blog_posts']['Insert']
