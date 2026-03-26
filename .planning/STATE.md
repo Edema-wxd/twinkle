@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 
 ## Current Position
 
-Phase: 6 (Admin Panel) — Complete
-Plan: 8 of 8 in Phase 6 (includes 06-05 image upload)
-Status: Phase complete
-Last activity: 2026-03-26 — Completed 06-05-PLAN.md (Product image upload: ImageUploader, dnd-kit, Supabase Storage)
+Phase: 7 (Content Pages) — In progress
+Plan: 1 of 5 in Phase 7
+Status: In progress
+Last activity: 2026-03-26 — Completed 07-01-PLAN.md (Supabase types for about_sections/faqs/blog_posts; AdminSidebar Content nav group)
 
-Progress: [████████] 8/8 plans (Phase 6)
+Progress: [█] 1/5 plans (Phase 7)
 
 ## Performance Metrics
 
@@ -33,6 +33,7 @@ Progress: [████████] 8/8 plans (Phase 6)
 | 4.1. CSV Price Import | 2/2 | Complete |
 | 5. Cart & Checkout | 9/9 | Complete |
 | 6. Admin Panel | 8/8 | Complete |
+| 7. Content Pages | 1/5 | In progress |
 
 ## Accumulated Context
 
@@ -144,6 +145,10 @@ Recent decisions affecting current work:
 - **Browser upload pattern**: createBrowserClient() + storage.from('product-images').upload() + getPublicUrl() — no Next.js server round-trip; avoids 413 body size limit
 - **tempId for new products**: useState(() => crypto.randomUUID()) gives stable upload path prefix before product ID exists
 - **image/images in ProductForm payload**: image = imageUrls[0] ?? placeholder SVG; images = imageUrls (ordered array)
+- **about_sections text PK**: fixed set of sections ('founder-story' | 'brand-mission' | 'why-loc-beads' | 'contact') — text PK enables meaningful upsert by ID
+- **blog_posts freeform tag**: no separate tags/categories table in v1 — avoids join complexity
+- **faqs answer plain text**: FAQ answers don't need Tiptap HTML; plain text simpler to render
+- **blog_posts RLS public read filter**: published=true only for public; drafts require service-role client in admin
 
 ### Roadmap Evolution
 
@@ -161,5 +166,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 06-05-PLAN.md — Product image upload (ImageUploader, dnd-kit, Supabase Storage)
+Stopped at: Completed 07-01-PLAN.md — Supabase types for about_sections/faqs/blog_posts; AdminSidebar Content nav group
 Resume file: None
