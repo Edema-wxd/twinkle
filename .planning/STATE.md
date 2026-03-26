@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 6 (Admin Panel) — Complete
-Plan: 7 of 7 in Phase 6 (backfilled 06-04 SUMMARY)
+Plan: 8 of 8 in Phase 6 (includes 06-05 image upload)
 Status: Phase complete
-Last activity: 2026-03-26 — Completed 06-04-PLAN.md (Product create/edit form, Tiptap, VariantTable, API routes)
+Last activity: 2026-03-26 — Completed 06-05-PLAN.md (Product image upload: ImageUploader, dnd-kit, Supabase Storage)
 
-Progress: [███████] 7/7 plans (Phase 6)
+Progress: [████████] 8/8 plans (Phase 6)
 
 ## Performance Metrics
 
@@ -32,7 +32,7 @@ Progress: [███████] 7/7 plans (Phase 6)
 | 4. Product Detail | 4/4 | Complete |
 | 4.1. CSV Price Import | 2/2 | Complete |
 | 5. Cart & Checkout | 9/9 | Complete |
-| 6. Admin Panel | 7/7 | Complete |
+| 6. Admin Panel | 8/8 | Complete |
 
 ## Accumulated Context
 
@@ -139,6 +139,11 @@ Recent decisions affecting current work:
 - **price_tiers API enforcement**: API routes enforce price_tiers shape — missing tiers default to [{qty:1,price:variant.price}]; storefront pack-size picker safe for admin-created products
 - **ProductForm dual-mode**: product prop undefined = create mode (POST), defined = edit mode (PUT); delete only in edit mode with inline confirm
 - **Slug auto-gen on name blur**: generates from name only when slug is empty AND not in edit mode — avoids overwriting existing slugs
+- **ImageUploader PointerSensor only**: handles mouse + touch via pointer events; no separate TouchSensor needed
+- **Remove button stopPropagation on onPointerDown**: prevents dnd-kit swallowing click; onClick fires normally
+- **Browser upload pattern**: createBrowserClient() + storage.from('product-images').upload() + getPublicUrl() — no Next.js server round-trip; avoids 413 body size limit
+- **tempId for new products**: useState(() => crypto.randomUUID()) gives stable upload path prefix before product ID exists
+- **image/images in ProductForm payload**: image = imageUrls[0] ?? placeholder SVG; images = imageUrls (ordered array)
 
 ### Roadmap Evolution
 
@@ -156,5 +161,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 06-04-PLAN.md — Product create/edit form (Tiptap, VariantTable, API routes, page wrappers)
+Stopped at: Completed 06-05-PLAN.md — Product image upload (ImageUploader, dnd-kit, Supabase Storage)
 Resume file: None
