@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 7 (Content Pages) — In progress
-Plan: 4 of 5 in Phase 7
+Plan: 5 of 5 in Phase 7
 Status: In progress
-Last activity: 2026-03-26 — Completed 07-04-PLAN.md (/shipping page with zone cards + WhatsApp CTA; /admin/shipping editor)
+Last activity: 2026-03-26 — Completed 07-05-PLAN.md (/admin/blog CRUD with Tiptap + image upload)
 
-Progress: [████] 4/5 plans (Phase 7)
+Progress: [█████] 5/5 plans (Phase 7)
 
 ## Performance Metrics
 
@@ -33,7 +33,7 @@ Progress: [████] 4/5 plans (Phase 7)
 | 4.1. CSV Price Import | 2/2 | Complete |
 | 5. Cart & Checkout | 9/9 | Complete |
 | 6. Admin Panel | 8/8 | Complete |
-| 7. Content Pages | 3/5 | In progress |
+| 7. Content Pages | 5/5 | Complete |
 
 ## Accumulated Context
 
@@ -159,6 +159,9 @@ Recent decisions affecting current work:
 - **CSS grid accordion animation**: grid-rows-[0fr/1fr] with overflow-hidden transition-all — no JS height measurement; works natively with Tailwind v4
 - **FaqAccordion leaf island**: /faq page.tsx is Server Component, passes faqs as props to FaqAccordion ('use client') — consistent with client island pattern
 - **FaqForm dual-mode**: optional faq prop drives create vs edit — POST to /api/admin/faqs (create) or PUT to /api/admin/faqs/[id] (edit); same component
+- **BlogPostForm single-file upload**: inline click-to-upload handler (not ImageUploader) for featured image — one image only, no DnD complexity
+- **published_at transition guard**: PUT /api/admin/blog/[id] fetches current post first, only auto-sets published_at when transitioning from false to true — no overwrite on subsequent saves
+- **Slug conflict as 409**: Postgres unique constraint violation code 23505 mapped to HTTP 409 for blog posts (same pattern as products)
 
 ### Roadmap Evolution
 
@@ -176,5 +179,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 07-04-PLAN.md — /shipping page + /admin/shipping editor + PUT /api/admin/shipping
+Stopped at: Completed 07-05-PLAN.md — /admin/blog CRUD with Tiptap editor, featured image upload, published toggle
 Resume file: None
