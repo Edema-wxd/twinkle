@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { RichTextEditor } from './RichTextEditor'
 import { VariantTable, VariantRow } from './VariantTable'
+import { ImageUploader } from './ImageUploader'
 import type { ProductMaterial } from '@/lib/types/product'
 
 interface ProductRow {
@@ -66,6 +67,7 @@ export function ProductForm({ product }: ProductFormProps) {
   const [variants, setVariants] = useState<VariantRow[]>(() =>
     parseVariants(product?.variants)
   )
+  const [imageUrls, setImageUrls] = useState<string[]>(product?.images ?? [])
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
@@ -99,6 +101,8 @@ export function ProductForm({ product }: ProductFormProps) {
           is_featured: isFeatured,
           is_active: isActive,
           variants,
+          image: imageUrls[0] ?? '/images/products/placeholder-bead.svg',
+          images: imageUrls,
         }
 
         const url = isEdit
@@ -270,6 +274,21 @@ export function ProductForm({ product }: ProductFormProps) {
           Each variant is a size/option. Set price_tiers for bulk pricing; a single tier is fine for simple pricing.
         </p>
         <VariantTable variants={variants} onChange={setVariants} />
+      </div>
+
+      {/* Product images */}
+      <div className="space-y-1.5">
+        <label className="block text-sm font-medium text-stone-300">
+          Product images <span className="text-stone-500 font-normal">(up to 5)</span>
+        </label>
+        <p className="text-xs text-stone-500 mb-2">
+          First image is used as the product card thumbnail. Drag to reorder.
+        </p>
+        <ImageUploader
+          productId={product?.id}
+          initialImages={product?.images ?? []}
+          onImagesChange={(urls) => setImageUrls(urls)}
+        />
       </div>
 
       {/* Actions */}
