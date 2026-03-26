@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 7 (Content Pages) — In progress
-Plan: 2 of 5 in Phase 7
+Plan: 3 of 5 in Phase 7
 Status: In progress
-Last activity: 2026-03-26 — Completed 07-02-PLAN.md (/about page with sticky pill nav; /admin/pages editor)
+Last activity: 2026-03-26 — Completed 07-03-PLAN.md (/faq page with accordion; /admin/faqs CRUD)
 
-Progress: [██] 2/5 plans (Phase 7)
+Progress: [███] 3/5 plans (Phase 7)
 
 ## Performance Metrics
 
@@ -33,7 +33,7 @@ Progress: [██] 2/5 plans (Phase 7)
 | 4.1. CSV Price Import | 2/2 | Complete |
 | 5. Cart & Checkout | 9/9 | Complete |
 | 6. Admin Panel | 8/8 | Complete |
-| 7. Content Pages | 2/5 | In progress |
+| 7. Content Pages | 3/5 | In progress |
 
 ## Accumulated Context
 
@@ -153,6 +153,9 @@ Recent decisions affecting current work:
 - **[&_tag]: selectors replace prose**: @tailwindcss/typography not installed; about body HTML uses custom Tailwind selectors for heading/paragraph/list/link styling
 - **content-images bucket**: separate from product-images; about section image uploads go to about/{sectionId}/{timestamp}-{filename}
 - **display_order defaults to array index in API**: PUT /api/admin/pages sets display_order to row's index in payload if not provided — satisfies Insert required field without form tracking it
+- **CSS grid accordion animation**: grid-rows-[0fr/1fr] with overflow-hidden transition-all — no JS height measurement; works natively with Tailwind v4
+- **FaqAccordion leaf island**: /faq page.tsx is Server Component, passes faqs as props to FaqAccordion ('use client') — consistent with client island pattern
+- **FaqForm dual-mode**: optional faq prop drives create vs edit — POST to /api/admin/faqs (create) or PUT to /api/admin/faqs/[id] (edit); same component
 
 ### Roadmap Evolution
 
@@ -170,5 +173,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 07-02-PLAN.md — /about page with sticky pill nav; /admin/pages editor with Tiptap + image upload
+Stopped at: Completed 07-03-PLAN.md — /faq accordion page + /admin/faqs CRUD
 Resume file: None
