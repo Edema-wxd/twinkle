@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 6 (Admin Panel) — Complete
-Plan: 7 of 7 in Phase 6
+Plan: 7 of 7 in Phase 6 (backfilled 06-04 SUMMARY)
 Status: Phase complete
-Last activity: 2026-03-25 — Completed 06-07-PLAN.md (Admin reviews entry + business settings form)
+Last activity: 2026-03-26 — Completed 06-04-PLAN.md (Product create/edit form, Tiptap, VariantTable, API routes)
 
 Progress: [███████] 7/7 plans (Phase 6)
 
@@ -135,6 +135,10 @@ Recent decisions affecting current work:
 - **Settings upsert batched**: all settings fields sent in single PUT; server builds array + .upsert(rows, { onConflict: 'key' }) once
 - **Admin form pattern**: Server Component page fetches data via createAdminClient(), passes as props to 'use client' form component; form POSTs/PUTs to /api/admin/*
 - **Toast pattern across admin**: useState<{type,message}|null> + setTimeout(3000) — consistent in ReviewForm, SettingsForm, ProductForm
+- **Tiptap immediatelyRender: false**: Required for App Router SSR; prevents hydration mismatch on RichTextEditor
+- **price_tiers API enforcement**: API routes enforce price_tiers shape — missing tiers default to [{qty:1,price:variant.price}]; storefront pack-size picker safe for admin-created products
+- **ProductForm dual-mode**: product prop undefined = create mode (POST), defined = edit mode (PUT); delete only in edit mode with inline confirm
+- **Slug auto-gen on name blur**: generates from name only when slug is empty AND not in edit mode — avoids overwriting existing slugs
 
 ### Roadmap Evolution
 
@@ -151,6 +155,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-25
-Stopped at: Completed 06-07-PLAN.md — Admin reviews entry form + business settings form; Phase 6 complete
+Last session: 2026-03-26
+Stopped at: Completed 06-04-PLAN.md — Product create/edit form (Tiptap, VariantTable, API routes, page wrappers)
 Resume file: None
