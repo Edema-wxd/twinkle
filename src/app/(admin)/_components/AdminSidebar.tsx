@@ -13,6 +13,13 @@ const NAV_LINKS = [
   { href: '/admin/settings', label: 'Settings', exact: false },
 ]
 
+const CONTENT_LINKS = [
+  { href: '/admin/pages', label: 'About Page', exact: false },
+  { href: '/admin/faqs', label: 'FAQs', exact: false },
+  { href: '/admin/blog', label: 'Blog', exact: false },
+  { href: '/admin/shipping', label: 'Shipping Info', exact: false },
+]
+
 function NavLink({
   href,
   label,
@@ -56,8 +63,25 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {NAV_LINKS.map((link) => (
+          <NavLink
+            key={link.href}
+            href={link.href}
+            label={link.label}
+            exact={link.exact}
+            onClick={onLinkClick}
+          />
+        ))}
+
+        {/* Content section separator */}
+        <div className="pt-4 pb-1 px-4">
+          <p className="font-heading text-xs text-stone-500 tracking-widest uppercase">
+            Content
+          </p>
+        </div>
+
+        {CONTENT_LINKS.map((link) => (
           <NavLink
             key={link.href}
             href={link.href}
