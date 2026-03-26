@@ -176,10 +176,15 @@ Plans:
   3. /shipping displays domestic delivery rates and timeframes, plus an explanation of the international inquiry process
   4. /blog displays a listing of published blog posts pulled from Supabase
   5. An individual blog post URL renders the full post content
-**Plans**: TBD
+**Plans**: 6 plans
 
 Plans:
-- [ ] 07-01: TBD
+- [ ] 07-01-PLAN.md — DB types + AdminSidebar: extend supabase.ts with about_sections/faqs/blog_posts, add content nav links
+- [ ] 07-02-PLAN.md — About page: /admin/pages editor (Tiptap + image upload) + public /about with sticky pill nav
+- [ ] 07-03-PLAN.md — FAQ page: /admin/faqs CRUD + public /faq with grouped accordion
+- [ ] 07-04-PLAN.md — Shipping page: /admin/shipping editor (settings keys) + public /shipping with zone rates + WhatsApp CTA
+- [ ] 07-05-PLAN.md — Blog admin: /admin/blog CRUD with Tiptap body + image upload + published toggle
+- [ ] 07-06-PLAN.md — Blog public: /blog listing with category filter + /blog/[slug] post page with share buttons + related posts
 
 ---
 
@@ -243,7 +248,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 4.1. CSV Price Import (INSERTED) | 2/2 | Complete | 2026-03-23 |
 | 5. Cart & Checkout | 9/9 | Complete | 2026-03-24 |
 | 6. Admin Panel | 7/7 | Complete | 2026-03-26 |
-| 7. Content Pages | 0/TBD | Not started | - |
+| 7. Content Pages | 0/6 | Not started | - |
 | 8. Conversion | 0/TBD | Not started | - |
 | 9. SEO | 0/TBD | Not started | - |
 | 10. Staging Deployment | 0/TBD | Not started | - |
