@@ -34,11 +34,11 @@
 
 ### Admin Panel
 
-- [ ] **ADMIN-01**: Admin can log in to a protected /admin panel with email/password
-- [ ] **ADMIN-02**: Admin can create, edit, and delete products including name, description, price, and variants
-- [ ] **ADMIN-03**: Admin can upload and manage product images stored in Supabase Storage
-- [ ] **ADMIN-04**: Admin can view all orders and update their status (pending / shipped / delivered)
-- [ ] **ADMIN-05**: Admin can view a dashboard showing recent orders and total sales figures
+- [x] **ADMIN-01**: Admin can log in to a protected /admin panel with email/password
+- [x] **ADMIN-02**: Admin can create, edit, and delete products including name, description, price, and variants
+- [x] **ADMIN-03**: Admin can upload and manage product images stored in Supabase Storage
+- [x] **ADMIN-04**: Admin can view all orders and update their status (pending / shipped / delivered)
+- [x] **ADMIN-05**: Admin can view a dashboard showing recent orders and total sales figures
 
 ### Content Pages
 
@@ -53,7 +53,7 @@
 
 - [ ] **CONV-01**: Visitor can submit their email address for the newsletter from the footer
 - [ ] **CONV-02**: Product detail page displays a "starter kit" bundle suggestion (beads + shears) as an upsell
-- [ ] **CONV-03**: Admin can add customer reviews to products via the admin panel (no self-service reviews in v1)
+- [x] **CONV-03**: Admin can add customer reviews to products via the admin panel (no self-service reviews in v1)
 
 ### SEO & Performance
 
@@ -125,11 +125,11 @@
 | CART-06 | Phase 5 | Pending |
 | CART-07 | Phase 5 | Pending |
 | CART-08 | Phase 5 | Pending |
-| ADMIN-01 | Phase 6 | Pending |
-| ADMIN-02 | Phase 6 | Pending |
-| ADMIN-03 | Phase 6 | Pending |
-| ADMIN-04 | Phase 6 | Pending |
-| ADMIN-05 | Phase 6 | Pending |
+| ADMIN-01 | Phase 6 | Complete |
+| ADMIN-02 | Phase 6 | Complete |
+| ADMIN-03 | Phase 6 | Complete |
+| ADMIN-04 | Phase 6 | Complete |
+| ADMIN-05 | Phase 6 | Complete |
 | CONT-01 | Phase 2 | Pending |
 | CONT-02 | Phase 7 | Pending |
 | CONT-03 | Phase 7 | Pending |
@@ -138,7 +138,7 @@
 | CONT-06 | Phase 7 | Pending |
 | CONV-01 | Phase 8 | Pending |
 | CONV-02 | Phase 4 | Complete |
-| CONV-03 | Phase 6 | Pending |
+| CONV-03 | Phase 6 | Complete |
 | SEO-01 | Phase 9 | Pending |
 | SEO-02 | Phase 9 | Pending |
 | SEO-03 | Phase 9 | Pending |
