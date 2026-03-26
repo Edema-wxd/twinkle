@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 7 (Content Pages) — In progress
-Plan: 3 of 5 in Phase 7
+Plan: 4 of 5 in Phase 7
 Status: In progress
-Last activity: 2026-03-26 — Completed 07-03-PLAN.md (/faq page with accordion; /admin/faqs CRUD)
+Last activity: 2026-03-26 — Completed 07-04-PLAN.md (/shipping page with zone cards + WhatsApp CTA; /admin/shipping editor)
 
-Progress: [███] 3/5 plans (Phase 7)
+Progress: [████] 4/5 plans (Phase 7)
 
 ## Performance Metrics
 
@@ -148,6 +148,9 @@ Recent decisions affecting current work:
 - **about_sections text PK**: fixed set of sections ('founder-story' | 'brand-mission' | 'why-loc-beads' | 'contact') — text PK enables meaningful upsert by ID
 - **blog_posts freeform tag**: no separate tags/categories table in v1 — avoids join complexity
 - **faqs answer plain text**: FAQ answers don't need Tiptap HTML; plain text simpler to render
+- **shipping_* settings keys**: shipping content uses existing settings table under shipping_lagos_rate, shipping_other_rate, shipping_lagos_days, shipping_other_days, shipping_intl_message, shipping_page_intro — no new DB table
+- **Shipping API key allowlist**: PUT /api/admin/shipping iterates ALLOWED_SHIPPING_KEYS constant — only those 6 keys can ever be written; prevents arbitrary settings injection
+- **Shipping page fallback defaults**: all 6 shipping keys have hardcoded defaults in shipping/page.tsx — page renders correctly before settings are configured
 - **blog_posts RLS public read filter**: published=true only for public; drafts require service-role client in admin
 - **AboutStickyNav DOM-first**: reads section elements directly via getElementById — no props from page.tsx; page stays Server Component
 - **[&_tag]: selectors replace prose**: @tailwindcss/typography not installed; about body HTML uses custom Tailwind selectors for heading/paragraph/list/link styling
@@ -173,5 +176,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 07-03-PLAN.md — /faq accordion page + /admin/faqs CRUD
+Stopped at: Completed 07-04-PLAN.md — /shipping page + /admin/shipping editor + PUT /api/admin/shipping
 Resume file: None
