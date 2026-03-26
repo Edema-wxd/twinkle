@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 7 (Content Pages) — In progress
-Plan: 1 of 5 in Phase 7
+Plan: 2 of 5 in Phase 7
 Status: In progress
-Last activity: 2026-03-26 — Completed 07-01-PLAN.md (Supabase types for about_sections/faqs/blog_posts; AdminSidebar Content nav group)
+Last activity: 2026-03-26 — Completed 07-02-PLAN.md (/about page with sticky pill nav; /admin/pages editor)
 
-Progress: [█] 1/5 plans (Phase 7)
+Progress: [██] 2/5 plans (Phase 7)
 
 ## Performance Metrics
 
@@ -33,7 +33,7 @@ Progress: [█] 1/5 plans (Phase 7)
 | 4.1. CSV Price Import | 2/2 | Complete |
 | 5. Cart & Checkout | 9/9 | Complete |
 | 6. Admin Panel | 8/8 | Complete |
-| 7. Content Pages | 1/5 | In progress |
+| 7. Content Pages | 2/5 | In progress |
 
 ## Accumulated Context
 
@@ -149,6 +149,10 @@ Recent decisions affecting current work:
 - **blog_posts freeform tag**: no separate tags/categories table in v1 — avoids join complexity
 - **faqs answer plain text**: FAQ answers don't need Tiptap HTML; plain text simpler to render
 - **blog_posts RLS public read filter**: published=true only for public; drafts require service-role client in admin
+- **AboutStickyNav DOM-first**: reads section elements directly via getElementById — no props from page.tsx; page stays Server Component
+- **[&_tag]: selectors replace prose**: @tailwindcss/typography not installed; about body HTML uses custom Tailwind selectors for heading/paragraph/list/link styling
+- **content-images bucket**: separate from product-images; about section image uploads go to about/{sectionId}/{timestamp}-{filename}
+- **display_order defaults to array index in API**: PUT /api/admin/pages sets display_order to row's index in payload if not provided — satisfies Insert required field without form tracking it
 
 ### Roadmap Evolution
 
@@ -166,5 +170,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 07-01-PLAN.md — Supabase types for about_sections/faqs/blog_posts; AdminSidebar Content nav group
+Stopped at: Completed 07-02-PLAN.md — /about page with sticky pill nav; /admin/pages editor with Tiptap + image upload
 Resume file: None
