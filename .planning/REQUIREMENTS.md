@@ -131,11 +131,11 @@
 | ADMIN-04 | Phase 6 | Complete |
 | ADMIN-05 | Phase 6 | Complete |
 | CONT-01 | Phase 2 | Pending |
-| CONT-02 | Phase 7 | Pending |
-| CONT-03 | Phase 7 | Pending |
-| CONT-04 | Phase 7 | Pending |
-| CONT-05 | Phase 7 | Pending |
-| CONT-06 | Phase 7 | Pending |
+| CONT-02 | Phase 7 | Complete |
+| CONT-03 | Phase 7 | Complete |
+| CONT-04 | Phase 7 | Complete |
+| CONT-05 | Phase 7 | Complete |
+| CONT-06 | Phase 7 | Complete |
 | CONV-01 | Phase 8 | Pending |
 | CONV-02 | Phase 4 | Complete |
 | CONV-03 | Phase 6 | Complete |
