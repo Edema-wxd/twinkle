@@ -9,17 +9,17 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 
 ## Current Position
 
-Phase: 7 (Content Pages) — Complete
-Plan: 6 of 6 in Phase 7
-Status: Phase complete
-Last activity: 2026-03-26 — Completed 07-06-PLAN.md (public /blog listing + /blog/[slug] post pages)
+Phase: 8 (Conversion) — In progress
+Plan: 1 of 2 in Phase 8
+Status: In progress
+Last activity: 2026-03-28 — Completed 08-01-PLAN.md (newsletter_subscribers table DDL, TypeScript types, POST /api/newsletter/subscribe)
 
-Progress: [██████] 6/6 plans (Phase 7)
+Progress: [█] 1/2 plans (Phase 8)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
+- Total plans completed: 39
 - Total execution time: 1 session + ongoing
 
 **By Phase:**
@@ -34,6 +34,7 @@ Progress: [██████] 6/6 plans (Phase 7)
 | 5. Cart & Checkout | 9/9 | Complete |
 | 6. Admin Panel | 8/8 | Complete |
 | 7. Content Pages | 6/6 | Complete |
+| 8. Conversion | 1/2 | In progress |
 
 ## Accumulated Context
 
@@ -166,6 +167,9 @@ Recent decisions affecting current work:
 - **Server-constructed canonical URL for share buttons**: BlogShareButtons receives canonicalUrl string prop built in Server Component from NEXT_PUBLIC_SITE_URL — avoids window.location.href SSR crash in client component
 - **Draft blog posts are 404**: /blog/[slug] uses .eq('published', true) in query; notFound() on error or null — draft posts are never accessible on public pages (not a pending state like orders)
 - **WhatsApp share wa.me/?text= (no phone)**: blog share opens contact picker; distinct from checkout WhatsApp CTA which dials the business number
+- **newsletter_subscribers RLS lockout guard only**: no public SELECT/INSERT/UPDATE/DELETE policies — all writes via service-role API route; RLS blocks any direct client access
+- **Email lowercase-normalised before newsletter insert**: `email.trim().toLowerCase()` ensures case-insensitive duplicate detection via unique constraint; 23505 maps to 409
+- **newsletter source_page optional**: allows tracking signup origin (homepage, blog, etc.) without making it mandatory; null if not provided
 
 ### Roadmap Evolution
 
@@ -182,6 +186,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-26
-Stopped at: Completed 07-06-PLAN.md — public /blog listing + /blog/[slug] post pages; Phase 7 Content Pages complete
+Last session: 2026-03-28
+Stopped at: Completed 08-01-PLAN.md — newsletter_subscribers table DDL, TypeScript types, POST /api/newsletter/subscribe endpoint
 Resume file: None
