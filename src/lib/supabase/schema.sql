@@ -298,3 +298,18 @@ update public.products set
      "price_tiers":[{"qty":1,"price":3500}]}
   ]'::jsonb
 where slug = 'shears';
+
+-- =============================================================================
+-- Phase 8 — newsletter_subscribers table
+-- =============================================================================
+create table public.newsletter_subscribers (
+  id            uuid primary key default gen_random_uuid(),
+  first_name    text not null,
+  email         text not null unique,
+  source_page   text,
+  subscribed_at timestamptz not null default now()
+);
+
+alter table public.newsletter_subscribers enable row level security;
+-- No public SELECT, INSERT, UPDATE, or DELETE policies.
+-- All writes are via service-role API route — RLS is a lockout guard only.

@@ -179,6 +179,21 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['blog_posts']['Insert']>
         Relationships: []
       }
+      newsletter_subscribers: {
+        Row: {
+          id: string
+          first_name: string
+          email: string
+          source_page: string | null
+          subscribed_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['newsletter_subscribers']['Row'], 'id' | 'subscribed_at'> & {
+          id?: string
+          subscribed_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['newsletter_subscribers']['Insert']>
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -209,3 +224,4 @@ export type Faq = Database['public']['Tables']['faqs']['Row']
 export type FaqInsert = Database['public']['Tables']['faqs']['Insert']
 export type BlogPost = Database['public']['Tables']['blog_posts']['Row']
 export type BlogPostInsert = Database['public']['Tables']['blog_posts']['Insert']
+export type NewsletterSubscriber = Database['public']['Tables']['newsletter_subscribers']['Row']
