@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { BUSINESS } from '@/lib/config/business'
+import { NewsletterForm } from './NewsletterForm'
 
 const footerLinks = [
   { href: '/catalog', label: 'Shop' },
@@ -13,7 +14,7 @@ export function Footer() {
   return (
     <footer className="bg-cocoa text-cream">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
             <p className="font-display text-2xl text-gold mb-3">Twinkle Locs</p>
@@ -68,6 +69,14 @@ export function Footer() {
                 </a>
               </li>
             </ul>
+          </div>
+
+          {/* Newsletter */}
+          <div>
+            <h3 className="font-heading text-sm font-semibold uppercase tracking-wider text-cream/60 mb-4">
+              Join the Twinkle family
+            </h3>
+            <NewsletterForm />
           </div>
         </div>
 
