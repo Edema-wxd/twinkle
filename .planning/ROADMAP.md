@@ -193,12 +193,14 @@ Plans:
 **Depends on**: Phase 7
 **Requirements**: CONV-01
 **Success Criteria** (what must be TRUE):
-  1. Footer on every page contains an email input field and a subscribe button
-  2. A visitor who submits their email address sees a success confirmation — the email is recorded in Supabase
-**Plans**: TBD
+  1. Footer on every page contains a first name field, email input, and a "Join" subscribe button under a "Join the Twinkle family" heading
+  2. A visitor who submits their email address sees inline success confirmation — the email is recorded in Supabase
+  3. A duplicate email submission shows a friendly "already on the list" message rather than an error
+**Plans**: 2 plans
 
 Plans:
-- [ ] 08-01: TBD
+- [ ] 08-01-PLAN.md — DB + API layer: newsletter_subscribers SQL migration, TypeScript types, POST /api/newsletter/subscribe route
+- [ ] 08-02-PLAN.md — UI layer: NewsletterForm client island + Footer 4-column grid wiring + visual checkpoint
 
 ---
 
@@ -249,7 +251,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. Cart & Checkout | 9/9 | Complete | 2026-03-24 |
 | 6. Admin Panel | 7/7 | Complete | 2026-03-26 |
 | 7. Content Pages | 6/6 | Complete | 2026-03-26 |
-| 8. Conversion | 0/TBD | Not started | - |
+| 8. Conversion | 0/2 | Not started | - |
 | 9. SEO | 0/TBD | Not started | - |
 | 10. Staging Deployment | 0/TBD | Not started | - |
 
