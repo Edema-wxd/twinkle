@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 8 (Conversion) — In progress
-Plan: 1 of 2 in Phase 8
-Status: In progress
-Last activity: 2026-03-28 — Completed 08-01-PLAN.md (newsletter_subscribers table DDL, TypeScript types, POST /api/newsletter/subscribe)
+Plan: 2 of 2 in Phase 8
+Status: Awaiting human verification checkpoint (08-02 checkpoint:human-verify)
+Last activity: 2026-03-28 — Completed 08-02-PLAN.md tasks (NewsletterForm client island + Footer 4-column grid); awaiting visual sign-off
 
-Progress: [█] 1/2 plans (Phase 8)
+Progress: [██] 2/2 plans (Phase 8) — checkpoint pending
 
 ## Performance Metrics
 
@@ -34,7 +34,7 @@ Progress: [█] 1/2 plans (Phase 8)
 | 5. Cart & Checkout | 9/9 | Complete |
 | 6. Admin Panel | 8/8 | Complete |
 | 7. Content Pages | 6/6 | Complete |
-| 8. Conversion | 1/2 | In progress |
+| 8. Conversion | 2/2 | Checkpoint pending |
 
 ## Accumulated Context
 
@@ -170,6 +170,8 @@ Recent decisions affecting current work:
 - **newsletter_subscribers RLS lockout guard only**: no public SELECT/INSERT/UPDATE/DELETE policies — all writes via service-role API route; RLS blocks any direct client access
 - **Email lowercase-normalised before newsletter insert**: `email.trim().toLowerCase()` ensures case-insensitive duplicate detection via unique constraint; 23505 maps to 409
 - **newsletter source_page optional**: allows tracking signup origin (homepage, blog, etc.) without making it mandatory; null if not provided
+- **NewsletterForm client island leaf in Server Component Footer**: Footer.tsx stays a Server Component; NewsletterForm is the 'use client' boundary leaf — consistent with FaqAccordion pattern
+- **Footer grid md:grid-cols-2 lg:grid-cols-4**: avoids cramped 4-column layout on tablet; Brand+Navigation stack 2x2 at md, spread to 4 equal columns at lg
 
 ### Roadmap Evolution
 
@@ -187,5 +189,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-28
-Stopped at: Completed 08-01-PLAN.md — newsletter_subscribers table DDL, TypeScript types, POST /api/newsletter/subscribe endpoint
+Stopped at: 08-02 checkpoint:human-verify — NewsletterForm island and Footer 4-column grid complete; awaiting visual sign-off
 Resume file: None
