@@ -51,7 +51,7 @@ completed: 2026-03-28
 - **Duration:** 15 min
 - **Started:** 2026-03-28T15:34:04Z
 - **Completed:** 2026-03-28T15:49:02Z
-- **Tasks:** 2 (checkpoint task pending human verification)
+- **Tasks:** 3 (2 auto + 1 checkpoint:human-verify — approved)
 - **Files modified:** 2
 
 ## Accomplishments
@@ -66,7 +66,7 @@ Each task was committed atomically:
 1. **Task 1: NewsletterForm client island** - `bbbd1bd` (feat)
 2. **Task 2: Wire NewsletterForm into Footer (4-column grid)** - `737e517` (feat)
 
-_Task 3 is a checkpoint:human-verify gate — awaiting visual sign-off before plan is fully complete._
+3. **Task 3: checkpoint:human-verify** - Visual sign-off approved by user
 
 ## Files Created/Modified
 - `src/components/layout/NewsletterForm.tsx` - 'use client' island; first_name + email form, fetch to /api/newsletter/subscribe, inline success/duplicate/error messages
@@ -90,10 +90,10 @@ None.
 None - no external service configuration required for this plan.
 
 ## Next Phase Readiness
-- Newsletter form is live on every page via shared Footer
-- Visual verification checkpoint is next — start `npm run dev` and visit http://localhost:3000 to confirm 4-column layout and form states
-- After checkpoint approval, Phase 8 (Conversion) will be complete
-- No blockers for continuation
+- Phase 8 (Conversion) is complete — all plans (08-01 and 08-02) signed off
+- Newsletter form is live on every page via shared Footer, visually verified
+- 4-column footer layout confirmed at lg breakpoint, 2x2 at md, stacked on mobile
+- No blockers for Phase 9
 
 ---
 *Phase: 08-conversion*
