@@ -136,7 +136,7 @@
 | CONT-04 | Phase 7 | Complete |
 | CONT-05 | Phase 7 | Complete |
 | CONT-06 | Phase 7 | Complete |
-| CONV-01 | Phase 8 | Pending |
+| CONV-01 | Phase 8 | Complete |
 | CONV-02 | Phase 4 | Complete |
 | CONV-03 | Phase 6 | Complete |
 | SEO-01 | Phase 9 | Pending |

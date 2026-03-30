@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** A Nigerian customer on mobile can discover, customise, and buy loc beads in under 2 minutes — and a diaspora customer anywhere in the world can do the same.
-**Current focus:** Phase 8 — Conversion
+**Current focus:** Phase 9 — SEO
 
 ## Current Position
 
