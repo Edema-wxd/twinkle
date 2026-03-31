@@ -1,4 +1,5 @@
 // This file is manually maintained until Supabase CLI type generation is set up.
+// DB migration required: ALTER TABLE products ADD COLUMN seo_description TEXT NULL;
 // To regenerate: npx supabase gen types typescript --project-id "$SUPABASE_PROJECT_REF" --schema public > src/types/supabase.ts
 
 export type Json =
@@ -18,6 +19,7 @@ export interface Database {
           name: string
           slug: string
           description: string
+          seo_description: string | null
           image: string
           images: string[]
           material: string
@@ -28,9 +30,10 @@ export interface Database {
           variants: Json
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['products']['Row'], 'id' | 'created_at'> & {
+        Insert: Omit<Database['public']['Tables']['products']['Row'], 'id' | 'created_at' | 'seo_description'> & {
           id?: string
           created_at?: string
+          seo_description?: string | null
         }
         Update: Partial<Database['public']['Tables']['products']['Insert']>
         Relationships: []

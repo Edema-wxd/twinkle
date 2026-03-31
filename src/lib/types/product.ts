@@ -18,6 +18,7 @@ export interface Product {
   name: string;
   slug: string;
   description: string;
+  seo_description?: string | null;
   image: string;
   /** Full gallery URLs — if absent, gallery uses [image] as fallback */
   images?: string[];
