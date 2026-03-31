@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 
 ## Current Position
 
-Phase: 9 (SEO) — In Progress
-Plan: 2 of 3 in Phase 9
-Status: In progress
-Last activity: 2026-03-31 — Completed 09-02-PLAN.md; all 8 public pages have metadata; robots.txt live
+Phase: 9 (SEO) — Complete
+Plan: 3 of 3 in Phase 9
+Status: Phase 9 complete
+Last activity: 2026-03-31 — Completed 09-03-PLAN.md; JSON-LD structured data on all key pages; /sitemap.xml live
 
-Progress: [██] 2/3 plans (Phase 9 so far)
+Progress: [███] 3/3 plans (Phase 9 complete)
 
 ## Performance Metrics
 
@@ -35,7 +35,7 @@ Progress: [██] 2/3 plans (Phase 9 so far)
 | 6. Admin Panel | 8/8 | Complete |
 | 7. Content Pages | 6/6 | Complete |
 | 8. Conversion | 2/2 | Complete |
-| 9. SEO | 2/3 | In Progress |
+| 9. SEO | 3/3 | Complete |
 
 ## Accumulated Context
 
@@ -182,6 +182,9 @@ Recent decisions affecting current work:
 - **generateMetadata Next.js 15 async params**: Dynamic route pages (catalog/[slug], blog/[slug]) use `params: Promise<{ slug: string }>` + `await params` pattern
 - **Product og:image prefers images[0] over image**: images array is the ordered gallery; image is the thumbnail fallback only
 - **seo_description ?? description .slice(0, 155)**: Meta description on product pages uses SEO-specific copy when available; falls back to product description trimmed to 155 chars
+- **JSON-LD XSS sanitisation**: All dangerouslySetInnerHTML JSON-LD blocks use `.replace(/</g, '\\u003c')` — product names/descriptions could contain < characters
+- **sitemap.ts staticRoutes must be updated for new public routes**: src/app/sitemap.ts is the sole sitemap source; any new public route must be added to the staticRoutes array manually
+- **product.price_min used in Product JSON-LD**: lowest visible price per Google Product schema guidance; consistent with how price_min is used on catalog cards
 
 ### Pending Todos
 
@@ -195,5 +198,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-31
-Stopped at: Phase 9 SEO — 09-02 complete; all static pages have metadata + generateMetadata on dynamic detail pages + robots.ts; ready for 09-03
+Stopped at: Phase 9 SEO — 09-03 complete; JSON-LD structured data on all key pages + dynamic sitemap.xml; Phase 9 fully complete
 Resume file: None
