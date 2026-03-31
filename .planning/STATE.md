@@ -9,17 +9,17 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 
 ## Current Position
 
-Phase: 8 (Conversion) — Complete
-Plan: 2 of 2 in Phase 8
-Status: Phase 8 complete
-Last activity: 2026-03-29 — Completed 08-02-PLAN.md; visual checkpoint approved; Phase 8 fully signed off
+Phase: 9 (SEO) — In Progress
+Plan: 2 of 3 in Phase 9
+Status: In progress
+Last activity: 2026-03-31 — Completed 09-02-PLAN.md; all 8 public pages have metadata; robots.txt live
 
-Progress: [██] 2/2 plans (Phase 8) — complete
+Progress: [██] 2/3 plans (Phase 9 so far)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 39
+- Total plans completed: 41
 - Total execution time: 1 session + ongoing
 
 **By Phase:**
@@ -35,6 +35,7 @@ Progress: [██] 2/2 plans (Phase 8) — complete
 | 6. Admin Panel | 8/8 | Complete |
 | 7. Content Pages | 6/6 | Complete |
 | 8. Conversion | 2/2 | Complete |
+| 9. SEO | 2/3 | In Progress |
 
 ## Accumulated Context
 
@@ -177,6 +178,11 @@ Recent decisions affecting current work:
 
 - Phase 4.1 inserted after Phase 4: CSV Price Import (URGENT) — import real pricing from 'Twinke Locs Prices .csv' into Supabase before Cart phase begins
 
+- **Homepage metadata title.absolute**: Uses `title: { absolute: 'Twinkle Locs | Nigerian Loc Beads & Accessories' }` to bypass root template and prevent brand doubling
+- **generateMetadata Next.js 15 async params**: Dynamic route pages (catalog/[slug], blog/[slug]) use `params: Promise<{ slug: string }>` + `await params` pattern
+- **Product og:image prefers images[0] over image**: images array is the ordered gallery; image is the thumbnail fallback only
+- **seo_description ?? description .slice(0, 155)**: Meta description on product pages uses SEO-specific copy when available; falls back to product description trimmed to 155 chars
+
 ### Pending Todos
 
 None.
@@ -188,6 +194,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29
-Stopped at: Phase 8 Conversion complete — 08-02 visual checkpoint approved; ready for Phase 9
+Last session: 2026-03-31
+Stopped at: Phase 9 SEO — 09-02 complete; all static pages have metadata + generateMetadata on dynamic detail pages + robots.ts; ready for 09-03
 Resume file: None
