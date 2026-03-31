@@ -79,6 +79,32 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       : []
 
   const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com'}/blog/${post.slug}`
+  const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com'
+
+  const blogJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt ?? undefined,
+    image: post.featured_image ?? undefined,
+    datePublished: post.published_at ?? undefined,
+    dateModified: post.updated_at ?? undefined,
+    author: {
+      '@type': 'Organization',
+      name: 'Twinkle Locs',
+      url: BASE,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Twinkle Locs',
+      url: BASE,
+    },
+    url: `${BASE}/blog/${post.slug}`,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${BASE}/blog/${post.slug}`,
+    },
+  }
 
   const formattedDate = post.published_at
     ? new Date(post.published_at).toLocaleDateString('en-NG', {
@@ -90,6 +116,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(blogJsonLd).replace(/</g, '\\u003c'),
+        }}
+      />
       {/* Back link */}
       <Link
         href="/blog"
