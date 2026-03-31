@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
@@ -9,6 +10,41 @@ import { UpsellBlock } from '@/components/product/UpsellBlock'
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+  const { slug } = await params
+  const supabase = await createClient()
+
+  const result = await supabase
+    .from('products')
+    .select('name, description, seo_description, image, images, slug')
+    .eq('slug', slug)
+    .single()
+
+  if (result.error || !result.data) return {}
+
+  const p = result.data
+  const description = (p.seo_description ?? p.description).slice(0, 155)
+  const ogImage = (p.images && p.images.length > 0 ? p.images[0] : null) ?? p.image
+
+  return {
+    title: p.name,
+    description,
+    openGraph: {
+      title: p.name,
+      description,
+      images: ogImage ? [{ url: ogImage }] : [{ url: '/og-image.jpg', width: 1200, height: 630 }],
+      type: 'website',
+    },
+    alternates: {
+      canonical: `/catalog/${p.slug}`,
+    },
+  }
 }
 
 export default async function ProductDetailPage({

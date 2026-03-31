@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -7,6 +8,43 @@ import { BlogPostCard } from '@/components/blog/BlogPostCard'
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+  const { slug } = await params
+  const supabase = await createClient()
+
+  const result = await supabase
+    .from('blog_posts')
+    .select('title, excerpt, featured_image, slug, published_at')
+    .eq('slug', slug)
+    .eq('published', true)
+    .single()
+
+  if (result.error || !result.data) return {}
+
+  const post = result.data
+
+  return {
+    title: post.title,
+    description: post.excerpt ?? undefined,
+    openGraph: {
+      title: post.title,
+      description: post.excerpt ?? undefined,
+      images: post.featured_image
+        ? [{ url: post.featured_image }]
+        : [{ url: '/og-image.jpg', width: 1200, height: 630 }],
+      type: 'article',
+      publishedTime: post.published_at ?? undefined,
+    },
+    alternates: {
+      canonical: `/blog/${post.slug}`,
+    },
+  }
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
