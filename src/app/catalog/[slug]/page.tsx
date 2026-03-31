@@ -86,6 +86,51 @@ export default async function ProductDetailPage({
 
   const reviews = (reviewsData ?? []) as Review[]
 
+  // Build JSON-LD structured data
+  const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com'
+
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description,
+    image: product.images && product.images.length > 0 ? product.images[0] : product.image,
+    brand: {
+      '@type': 'Brand',
+      name: 'Twinkle Locs',
+    },
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'NGN',
+      price: product.price_min,
+      availability: product.variants.some((v) => v.in_stock)
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      url: `${BASE}/catalog/${product.slug}`,
+      seller: {
+        '@type': 'Organization',
+        name: 'Twinkle Locs',
+      },
+    },
+    ...(reviews.length > 0 && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: (reviews.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / reviews.length).toFixed(1),
+        reviewCount: reviews.length,
+      },
+    }),
+  }
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
+      { '@type': 'ListItem', position: 2, name: 'Catalog', item: `${BASE}/catalog` },
+      { '@type': 'ListItem', position: 3, name: product.name, item: `${BASE}/catalog/${product.slug}` },
+    ],
+  }
+
   // Fetch shears for upsell — only when viewing a non-Tools product
   let shearsProduct: Product | null = null
   if (product.material !== 'Tools') {
@@ -115,6 +160,18 @@ export default async function ProductDetailPage({
 
   return (
     <main className="bg-cream min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productJsonLd).replace(/</g, '\\u003c'),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c'),
+        }}
+      />
       {/* Breadcrumb */}
       <nav className="max-w-6xl mx-auto px-4 pt-6 pb-0">
         <Link
