@@ -139,9 +139,9 @@
 | CONV-01 | Phase 8 | Complete |
 | CONV-02 | Phase 4 | Complete |
 | CONV-03 | Phase 6 | Complete |
-| SEO-01 | Phase 9 | Pending |
-| SEO-02 | Phase 9 | Pending |
-| SEO-03 | Phase 9 | Pending |
+| SEO-01 | Phase 9 | Complete |
+| SEO-02 | Phase 9 | Complete |
+| SEO-03 | Phase 9 | Complete |
 | SEO-04 | Phase 1 | Pending |
 | SEO-05 | Phase 10 | Pending |
 
