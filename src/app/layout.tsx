@@ -1,14 +1,27 @@
 import type { Metadata } from "next";
 import { halimun, raleway, inter } from "@/lib/fonts";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { StorefrontChrome } from "@/components/layout/StorefrontChrome";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Twinkle Locs",
-  description: "Premium loc bead accessories for your loc journey",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com'
+  ),
+  title: {
+    default: 'Twinkle Locs | Nigerian Loc Beads & Accessories',
+    template: '%s | Twinkle Locs',
+  },
+  description: 'Premium loc bead accessories for your loc journey. Shop handcrafted Nigerian loc beads, gold, silver, crystal styles.',
+  openGraph: {
+    siteName: 'Twinkle Locs',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Twinkle Locs – Nigerian Loc Beads & Accessories' }],
+    locale: 'en_NG',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
 };
 
 export default function RootLayout({
@@ -23,10 +36,7 @@ export default function RootLayout({
     >
       <body className="font-body bg-cream text-charcoal antialiased">
         <Providers>
-          <Header />
-          <main>{children}</main>
-          <Footer />
-          <WhatsAppButton />
+          <StorefrontChrome>{children}</StorefrontChrome>
         </Providers>
       </body>
     </html>
