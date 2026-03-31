@@ -1,10 +1,15 @@
-import { Metadata } from 'next'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
-  title: 'Shipping Information — Twinkle Locs',
-  description:
-    'Delivery rates and timeframes across Nigeria. International shipping available on request via WhatsApp.',
+  title: 'Shipping Information',
+  description: 'Shipping rates and delivery timelines for Twinkle Locs orders — domestic Nigerian delivery and international shipping enquiries.',
+  openGraph: {
+    title: 'Shipping Information | Twinkle Locs',
+    description: 'Domestic Nigerian shipping rates and international enquiry process.',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
+    type: 'website',
+  },
 }
 
 const SHIPPING_KEYS = [

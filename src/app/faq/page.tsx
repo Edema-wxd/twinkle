@@ -1,10 +1,16 @@
-import { Metadata } from 'next'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { FaqAccordion } from '@/components/faq/FaqAccordion'
 
 export const metadata: Metadata = {
-  title: 'FAQs — Twinkle Locs',
-  description: 'Answers to common questions about our loc beads, shipping, care, and orders.',
+  title: 'FAQs',
+  description: 'Answers to common questions about Twinkle Locs loc beads — materials, sizing, shipping timelines, care instructions, and how to place an order.',
+  openGraph: {
+    title: 'FAQs | Twinkle Locs',
+    description: 'Common questions about loc beads, sizing, shipping, and care.',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
+    type: 'website',
+  },
 }
 
 export default async function FaqPage() {

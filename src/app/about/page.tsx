@@ -1,11 +1,18 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { AboutSection } from '@/components/about/AboutSection'
 import { AboutStickyNav } from '@/components/about/AboutStickyNav'
 import { AboutSection as AboutSectionType } from '@/types/supabase'
 
-export const metadata = {
-  title: 'About — Twinkle Locs',
-  description: 'Learn about Twinkle Locs — our founder story, brand mission, and why we love loc beads.',
+export const metadata: Metadata = {
+  title: 'About Us',
+  description: 'Learn about Twinkle Locs — our founder story, brand mission, and why we create premium Nigerian loc bead accessories.',
+  openGraph: {
+    title: 'About Us | Twinkle Locs',
+    description: 'The story behind Twinkle Locs — handcrafted Nigerian loc bead accessories.',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
+    type: 'website',
+  },
 }
 
 const FALLBACK_SECTIONS: AboutSectionType[] = [

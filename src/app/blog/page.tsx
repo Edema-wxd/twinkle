@@ -1,12 +1,18 @@
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { BlogPostCard } from '@/components/blog/BlogPostCard'
 import { BlogCategoryFilter } from '@/components/blog/BlogCategoryFilter'
 
-export const metadata = {
-  title: 'Blog — Twinkle Locs',
-  description:
-    'Loc care tips, brand stories, and community from Twinkle Locs — Nigeria\'s home of premium loc bead accessories.',
+export const metadata: Metadata = {
+  title: 'Blog',
+  description: 'Tips, guides, and inspiration for your loc journey from the Twinkle Locs team — styling ideas, bead care, and loc maintenance advice.',
+  openGraph: {
+    title: 'Blog | Twinkle Locs',
+    description: 'Loc styling tips, bead care guides, and inspiration from Twinkle Locs.',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
+    type: 'website',
+  },
 }
 
 interface BlogPageProps {

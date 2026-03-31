@@ -1,11 +1,17 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Product, ProductMaterial, ProductVariant } from '@/lib/types/product'
 import { CatalogClient } from '@/components/catalog/CatalogClient'
 
-export const metadata = {
-  title: 'Shop Loc Beads — Twinkle Locs',
-  description:
-    'Browse all premium loc bead accessories handcrafted in Nigeria. Filter by material, sort by price, and find your perfect style.',
+export const metadata: Metadata = {
+  title: 'Shop Loc Beads',
+  description: 'Browse our full collection of Nigerian loc beads — gold, silver, crystal, and onyx styles in multiple sizes. Filter by material and sort by price.',
+  openGraph: {
+    title: 'Shop Loc Beads | Twinkle Locs',
+    description: 'Browse Nigerian loc beads in gold, silver, crystal, and onyx. Multiple sizes available.',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
+    type: 'website',
+  },
 }
 
 export default async function CatalogPage() {
