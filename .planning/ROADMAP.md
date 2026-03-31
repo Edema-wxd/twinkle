@@ -213,10 +213,12 @@ Plans:
   2. Every page has an OpenGraph image tag — link previews in WhatsApp/Twitter/Facebook render with the correct image
   3. Product pages include Schema.org Product structured data — valid when tested with Google's Rich Results Test
   4. /sitemap.xml is accessible and lists all public page URLs
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 09-01: TBD
+- [ ] 09-01-PLAN.md — Foundation: metadataBase + title template in root layout, seo_description DB types, placeholder og-image.jpg
+- [ ] 09-02-PLAN.md — Metadata: generateMetadata() for product + blog detail pages, static metadata for all static pages, robots.ts
+- [ ] 09-03-PLAN.md — Structured data + sitemap: JSON-LD for Product/BreadcrumbList/FAQPage/BlogPosting, sitemap.ts
 
 ---
 
@@ -252,7 +254,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 6. Admin Panel | 7/7 | Complete | 2026-03-26 |
 | 7. Content Pages | 6/6 | Complete | 2026-03-26 |
 | 8. Conversion | 2/2 | Complete | 2026-03-28 |
-| 9. SEO | 0/TBD | Not started | - |
+| 9. SEO | 0/3 | Not started | - |
 | 10. Staging Deployment | 0/TBD | Not started | - |
 
 ---
