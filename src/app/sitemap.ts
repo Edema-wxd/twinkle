@@ -17,6 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .eq('published', true),
   ])
 
+  // Audited 2026-04-01: all public routes present. /cart, /checkout, and /orders/ are intentionally excluded.
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE, changeFrequency: 'weekly', priority: 1 },
     { url: `${BASE}/catalog`, changeFrequency: 'weekly', priority: 0.9 },
