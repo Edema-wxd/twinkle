@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 
 ## Current Position
 
-Phase: 9 (SEO) — Complete
-Plan: 3 of 3 in Phase 9
-Status: Phase 9 complete
-Last activity: 2026-03-31 — Completed 09-03-PLAN.md; JSON-LD structured data on all key pages; /sitemap.xml live
+Phase: 10 (Staging Deployment) — In progress
+Plan: 1 of 3 in Phase 10
+Status: In progress
+Last activity: 2026-04-01 — Completed 10-01-PLAN.md; env var consolidation, WhatsApp placeholder fix, sitemap audit; build passes clean
 
-Progress: [███] 3/3 plans (Phase 9 complete)
+Progress: [█] 1/3 plans (Phase 10 in progress)
 
 ## Performance Metrics
 
@@ -36,6 +36,7 @@ Progress: [███] 3/3 plans (Phase 9 complete)
 | 7. Content Pages | 6/6 | Complete |
 | 8. Conversion | 2/2 | Complete |
 | 9. SEO | 3/3 | Complete |
+| 10. Staging Deployment | 1/3 | In progress |
 
 ## Accumulated Context
 
@@ -184,6 +185,10 @@ Recent decisions affecting current work:
 - **seo_description ?? description .slice(0, 155)**: Meta description on product pages uses SEO-specific copy when available; falls back to product description trimmed to 155 chars
 - **JSON-LD XSS sanitisation**: All dangerouslySetInnerHTML JSON-LD blocks use `.replace(/</g, '\\u003c')` — product names/descriptions could contain < characters
 - **sitemap.ts staticRoutes must be updated for new public routes**: src/app/sitemap.ts is the sole sitemap source; any new public route must be added to the staticRoutes array manually
+- **SUPABASE_SERVICE_ROLE_KEY is the canonical service-role env var**: all three service-role createClient calls (admin.ts, webhook route, orders page) use this name; Vercel must be configured with this name
+- **BUSINESS.whatsapp.url() is sole WhatsApp URL constructor**: import from @/lib/config/business — never inline wa.me string construction
+- **NEXT_PUBLIC_PAYSTACK_SECRET_KEY absent from source**: Paystack secret is PAYSTACK_SECRET_KEY (no NEXT_PUBLIC_ prefix); never exposed to browser
+- **sitemap.ts staticRoutes audited 2026-04-01**: all 6 public informational routes present; /cart, /checkout, /orders/ intentionally excluded as transactional
 - **product.price_min used in Product JSON-LD**: lowest visible price per Google Product schema guidance; consistent with how price_min is used on catalog cards
 
 ### Pending Todos
@@ -197,6 +202,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-31
-Stopped at: Phase 9 SEO — 09-03 complete; JSON-LD structured data on all key pages + dynamic sitemap.xml; Phase 9 fully complete
+Last session: 2026-04-01
+Stopped at: Phase 10 Staging Deployment — 10-01 complete; env var fixes, WhatsApp placeholder removal, sitemap audit; build passes clean; ready for 10-02 Vercel deployment
 Resume file: None
