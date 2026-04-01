@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { AboutSection as AboutSectionType } from '@/types/supabase'
+import { BUSINESS } from '@/lib/config/business'
 
 interface AboutSectionProps {
   section: AboutSectionType
@@ -36,7 +37,7 @@ export function AboutSection({ section }: AboutSectionProps) {
 
       {isContact && (
         <a
-          href="https://wa.me/2348000000000"
+          href={BUSINESS.whatsapp.url()}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-full transition-colors"

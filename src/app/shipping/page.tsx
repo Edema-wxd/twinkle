@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { BUSINESS } from '@/lib/config/business'
 
 export const metadata: Metadata = {
   title: 'Shipping Information',
@@ -53,7 +54,7 @@ export default async function ShippingPage() {
   const lagosRateDisplay = formatRate(lagosRate, raw.shipping_lagos_rate)
   const otherRateDisplay = formatRate(otherRate, raw.shipping_other_rate)
 
-  const waUrl = `https://wa.me/2348000000000?text=${encodeURIComponent(raw.shipping_intl_message)}`
+  const waUrl = BUSINESS.whatsapp.url(raw.shipping_intl_message)
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-12">
