@@ -231,10 +231,12 @@ Plans:
   2. A full purchase flow (add to cart → checkout → Paystack payment → order confirmation) completes successfully on staging
   3. Admin can log in and manage products/orders on the staging environment
   4. No console errors, broken images, or broken links on the homepage, catalog, and a product detail page
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 10-01: TBD
+- [ ] 10-01-PLAN.md — Pre-deployment fixes: consolidate SUPABASE_SERVICE_ROLE_KEY, replace hardcoded WhatsApp placeholder, audit sitemap routes
+- [ ] 10-02-PLAN.md — Vercel deployment: project creation, environment variables, first build, basic accessibility verification
+- [ ] 10-03-PLAN.md — Smoke testing: Paystack webhook registration, visual check, full purchase flow, admin flow, DNS cutover readiness decision
 
 ---
 
@@ -255,7 +257,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Content Pages | 6/6 | Complete | 2026-03-26 |
 | 8. Conversion | 2/2 | Complete | 2026-03-28 |
 | 9. SEO | 3/3 | Complete | 2026-03-31 |
-| 10. Staging Deployment | 0/TBD | Not started | - |
+| 10. Staging Deployment | 0/3 | Not started | - |
 
 ---
 *Roadmap created: 2026-03-19*
