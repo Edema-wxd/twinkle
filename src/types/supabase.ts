@@ -197,6 +197,32 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['newsletter_subscribers']['Insert']>
         Relationships: []
       }
+      // DDL: see supabase/migrations/20260402_abandoned_orders.sql
+      abandoned_orders: {
+        Row: {
+          id: string
+          created_at: string
+          customer_name: string
+          customer_email: string
+          customer_phone: string
+          delivery_address: string
+          delivery_state: string
+          shipping_cost: number
+          subtotal: number
+          total: number
+          cart_items: Json
+          recovered: boolean
+          recovered_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['abandoned_orders']['Row'], 'id' | 'created_at' | 'recovered' | 'recovered_at'> & {
+          id?: string
+          created_at?: string
+          recovered?: boolean
+          recovered_at?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['abandoned_orders']['Insert']>
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -228,3 +254,5 @@ export type FaqInsert = Database['public']['Tables']['faqs']['Insert']
 export type BlogPost = Database['public']['Tables']['blog_posts']['Row']
 export type BlogPostInsert = Database['public']['Tables']['blog_posts']['Insert']
 export type NewsletterSubscriber = Database['public']['Tables']['newsletter_subscribers']['Row']
+export type AbandonedOrder = Database['public']['Tables']['abandoned_orders']['Row']
+export type AbandonedOrderInsert = Database['public']['Tables']['abandoned_orders']['Insert']

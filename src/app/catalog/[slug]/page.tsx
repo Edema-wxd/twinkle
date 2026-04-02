@@ -7,6 +7,7 @@ import { Review } from '@/lib/types/review'
 import { ProductDetailClient } from '@/components/product/ProductDetailClient'
 import { ProductReviews } from '@/components/product/ProductReviews'
 import { UpsellBlock } from '@/components/product/UpsellBlock'
+import { RelatedProducts } from '@/components/product/RelatedProducts'
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>
@@ -158,6 +159,31 @@ export default async function ProductDetailPage({
     }
   }
 
+  // Fetch related products — exclude current product and shears (handled separately)
+  const { data: relatedData } = await supabase
+    .from('products')
+    .select('*')
+    .neq('slug', slug)
+    .neq('slug', 'shears')
+    .neq('material', 'Tools')
+    .order('is_featured', { ascending: false })
+    .limit(4)
+
+  const relatedProducts: Product[] = (relatedData ?? []).map((r) => ({
+    id: r.id,
+    name: r.name,
+    slug: r.slug,
+    description: r.description,
+    image: r.image,
+    material: r.material as ProductMaterial,
+    is_featured: r.is_featured,
+    variants: r.variants as unknown as ProductVariant[],
+    price_min: r.price_min,
+    price_max: r.price_max,
+    created_at: r.created_at,
+    images: r.images?.length ? r.images : undefined,
+  }))
+
   return (
     <main className="bg-cream min-h-screen">
       <script
@@ -193,6 +219,9 @@ export default async function ProductDetailPage({
       <section className="max-w-6xl mx-auto px-4 pb-12">
         <ProductReviews reviews={reviews} />
       </section>
+
+      {/* Related products */}
+      <RelatedProducts products={relatedProducts} />
 
       {/* Upsell block — only for non-Tools products */}
       {shearsProduct && (

@@ -154,4 +154,15 @@ async function handleChargeSuccess(data: PaystackChargeData) {
   if (itemsResult.error) {
     console.error('[webhook] Failed to insert order_items:', itemsResult.error)
   }
+
+  // Mark any matching abandoned checkouts as recovered
+  const { error: recoverError } = await supabase
+    .from('abandoned_orders')
+    .update({ recovered: true, recovered_at: new Date().toISOString() })
+    .eq('customer_email', data.customer.email.toLowerCase())
+    .eq('recovered', false)
+
+  if (recoverError) {
+    console.error('[webhook] Failed to mark abandoned orders recovered:', recoverError)
+  }
 }

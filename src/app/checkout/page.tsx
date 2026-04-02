@@ -30,6 +30,26 @@ export default function CheckoutPage() {
     } else {
       setIsInternational(false);
       setStep(2);
+      // Fire-and-forget: save customer details as an abandoned order so we can
+      // follow up if they don't complete payment.
+      const subtotal = state.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+      fetch('/api/checkout/save-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: `${details.firstName} ${details.lastName}`.trim(),
+          customerEmail: details.email,
+          customerPhone: details.phone,
+          deliveryAddress: details.deliveryAddress,
+          deliveryState: details.state,
+          cartItems: state.items.map(({ productId, productName, variantId, variantName, tierQty, threadColour, unitPrice, quantity, isTool }) => ({
+            productId, productName, variantId, variantName, tierQty, threadColour, unitPrice, quantity, isTool,
+          })),
+          subtotal,
+        }),
+      }).catch(() => {
+        // Silently ignore — this is best-effort, never block the user
+      });
     }
   }
 
