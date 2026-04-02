@@ -160,7 +160,7 @@ export function AboutPagesForm({ sections }: AboutPagesFormProps) {
                     type="text"
                     value={section.title}
                     onChange={(e) => updateSection(section.id, { title: e.target.value })}
-                    className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
                   />
                 </div>
 
@@ -210,7 +210,7 @@ export function AboutPagesForm({ sections }: AboutPagesFormProps) {
                       className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed text-sm cursor-pointer transition-colors ${
                         uploading[section.id]
                           ? 'border-stone-700 text-stone-500 cursor-not-allowed'
-                          : 'border-stone-600 text-stone-400 hover:border-amber-600/60 hover:text-stone-300'
+                          : 'border-stone-600 text-stone-400 hover:border-gold/60 hover:text-stone-300'
                       }`}
                     >
                       <svg
@@ -261,7 +261,7 @@ export function AboutPagesForm({ sections }: AboutPagesFormProps) {
           type="button"
           onClick={handleSave}
           disabled={isPending}
-          className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+          className="px-6 py-2.5 bg-gold hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
         >
           {isPending ? 'Saving…' : 'Save all sections'}
         </button>

@@ -89,7 +89,7 @@ export function ReviewForm({ products }: ReviewFormProps) {
             value={productId}
             onChange={(e) => setProductId(e.target.value)}
             required
-            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
           >
             {products.map((p) => (
               <option key={p.id} value={p.id}>
@@ -111,7 +111,7 @@ export function ReviewForm({ products }: ReviewFormProps) {
           onChange={(e) => setAuthorName(e.target.value)}
           placeholder="e.g. Adaeze O."
           required
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
         />
       </div>
 
@@ -126,7 +126,7 @@ export function ReviewForm({ products }: ReviewFormProps) {
           placeholder="Write the customer's review here..."
           required
           rows={4}
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-y"
+          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold resize-y"
         />
       </div>
 
@@ -148,11 +148,11 @@ export function ReviewForm({ products }: ReviewFormProps) {
               onClick={() => setRating(star)}
               onMouseEnter={() => setHoverRating(star)}
               aria-label={`${star} star${star !== 1 ? 's' : ''}`}
-              className="text-2xl leading-none transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded"
+              className="text-2xl leading-none transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded"
             >
               <span
                 className={
-                  star <= activeRating ? 'text-amber-400' : 'text-stone-600'
+                  star <= activeRating ? 'text-gold' : 'text-stone-600'
                 }
               >
                 {star <= activeRating ? '★' : '☆'}
@@ -169,7 +169,7 @@ export function ReviewForm({ products }: ReviewFormProps) {
       <button
         type="submit"
         disabled={isPending || products.length === 0}
-        className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+        className="px-6 py-2.5 bg-gold hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
       >
         {isPending ? 'Saving…' : 'Save review'}
       </button>

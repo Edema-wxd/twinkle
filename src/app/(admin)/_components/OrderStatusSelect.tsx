@@ -6,7 +6,7 @@ const STATUS_OPTIONS = ['paid', 'processing', 'shipped', 'delivered'] as const
 type OrderStatus = (typeof STATUS_OPTIONS)[number]
 
 const STATUS_COLOURS: Record<OrderStatus, string> = {
-  paid: 'text-amber-300',
+  paid: 'text-gold/80',
   processing: 'text-blue-300',
   shipped: 'text-purple-300',
   delivered: 'text-green-300',
@@ -62,7 +62,7 @@ export function OrderStatusSelect({
         value={status}
         onChange={(e) => handleChange(e.target.value)}
         disabled={saving}
-        className={`bg-stone-800 border border-stone-600 rounded px-2 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-50 disabled:cursor-not-allowed ${colourClass}`}
+        className={`bg-stone-800 border border-stone-600 rounded px-2 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-gold disabled:opacity-50 disabled:cursor-not-allowed ${colourClass}`}
       >
         {STATUS_OPTIONS.map((s) => (
           <option key={s} value={s} className={STATUS_COLOURS[s]}>

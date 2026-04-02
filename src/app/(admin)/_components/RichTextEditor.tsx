@@ -30,7 +30,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
           aria-label="Bold"
           className={`px-2 py-1 text-sm font-bold rounded transition-colors ${
             editor.isActive('bold')
-              ? 'bg-amber-600 text-white'
+              ? 'bg-gold text-white'
               : 'text-stone-300 hover:bg-stone-600 hover:text-white'
           }`}
         >
@@ -42,7 +42,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
           aria-label="Italic"
           className={`px-2 py-1 text-sm italic rounded transition-colors ${
             editor.isActive('italic')
-              ? 'bg-amber-600 text-white'
+              ? 'bg-gold text-white'
               : 'text-stone-300 hover:bg-stone-600 hover:text-white'
           }`}
         >
@@ -54,7 +54,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
           aria-label="Bullet list"
           className={`px-2 py-1 text-sm rounded transition-colors ${
             editor.isActive('bulletList')
-              ? 'bg-amber-600 text-white'
+              ? 'bg-gold text-white'
               : 'text-stone-300 hover:bg-stone-600 hover:text-white'
           }`}
         >
@@ -65,7 +65,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
       {/* Editor content */}
       <EditorContent
         editor={editor}
-        className="bg-stone-800 text-white text-sm [&_.ProseMirror]:min-h-[120px] [&_.ProseMirror]:px-3 [&_.ProseMirror]:py-2 [&_.ProseMirror]:outline-none [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-5 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-5 [&_.ProseMirror_p]:my-1 focus-within:ring-2 focus-within:ring-amber-500"
+        className="bg-stone-800 text-white text-sm [&_.ProseMirror]:min-h-[120px] [&_.ProseMirror]:px-3 [&_.ProseMirror]:py-2 [&_.ProseMirror]:outline-none [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-5 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-5 [&_.ProseMirror_p]:my-1 focus-within:ring-2 focus-within:ring-gold"
       />
     </div>
   )

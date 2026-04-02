@@ -63,7 +63,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
             onClick={() => setActiveTab(tab)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
               activeTab === tab
-                ? 'bg-amber-600 text-white'
+                ? 'bg-gold text-white'
                 : 'bg-stone-800 text-stone-300 hover:bg-stone-700 border border-stone-700'
             }`}
           >
@@ -101,7 +101,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                   <td className="px-4 py-3 font-mono text-stone-300 whitespace-nowrap">
                     <Link
                       href={`/admin/orders/${order.id}`}
-                      className="hover:text-amber-400 transition-colors underline underline-offset-2"
+                      className="hover:text-gold transition-colors underline underline-offset-2"
                     >
                       #{shortRef(order.paystack_reference)}
                     </Link>

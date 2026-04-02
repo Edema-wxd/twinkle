@@ -113,7 +113,7 @@ export function VariantTable({ variants, onChange }: VariantTableProps) {
                       value={v.name}
                       onChange={(e) => updateVariant(v.id, { name: e.target.value })}
                       placeholder="e.g. 4mm"
-                      className="w-full bg-stone-900 border border-stone-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      className="w-full bg-stone-900 border border-stone-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-gold"
                     />
                   </td>
                   <td className="px-3 py-2">
@@ -124,7 +124,7 @@ export function VariantTable({ variants, onChange }: VariantTableProps) {
                       onChange={(e) =>
                         updateVariant(v.id, { price: Number(e.target.value) })
                       }
-                      className="w-28 bg-stone-900 border border-stone-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      className="w-28 bg-stone-900 border border-stone-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-gold"
                     />
                   </td>
                   <td className="px-3 py-2 text-center">
@@ -132,7 +132,7 @@ export function VariantTable({ variants, onChange }: VariantTableProps) {
                       type="checkbox"
                       checked={v.in_stock}
                       onChange={(e) => updateVariant(v.id, { in_stock: e.target.checked })}
-                      className="w-4 h-4 accent-amber-500"
+                      className="w-4 h-4 accent-gold"
                     />
                   </td>
                   <td className="px-3 py-2">
@@ -145,7 +145,7 @@ export function VariantTable({ variants, onChange }: VariantTableProps) {
                         onClick={() =>
                           setExpandedTiersId(expandedTiersId === v.id ? null : v.id)
                         }
-                        className="text-xs text-amber-400 hover:text-amber-300 whitespace-nowrap"
+                        className="text-xs text-gold hover:text-gold/80 whitespace-nowrap"
                       >
                         {expandedTiersId === v.id ? 'Close' : 'Edit tiers'}
                       </button>
@@ -181,7 +181,7 @@ export function VariantTable({ variants, onChange }: VariantTableProps) {
                               onChange={(e) =>
                                 updateTier(v.id, idx, 'qty', Number(e.target.value))
                               }
-                              className="w-20 bg-stone-800 border border-stone-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                              className="w-20 bg-stone-800 border border-stone-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-gold"
                             />
                             <label className="text-xs text-stone-400 w-14">Price ₦:</label>
                             <input
@@ -191,7 +191,7 @@ export function VariantTable({ variants, onChange }: VariantTableProps) {
                               onChange={(e) =>
                                 updateTier(v.id, idx, 'price', Number(e.target.value))
                               }
-                              className="w-24 bg-stone-800 border border-stone-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                              className="w-24 bg-stone-800 border border-stone-600 text-white rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-gold"
                             />
                             {v.price_tiers.length > 1 && (
                               <button
@@ -207,7 +207,7 @@ export function VariantTable({ variants, onChange }: VariantTableProps) {
                         <button
                           type="button"
                           onClick={() => addTier(v.id)}
-                          className="text-xs text-amber-400 hover:text-amber-300 mt-1"
+                          className="text-xs text-gold hover:text-gold/80 mt-1"
                         >
                           + Add tier
                         </button>
@@ -224,7 +224,7 @@ export function VariantTable({ variants, onChange }: VariantTableProps) {
       <button
         type="button"
         onClick={addVariant}
-        className="text-sm text-amber-400 hover:text-amber-300 transition-colors"
+        className="text-sm text-gold hover:text-gold/80 transition-colors"
       >
         + Add variant
       </button>

@@ -94,7 +94,7 @@ export function ShippingForm({ settings }: ShippingFormProps) {
             onChange={(e) => setPageIntro(e.target.value)}
             placeholder="We deliver across Nigeria..."
             rows={3}
-            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-y"
+            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold resize-y"
           />
           <p className="text-xs text-stone-500">Shown at the top of the /shipping page.</p>
         </div>
@@ -119,7 +119,7 @@ export function ShippingForm({ settings }: ShippingFormProps) {
               placeholder="3000"
               min="0"
               step="100"
-              className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
             />
           </div>
 
@@ -130,7 +130,7 @@ export function ShippingForm({ settings }: ShippingFormProps) {
               value={lagosDays}
               onChange={(e) => setLagosDays(e.target.value)}
               placeholder="1–2 business days"
-              className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
             />
           </div>
 
@@ -145,7 +145,7 @@ export function ShippingForm({ settings }: ShippingFormProps) {
               placeholder="4500"
               min="0"
               step="100"
-              className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
             />
           </div>
 
@@ -158,7 +158,7 @@ export function ShippingForm({ settings }: ShippingFormProps) {
               value={otherDays}
               onChange={(e) => setOtherDays(e.target.value)}
               placeholder="3–5 business days"
-              className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
             />
           </div>
         </div>
@@ -182,7 +182,7 @@ export function ShippingForm({ settings }: ShippingFormProps) {
             onChange={(e) => setIntlMessage(e.target.value)}
             placeholder="Hi, I'd like a shipping quote for an international order."
             rows={3}
-            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-y"
+            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold resize-y"
           />
           <p className="text-xs text-stone-500">
             This text is URL-encoded into the WhatsApp CTA link on the shipping page.
@@ -194,7 +194,7 @@ export function ShippingForm({ settings }: ShippingFormProps) {
       <button
         type="submit"
         disabled={isPending}
-        className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+        className="px-6 py-2.5 bg-gold hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
       >
         {isPending ? 'Saving…' : 'Save shipping info'}
       </button>

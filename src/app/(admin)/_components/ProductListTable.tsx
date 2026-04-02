@@ -91,7 +91,7 @@ export function ProductListTable({ products }: ProductListTableProps) {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search products..."
-          className="w-full sm:w-64 px-3 py-2 bg-stone-800 text-white placeholder-stone-500 border border-stone-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full sm:w-64 px-3 py-2 bg-stone-800 text-white placeholder-stone-500 border border-stone-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
         />
 
         {/* Category chips */}
@@ -102,7 +102,7 @@ export function ProductListTable({ products }: ProductListTableProps) {
               onClick={() => setActiveCategory(cat)}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 activeCategory === cat
-                  ? 'bg-amber-600 text-white'
+                  ? 'bg-gold text-white'
                   : 'bg-stone-800 text-stone-300 hover:bg-stone-700 border border-stone-700'
               }`}
             >
@@ -114,7 +114,7 @@ export function ProductListTable({ products }: ProductListTableProps) {
         {/* New product button (also available at page level) */}
         <Link
           href="/admin/products/new"
-          className="hidden md:inline-flex ml-auto items-center px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+          className="hidden md:inline-flex ml-auto items-center px-4 py-2 bg-gold hover:bg-yellow-600 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
         >
           + New product
         </Link>
@@ -191,7 +191,7 @@ export function ProductListTable({ products }: ProductListTableProps) {
                           className={`px-3 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                             isActive
                               ? 'bg-stone-700 text-stone-300 hover:bg-stone-600'
-                              : 'bg-amber-700 text-amber-200 hover:bg-amber-600'
+                              : 'bg-gold/20 text-gold hover:bg-gold/30'
                           }`}
                         >
                           {isLoading

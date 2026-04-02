@@ -14,7 +14,7 @@ type StatusKey =
 
 const STATUS_STYLES: Record<string, string> = {
   pending: 'bg-yellow-900/40 text-yellow-400 border border-yellow-800',
-  paid: 'bg-amber-900/40 text-amber-400 border border-amber-800',
+  paid: 'bg-gold/10 text-gold border border-gold/30',
   processing: 'bg-blue-900/40 text-blue-400 border border-blue-800',
   shipped: 'bg-purple-900/40 text-purple-400 border border-purple-800',
   delivered: 'bg-green-900/40 text-green-400 border border-green-800',

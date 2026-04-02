@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /Users/mac/Documents/GitHub/twinkle/src/app/\\\\\\(admin\\\\\\)/admin/orders/)"
+    ]
+  }
+}

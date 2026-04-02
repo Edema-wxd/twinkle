@@ -59,7 +59,7 @@ function SortableThumb({ item, isPrimary, onRemove }: SortableThumbProps) {
 
       {/* Primary badge */}
       {isPrimary && (
-        <span className="absolute bottom-0 left-0 right-0 bg-amber-600/90 text-white text-[10px] font-semibold text-center py-0.5 leading-tight">
+        <span className="absolute bottom-0 left-0 right-0 bg-gold/90 text-white text-[10px] font-semibold text-center py-0.5 leading-tight">
           Primary
         </span>
       )}
@@ -178,7 +178,7 @@ export function ImageUploader({ productId, initialImages, onImagesChange }: Imag
         className={`relative flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed transition-colors ${
           images.length >= 5
             ? 'border-stone-700 bg-stone-800/40 cursor-not-allowed'
-            : 'border-stone-600 bg-stone-800 cursor-pointer hover:border-amber-600/60 hover:bg-stone-700/60'
+            : 'border-stone-600 bg-stone-800 cursor-pointer hover:border-gold/60 hover:bg-stone-700/60'
         }`}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
@@ -191,7 +191,7 @@ export function ImageUploader({ productId, initialImages, onImagesChange }: Imag
         {uploading && (
           <div className="absolute inset-0 flex items-center justify-center bg-stone-900/60 rounded-lg z-10">
             <svg
-              className="animate-spin h-6 w-6 text-amber-500"
+              className="animate-spin h-6 w-6 text-gold"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"

@@ -184,7 +184,7 @@ export function ProductForm({ product }: ProductFormProps) {
           onBlur={handleNameBlur}
           required
           placeholder="e.g. 24K Gold Loc Beads"
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
         />
       </div>
 
@@ -198,7 +198,7 @@ export function ProductForm({ product }: ProductFormProps) {
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
           placeholder="used-in-url"
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
         />
         <p className="text-xs text-stone-500">Used in the product URL: /catalog/[slug]</p>
       </div>
@@ -211,7 +211,7 @@ export function ProductForm({ product }: ProductFormProps) {
         <select
           value={material}
           onChange={(e) => setMaterial(e.target.value as ProductMaterial)}
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
         >
           {MATERIALS.map((m) => (
             <option key={m} value={m}>
@@ -229,7 +229,7 @@ export function ProductForm({ product }: ProductFormProps) {
             type="checkbox"
             checked={isFeatured}
             onChange={(e) => setIsFeatured(e.target.checked)}
-            className="w-4 h-4 accent-amber-500"
+            className="w-4 h-4 accent-gold"
           />
           <span className="text-sm text-stone-300">Featured on homepage</span>
         </label>
@@ -241,8 +241,8 @@ export function ProductForm({ product }: ProductFormProps) {
             role="switch"
             aria-checked={isActive}
             onClick={() => setIsActive((v) => !v)}
-            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
-              isActive ? 'bg-amber-600' : 'bg-stone-600'
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold ${
+              isActive ? 'bg-gold' : 'bg-stone-600'
             }`}
           >
             <span
@@ -297,7 +297,7 @@ export function ProductForm({ product }: ProductFormProps) {
           <button
             type="submit"
             disabled={isPending}
-            className="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+            className="px-5 py-2.5 bg-gold hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
           >
             {isPending ? 'Saving…' : 'Save product'}
           </button>

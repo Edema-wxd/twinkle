@@ -180,7 +180,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
           onBlur={handleTitleBlur}
           required
           placeholder="e.g. How to care for your loc beads"
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
         />
       </div>
 
@@ -194,7 +194,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
           placeholder="used-in-url"
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
         />
         <p className="text-xs text-stone-500">Used in the post URL: /blog/[slug]</p>
       </div>
@@ -209,7 +209,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
           onChange={(e) => setExcerpt(e.target.value)}
           rows={3}
           placeholder="1–3 sentences shown on the blog listing page..."
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-y"
+          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold resize-y"
         />
       </div>
 
@@ -223,7 +223,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
           value={tag}
           onChange={(e) => setTag(e.target.value)}
           placeholder="e.g. Hair Care, Tutorials, Brand Story"
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
         />
         <p className="text-xs text-stone-500">Freeform tag shown on blog cards and the post page.</p>
       </div>
@@ -294,7 +294,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
             type="checkbox"
             checked={published}
             onChange={(e) => setPublished(e.target.checked)}
-            className="w-4 h-4 accent-amber-500"
+            className="w-4 h-4 accent-gold"
           />
           <span className="text-sm text-stone-300">Publish post (visible on blog)</span>
         </label>
@@ -306,7 +306,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
           <button
             type="submit"
             disabled={isPending}
-            className="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+            className="px-5 py-2.5 bg-gold hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
           >
             {isPending ? 'Saving…' : isEdit ? 'Save post' : 'Create post'}
           </button>

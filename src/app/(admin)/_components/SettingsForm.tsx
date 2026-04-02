@@ -95,7 +95,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             value={storeName}
             onChange={(e) => setStoreName(e.target.value)}
             placeholder="Twinkle Locs"
-            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
           />
         </div>
 
@@ -106,7 +106,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             value={storeTagline}
             onChange={(e) => setStoreTagline(e.target.value)}
             placeholder="Adorn your locs"
-            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
           />
         </div>
 
@@ -117,7 +117,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="hello@twinklelocs.com"
-            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
           />
         </div>
 
@@ -128,7 +128,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             onChange={(e) => setAddress(e.target.value)}
             placeholder="Lagos, Nigeria"
             rows={2}
-            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-y"
+            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold resize-y"
           />
         </div>
       </section>
@@ -149,7 +149,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             value={whatsappNumber}
             onChange={(e) => setWhatsappNumber(e.target.value)}
             placeholder="+2349118888010"
-            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
           />
           <p className="text-xs text-stone-500">Include country code, e.g. +2349118888010</p>
         </div>
@@ -163,7 +163,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             placeholder="3000"
             min="0"
             step="100"
-            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
           />
           <p className="text-xs text-stone-500">
             Applied to all orders (override per-state logic not supported in v1)
@@ -187,7 +187,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             value={instagramUrl}
             onChange={(e) => setInstagramUrl(e.target.value)}
             placeholder="https://instagram.com/twinklelocs"
-            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
           />
         </div>
 
@@ -198,7 +198,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             value={tiktokUrl}
             onChange={(e) => setTiktokUrl(e.target.value)}
             placeholder="https://tiktok.com/@twinklelocs"
-            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
           />
         </div>
 
@@ -209,7 +209,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             value={facebookUrl}
             onChange={(e) => setFacebookUrl(e.target.value)}
             placeholder="https://facebook.com/twinklelocs"
-            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
           />
         </div>
       </section>
@@ -218,7 +218,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
       <button
         type="submit"
         disabled={isPending}
-        className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+        className="px-6 py-2.5 bg-gold hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
       >
         {isPending ? 'Saving…' : 'Save settings'}
       </button>

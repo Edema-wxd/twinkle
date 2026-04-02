@@ -110,7 +110,7 @@ export function FaqForm({ faq }: FaqFormProps) {
           onChange={(e) => setCategory(e.target.value)}
           placeholder="e.g. Shipping, Products, Care, Orders"
           required
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
         />
       </div>
 
@@ -125,7 +125,7 @@ export function FaqForm({ faq }: FaqFormProps) {
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="e.g. How long does delivery take?"
           required
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
         />
       </div>
 
@@ -140,7 +140,7 @@ export function FaqForm({ faq }: FaqFormProps) {
           placeholder="Write the answer here..."
           required
           rows={4}
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-y"
+          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold resize-y"
         />
       </div>
 
@@ -155,7 +155,7 @@ export function FaqForm({ faq }: FaqFormProps) {
           value={displayOrder}
           onChange={(e) => setDisplayOrder(Number(e.target.value))}
           min={0}
-          className="w-32 px-3 py-2 bg-stone-800 border border-stone-600 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-32 px-3 py-2 bg-stone-800 border border-stone-600 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
         />
       </div>
 
@@ -164,7 +164,7 @@ export function FaqForm({ faq }: FaqFormProps) {
         <button
           type="submit"
           disabled={isPending}
-          className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+          className="px-6 py-2.5 bg-gold hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
         >
           {isPending ? 'Saving…' : isEdit ? 'Save changes' : 'Add FAQ'}
         </button>

@@ -42,7 +42,7 @@ export default function StatsPanel({ stats }: StatsPanelProps) {
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === tab.id
-                ? 'bg-amber-600 text-white'
+                ? 'bg-gold text-white'
                 : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
             }`}
           >
@@ -58,7 +58,7 @@ export default function StatsPanel({ stats }: StatsPanelProps) {
           <p className="text-stone-400 text-sm font-medium mb-2">
             Total Sales
           </p>
-          <p className="text-3xl font-bold text-amber-500">
+          <p className="text-3xl font-bold text-gold">
             {formatNaira(current.totalSales)}
           </p>
         </div>
@@ -66,7 +66,7 @@ export default function StatsPanel({ stats }: StatsPanelProps) {
         {/* Order Count */}
         <div className="bg-stone-800 rounded-lg p-6">
           <p className="text-stone-400 text-sm font-medium mb-2">Orders</p>
-          <p className="text-3xl font-bold text-amber-500">{current.count}</p>
+          <p className="text-3xl font-bold text-gold">{current.count}</p>
         </div>
       </div>
     </div>
