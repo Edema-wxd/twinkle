@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { AbandonedOrder } from '@/types/supabase'
 
 function formatNaira(amount: number): string {
@@ -49,7 +50,14 @@ export function AbandonedOrdersTable({ abandonedOrders }: AbandonedOrdersTablePr
               key={order.id}
               className={`transition-colors ${order.recovered ? 'bg-stone-900/50 opacity-60' : 'bg-stone-900 hover:bg-stone-800'}`}
             >
-              <td className="px-4 py-3 text-white">{order.customer_name}</td>
+              <td className="px-4 py-3 text-white">
+                <Link
+                  href={`/admin/abandoned-orders/${order.id}`}
+                  className="hover:text-gold transition-colors underline underline-offset-2"
+                >
+                  {order.customer_name}
+                </Link>
+              </td>
               <td className="px-4 py-3 text-stone-300">{order.customer_email}</td>
               <td className="px-4 py-3 text-stone-300">{order.customer_phone}</td>
               <td className="px-4 py-3 text-stone-200 text-right whitespace-nowrap">
