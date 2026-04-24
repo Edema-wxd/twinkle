@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: executing
+stopped_at: Phase 10 Staging Deployment — 10-01 complete; env var fixes, WhatsApp placeholder removal, sitemap audit; build passes clean; ready for 10-02 Vercel deployment
+last_updated: "2026-04-24T08:59:03.301Z"
+last_activity: 2026-04-24 -- Phase 10 execution started
+progress:
+  total_phases: 12
+  completed_phases: 8
+  total_plans: 43
+  completed_plans: 44
+  percent: 100
+---
+
 # Project State
 
 ## Project Reference
@@ -5,20 +21,21 @@
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** A Nigerian customer on mobile can discover, customise, and buy loc beads in under 2 minutes — and a diaspora customer anywhere in the world can do the same.
-**Current focus:** Phase 10 — Staging Deployment
+**Current focus:** Phase 10 — staging-deployment
 
 ## Current Position
 
-Phase: 10 (Staging Deployment) — In progress
-Plan: 1 of 3 in Phase 10
-Status: In progress
-Last activity: 2026-04-01 — Completed 10-01-PLAN.md; env var consolidation, WhatsApp placeholder fix, sitemap audit; build passes clean
+Phase: 10 (staging-deployment) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 10
+Last activity: 2026-04-24 -- Phase 10 execution started
 
 Progress: [█] 1/3 plans (Phase 10 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 41
 - Total execution time: 1 session + ongoing
 
@@ -190,6 +207,8 @@ Recent decisions affecting current work:
 - **NEXT_PUBLIC_PAYSTACK_SECRET_KEY absent from source**: Paystack secret is PAYSTACK_SECRET_KEY (no NEXT_PUBLIC_ prefix); never exposed to browser
 - **sitemap.ts staticRoutes audited 2026-04-01**: all 6 public informational routes present; /cart, /checkout, /orders/ intentionally excluded as transactional
 - **product.price_min used in Product JSON-LD**: lowest visible price per Google Product schema guidance; consistent with how price_min is used on catalog cards
+
+- Phase 11 added: Migrate from Supabase to Neon + Uploadthing
 
 ### Pending Todos
 
