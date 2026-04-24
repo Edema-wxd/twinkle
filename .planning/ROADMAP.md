@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 7: Content Pages** - About/Founder, FAQ, Shipping Info, Blog listing and post pages
 - [ ] **Phase 8: Conversion** - Footer newsletter signup (email capture)
 - [x] **Phase 9: SEO** - Metadata, OpenGraph, structured data, sitemap, URL slug enforcement
-- [ ] **Phase 10: Staging Deployment** - Vercel staging URL, smoke test, pre-DNS-cutover checklist
+- [x] **Phase 10: Staging Deployment** - Vercel staging URL, smoke test, pre-DNS-cutover checklist (completed 2026-04-24)
 
 ## Phase Details
 
@@ -234,9 +234,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 10-01-PLAN.md — Pre-deployment fixes: consolidate SUPABASE_SERVICE_ROLE_KEY, replace hardcoded WhatsApp placeholder, audit sitemap routes
-- [ ] 10-02-PLAN.md — Vercel deployment: project creation, environment variables, first build, basic accessibility verification
-- [ ] 10-03-PLAN.md — Smoke testing: Paystack webhook registration, visual check, full purchase flow, admin flow, DNS cutover readiness decision
+- [x] 10-01-PLAN.md — Pre-deployment fixes: consolidate SUPABASE_SERVICE_ROLE_KEY, replace hardcoded WhatsApp placeholder, audit sitemap routes
+- [x] 10-02-PLAN.md — Vercel deployment: project creation, environment variables, first build, basic accessibility verification
+- [x] 10-03-PLAN.md — Smoke testing: Paystack webhook registration, visual check, full purchase flow, admin flow, DNS cutover readiness decision
 
 ---
 
@@ -257,7 +257,17 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Content Pages | 6/6 | Complete | 2026-03-26 |
 | 8. Conversion | 2/2 | Complete | 2026-03-28 |
 | 9. SEO | 3/3 | Complete | 2026-03-31 |
-| 10. Staging Deployment | 0/3 | Not started | - |
+| 10. Staging Deployment | 3/3 | Complete    | 2026-04-24 |
+
+### Phase 11: Migrate from Supabase to Neon + Uploadthing
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 10
+**Plans:** 3/3 plans complete
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 11 to break down)
 
 ---
 *Roadmap created: 2026-03-19*
