@@ -123,7 +123,11 @@ async function handleChargeSuccess(data: PaystackChargeData) {
     return
   }
 
-  const { customer_details, cart_items, subtotal, shipping_cost } = data.metadata
+  const { customer_details, cart_items, subtotal, shipping_cost } = data.metadata ?? {}
+  if (!customer_details || !Array.isArray(cart_items) || cart_items.length === 0) {
+    console.error('[webhook] Missing metadata fields for reference:', data.reference)
+    return
+  }
 
   const orderInsert: OrderInsert = {
     paystack_reference: data.reference,
