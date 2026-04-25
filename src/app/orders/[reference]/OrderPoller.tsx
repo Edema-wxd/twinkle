@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { Order, OrderItem } from '@/types/supabase';
 import { OrderConfirmationView } from './OrderConfirmationView';
 import { BUSINESS } from '@/lib/config/business';
@@ -18,50 +17,47 @@ export function OrderPoller({ reference }: OrderPollerProps) {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
+    let cancelled = false;
 
     // 30-second timeout
     timeoutRef.current = setTimeout(() => setTimedOut(true), 30_000);
 
-    // Helper to fetch full order with items
+    // Helper to fetch full order via API route (uses service-role key server-side,
+    // avoids RLS blocking anon reads on the orders table)
     async function fetchFullOrder() {
-      const result = await supabase
-        .from('orders')
-        .select('*, order_items(*)')
-        .eq('paystack_reference', reference)
-        .single();
-      if (!result.error && result.data) {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        setOrder(result.data as unknown as FullOrder);
-        return true;
+      try {
+        const res = await fetch(`/api/orders/${reference}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && !cancelled) {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            setOrder(data as FullOrder);
+            return true;
+          }
+        }
+      } catch {
+        // Network error — will retry on next interval
       }
       return false;
     }
 
     // Immediate fetch to cover the race where webhook already arrived
-    fetchFullOrder();
-
-    // Realtime subscription for when webhook arrives after page load
-    const channel = supabase
-      .channel('order-' + reference)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'orders',
-          filter: 'paystack_reference=eq.' + reference,
-        },
-        async () => {
-          // Realtime payload may not include order_items relation — do a full fetch
-          await fetchFullOrder();
-        }
-      )
-      .subscribe();
+    fetchFullOrder().then((found) => {
+      if (found || cancelled) return;
+      // Poll every 2 seconds until order appears or timeout fires
+      const intervalId = setInterval(async () => {
+        const found = await fetchFullOrder();
+        if (found || cancelled) clearInterval(intervalId);
+      }, 2_000);
+      timeoutRef.current = setTimeout(() => {
+        clearInterval(intervalId);
+        if (!cancelled) setTimedOut(true);
+      }, 30_000);
+    });
 
     return () => {
+      cancelled = true;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      supabase.removeChannel(channel);
     };
   }, [reference]);
 
