@@ -67,12 +67,24 @@ export async function POST(req: NextRequest) {
   }
 
   // 3. Parse event
-  const event: PaystackEvent = JSON.parse(body)
+  let event: PaystackEvent
+  try {
+    event = JSON.parse(body)
+  } catch {
+    console.error('[webhook] Malformed JSON body for signature', signature)
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
 
   // 4. Handle charge.success — await to ensure DB write completes before
   //    returning 200 (Paystack allows up to 10 seconds; two inserts are fast)
-  if (event.event === 'charge.success') {
-    await handleChargeSuccess(event.data)
+  try {
+    if (event.event === 'charge.success') {
+      await handleChargeSuccess(event.data)
+    }
+  } catch (err) {
+    console.error('[webhook] Unhandled error in handleChargeSuccess:', err)
+    // Return 200 to prevent infinite Paystack retries for a payload we cannot parse.
+    return NextResponse.json({ received: true, warning: 'processing_error' }, { status: 200 })
   }
 
   return NextResponse.json({ received: true }, { status: 200 })
