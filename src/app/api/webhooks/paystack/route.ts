@@ -175,6 +175,9 @@ async function handleChargeSuccess(data: PaystackChargeData) {
 
   if (itemsResult.error) {
     console.error('[webhook] Failed to insert order_items:', itemsResult.error)
+    // Throw so the outer try/catch returns a non-200 — Paystack will retry.
+    // The idempotency guard prevents a duplicate order header on retry.
+    throw new Error('order_items insert failed')
   }
 
   // Mark any matching abandoned checkouts as recovered
