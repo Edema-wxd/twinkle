@@ -180,12 +180,15 @@ async function handleChargeSuccess(data: PaystackChargeData) {
     throw new Error('order_items insert failed')
   }
 
-  // Mark any matching abandoned checkouts as recovered
+  // Mark any matching abandoned checkouts as recovered.
+  // Time-bounded to 48 h to avoid marking unrelated past carts for returning customers.
+  const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
   const { error: recoverError } = await supabase
     .from('abandoned_orders')
     .update({ recovered: true, recovered_at: new Date().toISOString() })
     .eq('customer_email', data.customer.email.toLowerCase())
     .eq('recovered', false)
+    .gte('created_at', fortyEightHoursAgo)
 
   if (recoverError) {
     console.error('[webhook] Failed to mark abandoned orders recovered:', recoverError)
