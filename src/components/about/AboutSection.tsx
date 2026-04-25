@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import sanitizeHtml from 'sanitize-html'
 import { AboutSection as AboutSectionType } from '@/types/supabase'
 import { BUSINESS } from '@/lib/config/business'
 
@@ -8,6 +9,16 @@ interface AboutSectionProps {
 
 export function AboutSection({ section }: AboutSectionProps) {
   const isContact = section.id === 'contact'
+
+  const safeBody = section.body
+    ? sanitizeHtml(section.body, {
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h2', 'img']),
+        allowedAttributes: {
+          ...sanitizeHtml.defaults.allowedAttributes,
+          a: ['href', 'target', 'rel'],
+        },
+      })
+    : null
 
   return (
     <section id={section.id} className="scroll-mt-20">
@@ -28,10 +39,10 @@ export function AboutSection({ section }: AboutSectionProps) {
         </div>
       )}
 
-      {section.body && (
+      {safeBody && (
         <div
           className="[&_h2]:font-heading [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mb-4 [&_p]:mb-4 [&_p]:leading-relaxed [&_p]:text-charcoal/80 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_a]:text-gold [&_a]:underline [&_a]:hover:text-gold/80"
-          dangerouslySetInnerHTML={{ __html: section.body }}
+          dangerouslySetInnerHTML={{ __html: safeBody }}
         />
       )}
 
