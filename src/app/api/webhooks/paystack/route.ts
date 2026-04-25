@@ -100,6 +100,12 @@ async function handleChargeSuccess(data: PaystackChargeData) {
     .eq('paystack_reference', data.reference)
     .maybeSingle()
 
+  if (existing.error) {
+    console.error('[webhook] Idempotency check failed:', existing.error)
+    // Fail safe: abort — Paystack will retry and the DB should be healthy by then.
+    return
+  }
+
   if (existing.data) {
     // Order already created from a previous delivery of this webhook
     return
