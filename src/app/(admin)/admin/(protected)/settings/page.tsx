@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { settings } from '@/db'
 import { SettingsForm } from '../../../_components/SettingsForm'
 
 export const metadata = {
@@ -18,18 +19,14 @@ export default async function AdminSettingsPage() {
     redirect('/admin/login')
   }
 
-  const adminClient = createAdminClient()
-  const { data: rows, error } = await adminClient
-    .from('settings')
-    .select('key, value')
+  let settingsMap: Record<string, string> = {}
 
-  if (error) {
+  try {
+    const rows = await db.select({ key: settings.key, value: settings.value }).from(settings)
+    settingsMap = Object.fromEntries(rows.map((r) => [r.key, r.value]))
+  } catch (error) {
     console.error('Failed to fetch settings:', error)
   }
-
-  const settings: Record<string, string> = Object.fromEntries(
-    (rows ?? []).map((r) => [r.key, r.value])
-  )
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-2xl">
@@ -40,7 +37,7 @@ export default async function AdminSettingsPage() {
         </p>
       </div>
 
-      <SettingsForm settings={settings} />
+      <SettingsForm settings={settingsMap} />
     </div>
   )
 }

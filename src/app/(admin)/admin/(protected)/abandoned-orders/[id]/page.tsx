@@ -1,8 +1,10 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { AbandonedOrder } from '@/types/supabase'
+import { db } from '@/db'
+import { abandonedOrders } from '@/db'
+import { eq } from 'drizzle-orm'
+
 const SITE_URL = 'https://twinklelocs.com'
 
 interface CartItemSnapshot {
@@ -46,19 +48,34 @@ export default async function AbandonedOrderDetailPage({ params }: PageProps) {
   }
 
   const { id } = await params
-  const adminClient = createAdminClient()
 
-  const { data, error } = await adminClient
-    .from('abandoned_orders')
-    .select('*')
-    .eq('id', id)
-    .single()
+  const [row] = await db
+    .select()
+    .from(abandonedOrders)
+    .where(eq(abandonedOrders.id, id))
+    .limit(1)
 
-  if (error || !data) {
+  if (!row) {
     notFound()
   }
 
-  const order = data as AbandonedOrder
+  // Map camelCase Drizzle row to the shape used in this page
+  const order = {
+    id: row.id,
+    created_at: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+    customer_name: row.customerName,
+    customer_email: row.customerEmail,
+    customer_phone: row.customerPhone,
+    delivery_address: row.deliveryAddress,
+    delivery_state: row.deliveryState,
+    shipping_cost: Number(row.shippingCost),
+    subtotal: Number(row.subtotal),
+    total: Number(row.total),
+    cart_items: row.cartItems,
+    recovered: row.recovered,
+    recovered_at: row.recoveredAt instanceof Date ? row.recoveredAt.toISOString() : (row.recoveredAt ?? null),
+  }
+
   const cartItems = (order.cart_items as unknown as CartItemSnapshot[]) ?? []
 
   const whatsappMessage = encodeURIComponent(
