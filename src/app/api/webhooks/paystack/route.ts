@@ -1,7 +1,8 @@
 import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { Database, OrderInsert, OrderItemInsert } from '@/types/supabase'
+import { db } from '@/db'
+import { orders, orderItems, abandonedOrders } from '@/db'
+import { eq, and, gte } from 'drizzle-orm'
 
 // ── Paystack webhook payload types ──────────────────────────────────────────
 
@@ -93,32 +94,14 @@ export async function POST(req: NextRequest) {
 // ── Order creation ───────────────────────────────────────────────────────────
 
 async function handleChargeSuccess(data: PaystackChargeData) {
-  const supabase = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-      },
-    }
-  )
-
   // Idempotency guard — ignore duplicate webhook fires
-  const existing = await supabase
-    .from('orders')
-    .select('id')
-    .eq('paystack_reference', data.reference)
-    .maybeSingle()
+  const [existing] = await db
+    .select({ id: orders.id })
+    .from(orders)
+    .where(eq(orders.paystackReference, data.reference))
+    .limit(1)
 
-  if (existing.error) {
-    console.error('[webhook] Idempotency check failed:', existing.error)
-    // Fail safe: abort — Paystack will retry and the DB should be healthy by then.
-    return
-  }
-
-  if (existing.data) {
+  if (existing) {
     // Order already created from a previous delivery of this webhook
     return
   }
@@ -129,68 +112,63 @@ async function handleChargeSuccess(data: PaystackChargeData) {
     return
   }
 
-  const orderInsert: OrderInsert = {
-    paystack_reference: data.reference,
-    paystack_payload: JSON.parse(JSON.stringify(data)) as Database['public']['Tables']['orders']['Insert']['paystack_payload'],
-    status: 'paid',
-    customer_name: `${customer_details.first_name} ${customer_details.last_name}`.trim(),
-    customer_email: data.customer.email,
-    customer_phone: customer_details.phone,
-    customer_ip: data.ip_address,
-    delivery_address: customer_details.delivery_address,
-    delivery_state: customer_details.state,
-    shipping_cost,
-    subtotal,
-    total: subtotal + shipping_cost,
-  }
+  const [order] = await db
+    .insert(orders)
+    .values({
+      paystackReference: data.reference,
+      paystackPayload: data as unknown,
+      status: 'paid',
+      customerName: `${customer_details.first_name} ${customer_details.last_name}`.trim(),
+      customerEmail: data.customer.email,
+      customerPhone: customer_details.phone,
+      customerIp: data.ip_address,
+      deliveryAddress: customer_details.delivery_address,
+      deliveryState: customer_details.state,
+      shippingCost: shipping_cost,
+      subtotal,
+      total: subtotal + shipping_cost,
+    })
+    .returning({ id: orders.id })
 
-  const orderResult = await supabase
-    .from('orders')
-    .insert(orderInsert)
-    .select('id')
-    .single()
-
-  if (orderResult.error || !orderResult.data) {
-    // Log error — cannot throw from fire-and-forget context
-    console.error('[webhook] Failed to insert order:', orderResult.error)
+  if (!order) {
+    // Log error and abort — cannot insert items without an order ID
+    console.error('[webhook] Failed to insert order: no data returned')
     return
   }
 
-  const orderId = orderResult.data.id
+  const orderId = order.id
 
-  const orderItems: OrderItemInsert[] = cart_items.map((item) => ({
-    order_id: orderId,
-    product_id: item.productId,
-    product_name: item.productName,
-    variant_id: item.variantId,
-    variant_name: item.variantName,
-    tier_qty: item.tierQty,
-    thread_colour: item.isTool ? null : item.threadColour,
-    unit_price: item.unitPrice,
+  const items = cart_items.map((item) => ({
+    orderId,
+    productId: item.productId,
+    productName: item.productName,
+    variantId: item.variantId,
+    variantName: item.variantName,
+    tierQty: item.tierQty,
+    threadColour: item.isTool ? null : item.threadColour,
+    unitPrice: item.unitPrice,
     quantity: item.quantity,
-    line_total: item.unitPrice * item.quantity,
+    lineTotal: item.unitPrice * item.quantity,
   }))
 
-  const itemsResult = await supabase.from('order_items').insert(orderItems)
-
-  if (itemsResult.error) {
-    console.error('[webhook] Failed to insert order_items:', itemsResult.error)
-    // Throw so the outer try/catch returns a non-200 — Paystack will retry.
-    // The idempotency guard prevents a duplicate order header on retry.
-    throw new Error('order_items insert failed')
-  }
+  // Throw on failure so the outer try/catch returns non-200 — Paystack will retry.
+  // The idempotency guard prevents a duplicate order header on retry.
+  await db.insert(orderItems).values(items)
 
   // Mark any matching abandoned checkouts as recovered.
   // Time-bounded to 48 h to avoid marking unrelated past carts for returning customers.
-  const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
-  const { error: recoverError } = await supabase
-    .from('abandoned_orders')
-    .update({ recovered: true, recovered_at: new Date().toISOString() })
-    .eq('customer_email', data.customer.email.toLowerCase())
-    .eq('recovered', false)
-    .gte('created_at', fortyEightHoursAgo)
-
-  if (recoverError) {
-    console.error('[webhook] Failed to mark abandoned orders recovered:', recoverError)
+  try {
+    await db
+      .update(abandonedOrders)
+      .set({ recovered: true, recoveredAt: new Date() })
+      .where(
+        and(
+          eq(abandonedOrders.customerEmail, data.customer.email.toLowerCase()),
+          eq(abandonedOrders.recovered, false),
+          gte(abandonedOrders.createdAt, new Date(Date.now() - 48 * 60 * 60 * 1000))
+        )
+      )
+  } catch (recoverErr) {
+    console.error('[webhook] Failed to mark abandoned orders recovered:', recoverErr)
   }
 }
