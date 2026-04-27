@@ -1,6 +1,6 @@
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { orders } from '@/db'
 import { eq } from 'drizzle-orm'
@@ -43,14 +43,7 @@ interface PageProps {
 
 export default async function AdminOrderDetailPage({ params }: PageProps) {
   // Belt-and-braces auth check
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/admin/login')
-  }
+  await requireAdminSession()
 
   const { id } = await params
 

@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { orders, abandonedOrders as abandonedOrdersTable } from '@/db'
 import { desc } from 'drizzle-orm'
@@ -10,14 +9,7 @@ import { AbandonedOrdersTable } from '../../../_components/AbandonedOrdersTable'
 // Belt-and-braces auth check — layout.tsx also checks, but individual pages
 // should never trust the layout alone (CVE-2025-29927).
 export default async function AdminOrdersPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/admin/login')
-  }
+  await requireAdminSession()
 
   const [ordersRows, abandonedRows] = await Promise.all([
     db

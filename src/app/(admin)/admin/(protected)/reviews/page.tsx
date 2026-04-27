@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { reviews, products } from '@/db'
 import { desc, asc, eq } from 'drizzle-orm'
@@ -12,14 +11,7 @@ export const metadata = {
 
 export default async function AdminReviewsPage() {
   // Belt-and-braces auth check (CVE-2025-29927 — layout.tsx also checks)
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/admin/login')
-  }
+  await requireAdminSession()
 
   const [reviewRows, productRows] = await Promise.all([
     db
