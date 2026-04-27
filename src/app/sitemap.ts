@@ -1,20 +1,20 @@
 import type { MetadataRoute } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { db } from '@/db'
+import { products, blogPosts } from '@/db'
+import { eq } from 'drizzle-orm'
 
 const BASE = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com').replace(/\/$/, '')
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = await createClient()
-
-  const [{ data: products }, { data: posts }] = await Promise.all([
-    supabase
-      .from('products')
-      .select('slug, created_at')
-      .eq('is_active', true),
-    supabase
-      .from('blog_posts')
-      .select('slug, updated_at')
-      .eq('published', true),
+  const [productRows, postRows] = await Promise.all([
+    db
+      .select({ slug: products.slug, createdAt: products.createdAt })
+      .from(products)
+      .where(eq(products.isActive, true)),
+    db
+      .select({ slug: blogPosts.slug, updatedAt: blogPosts.updatedAt })
+      .from(blogPosts)
+      .where(eq(blogPosts.published, true)),
   ])
 
   // Audited 2026-04-01: all public routes present. /cart, /checkout, and /orders/ are intentionally excluded.
@@ -27,16 +27,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/blog`, changeFrequency: 'weekly', priority: 0.8 },
   ]
 
-  const productRoutes: MetadataRoute.Sitemap = (products ?? []).map((p) => ({
+  const productRoutes: MetadataRoute.Sitemap = productRows.map((p) => ({
     url: `${BASE}/catalog/${p.slug}`,
-    lastModified: p.created_at,
+    lastModified: p.createdAt,
     changeFrequency: 'monthly' as const,
     priority: 0.8,
   }))
 
-  const postRoutes: MetadataRoute.Sitemap = (posts ?? []).map((p) => ({
+  const postRoutes: MetadataRoute.Sitemap = postRows.map((p) => ({
     url: `${BASE}/blog/${p.slug}`,
-    lastModified: p.updated_at ?? undefined,
+    lastModified: p.updatedAt ?? undefined,
     changeFrequency: 'weekly' as const,
     priority: 0.7,
   }))
