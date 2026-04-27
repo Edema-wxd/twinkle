@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { reviews } from '@/db'
+import { eq } from 'drizzle-orm'
 
 async function getAuthenticatedUser() {
   const supabase = await createClient()
@@ -51,24 +53,26 @@ export async function PUT(
     )
   }
 
-  const adminClient = createAdminClient()
-  const { data, error } = await adminClient
-    .from('reviews')
-    .update({
-      author_name: author_name.trim(),
-      body: (reviewBody as string).trim(),
-      rating,
-    })
-    .eq('id', id)
-    .select()
-    .single()
+  try {
+    const [data] = await db
+      .update(reviews)
+      .set({
+        authorName: author_name.trim(),
+        body: (reviewBody as string).trim(),
+        rating,
+      })
+      .where(eq(reviews.id, id))
+      .returning()
 
-  if (error) {
-    console.error('Failed to update review:', error)
+    if (!data) {
+      return NextResponse.json({ error: 'Review not found' }, { status: 404 })
+    }
+
+    return NextResponse.json(data)
+  } catch (err) {
+    console.error('Failed to update review:', err)
     return NextResponse.json({ error: 'Failed to update review' }, { status: 500 })
   }
-
-  return NextResponse.json(data)
 }
 
 export async function DELETE(
@@ -80,13 +84,11 @@ export async function DELETE(
 
   const { id } = await params
 
-  const adminClient = createAdminClient()
-  const { error } = await adminClient.from('reviews').delete().eq('id', id)
-
-  if (error) {
-    console.error('Failed to delete review:', error)
+  try {
+    await db.delete(reviews).where(eq(reviews.id, id))
+    return new NextResponse(null, { status: 204 })
+  } catch (err) {
+    console.error('Failed to delete review:', err)
     return NextResponse.json({ error: 'Failed to delete review' }, { status: 500 })
   }
-
-  return new NextResponse(null, { status: 204 })
 }

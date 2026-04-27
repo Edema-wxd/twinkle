@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { orders } from '@/db'
+import { eq } from 'drizzle-orm'
 
 const VALID_STATUSES = ['paid', 'processing', 'shipped', 'delivered'] as const
 type OrderStatus = (typeof VALID_STATUSES)[number]
@@ -44,27 +46,22 @@ export async function PATCH(
     )
   }
 
-  const adminClient = createAdminClient()
-
   // Verify order exists
-  const { data: existing, error: fetchError } = await adminClient
-    .from('orders')
-    .select('id')
-    .eq('id', id)
-    .single()
+  const [existing] = await db
+    .select({ id: orders.id })
+    .from(orders)
+    .where(eq(orders.id, id))
+    .limit(1)
 
-  if (fetchError || !existing) {
+  if (!existing) {
     return NextResponse.json({ error: 'Order not found' }, { status: 404 })
   }
 
   // Update status
-  const { error: updateError } = await adminClient
-    .from('orders')
-    .update({ status })
-    .eq('id', id)
-
-  if (updateError) {
-    console.error('Failed to update order status:', updateError)
+  try {
+    await db.update(orders).set({ status }).where(eq(orders.id, id))
+  } catch (err) {
+    console.error('Failed to update order status:', err)
     return NextResponse.json(
       { error: 'Failed to update order status' },
       { status: 500 }

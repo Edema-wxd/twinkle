@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { reviews } from '@/db'
 
 export async function POST(req: NextRequest) {
   // Auth check — validate against auth server (not just local JWT)
@@ -50,23 +51,21 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const adminClient = createAdminClient()
-
-  const { data, error } = await adminClient
-    .from('reviews')
-    .insert({
-      product_id: product_id.trim(),
-      author_name: author_name.trim(),
+  try {
+    const [data] = await db.insert(reviews).values({
+      productId: product_id.trim(),
+      authorName: author_name.trim(),
       body: reviewBody.trim(),
       rating,
-    })
-    .select()
-    .single()
+    }).returning()
 
-  if (error) {
-    console.error('Failed to insert review:', error)
+    if (!data) {
+      return NextResponse.json({ error: 'Failed to save review' }, { status: 500 })
+    }
+
+    return NextResponse.json(data, { status: 201 })
+  } catch (err) {
+    console.error('Failed to insert review:', err)
     return NextResponse.json({ error: 'Failed to save review' }, { status: 500 })
   }
-
-  return NextResponse.json(data, { status: 201 })
 }
