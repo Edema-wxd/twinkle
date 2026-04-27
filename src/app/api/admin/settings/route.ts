@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { settings } from '@/db'
+import { sql } from 'drizzle-orm'
 
 export async function PUT(req: NextRequest) {
   // Auth check — validate against auth server (not just local JWT)
@@ -45,16 +47,14 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ updated: [] })
   }
 
-  const adminClient = createAdminClient()
-
-  const { error } = await adminClient
-    .from('settings')
-    .upsert(rows, { onConflict: 'key' })
-
-  if (error) {
-    console.error('Failed to upsert settings:', error)
+  try {
+    await db.insert(settings).values(rows).onConflictDoUpdate({
+      target: settings.key,
+      set: { value: sql`excluded.value` },
+    })
+    return NextResponse.json({ updated: rows.map((r) => r.key) })
+  } catch (err) {
+    console.error('Failed to upsert settings:', err)
     return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 })
   }
-
-  return NextResponse.json({ updated: rows.map((r) => r.key) })
 }
