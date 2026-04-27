@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { logoutAction } from '@/app/(admin)/admin/login/actions'
+import { authClient } from '@/lib/auth/client'
 
 const NAV_LINKS = [
   { href: '/admin', label: 'Dashboard', exact: true },
@@ -50,6 +50,14 @@ function NavLink({
 }
 
 function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
+  const router = useRouter()
+
+  async function handleSignOut() {
+    await authClient.signOut()
+    router.push('/admin/login')
+    router.refresh()
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Brand */}
@@ -94,14 +102,12 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
 
       {/* Logout */}
       <div className="px-3 py-4 border-t border-stone-700">
-        <form action={logoutAction}>
-          <button
-            type="submit"
-            className="w-full px-4 py-2.5 rounded-lg text-sm font-heading font-medium text-stone-300 hover:bg-stone-700 hover:text-white transition-colors text-left"
-          >
-            Sign out
-          </button>
-        </form>
+        <button
+          onClick={handleSignOut}
+          className="w-full px-4 py-2.5 rounded-lg text-sm font-heading font-medium text-stone-300 hover:bg-stone-700 hover:text-white transition-colors text-left"
+        >
+          Sign out
+        </button>
       </div>
     </div>
   )
