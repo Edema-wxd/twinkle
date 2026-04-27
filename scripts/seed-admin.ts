@@ -1,7 +1,10 @@
 /**
  * Seed the initial admin user in Neon via better-auth.
- * Run once: `npx tsx scripts/seed-admin.ts`
- * Reads ADMIN_EMAIL + ADMIN_PASSWORD from environment.
+ *
+ * tsx does NOT auto-load .env.local — pass vars explicitly:
+ *   DATABASE_URL='...' BETTER_AUTH_SECRET='...' BETTER_AUTH_URL=http://localhost:3000 \
+ *   ADMIN_EMAIL=you@example.com ADMIN_PASSWORD=secret \
+ *   node_modules/.bin/tsx scripts/seed-admin.ts
  */
 import { auth } from '@/lib/auth'
 
