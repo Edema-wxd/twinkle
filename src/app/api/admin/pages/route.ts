@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { aboutSections } from '@/db'
+import { sql } from 'drizzle-orm'
 
 interface SectionPayload {
   id: string
@@ -62,25 +64,28 @@ export async function PUT(req: NextRequest) {
     })
   }
 
-  const adminClient = createAdminClient()
-
   // Map to Insert shape — preserve display_order if provided, else omit (DB keeps existing value via upsert)
   const insertRows = rows.map((r, idx) => ({
     id: r.id,
     title: r.title,
     body: r.body,
-    image_url: r.image_url,
-    display_order: r.display_order ?? idx,
+    imageUrl: r.image_url,
+    displayOrder: r.display_order ?? idx,
   }))
 
-  const { error } = await adminClient
-    .from('about_sections')
-    .upsert(insertRows, { onConflict: 'id' })
-
-  if (error) {
-    console.error('Failed to upsert about_sections:', error)
+  try {
+    await db.insert(aboutSections).values(insertRows).onConflictDoUpdate({
+      target: aboutSections.id,
+      set: {
+        title: sql`excluded.title`,
+        body: sql`excluded.body`,
+        imageUrl: sql`excluded.image_url`,
+        displayOrder: sql`excluded.display_order`,
+      },
+    })
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error('Failed to upsert about_sections:', err)
     return NextResponse.json({ error: 'Failed to save sections' }, { status: 500 })
   }
-
-  return NextResponse.json({ ok: true })
 }

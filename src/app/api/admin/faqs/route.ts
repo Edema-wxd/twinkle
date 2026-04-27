@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { faqs } from '@/db'
 
 export async function POST(req: NextRequest) {
   // Auth check — validate against auth server (not just local JWT)
@@ -38,23 +39,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'answer is required' }, { status: 400 })
   }
 
-  const adminClient = createAdminClient()
-
-  const { data, error } = await adminClient
-    .from('faqs')
-    .insert({
+  try {
+    const [data] = await db.insert(faqs).values({
       category: category.trim(),
       question: question.trim(),
       answer: answer.trim(),
-      display_order: typeof display_order === 'number' ? display_order : 0,
-    })
-    .select()
-    .single()
+      displayOrder: typeof display_order === 'number' ? display_order : 0,
+    }).returning()
 
-  if (error) {
-    console.error('Failed to insert FAQ:', error)
+    if (!data) {
+      return NextResponse.json({ error: 'Failed to save FAQ' }, { status: 500 })
+    }
+
+    return NextResponse.json({ faq: data }, { status: 201 })
+  } catch (err) {
+    console.error('Failed to insert FAQ:', err)
     return NextResponse.json({ error: 'Failed to save FAQ' }, { status: 500 })
   }
-
-  return NextResponse.json({ faq: data }, { status: 201 })
 }

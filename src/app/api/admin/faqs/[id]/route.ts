@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { faqs } from '@/db'
+import { eq } from 'drizzle-orm'
 
 export async function PUT(
   req: NextRequest,
@@ -44,37 +46,27 @@ export async function PUT(
     updatePayload.answer = answer.trim()
   }
   if (typeof display_order === 'number') {
-    updatePayload.display_order = display_order
+    updatePayload.displayOrder = display_order
   }
-
-  const adminClient = createAdminClient()
 
   // Check row exists
-  const { data: existing, error: fetchError } = await adminClient
-    .from('faqs')
-    .select('id')
-    .eq('id', id)
-    .maybeSingle()
+  const [existing] = await db
+    .select({ id: faqs.id })
+    .from(faqs)
+    .where(eq(faqs.id, id))
+    .limit(1)
 
-  if (fetchError) {
-    console.error('Failed to fetch FAQ:', fetchError)
-    return NextResponse.json({ error: 'Failed to fetch FAQ' }, { status: 500 })
-  }
   if (!existing) {
     return NextResponse.json({ error: 'FAQ not found' }, { status: 404 })
   }
 
-  const { error } = await adminClient
-    .from('faqs')
-    .update(updatePayload)
-    .eq('id', id)
-
-  if (error) {
-    console.error('Failed to update FAQ:', error)
+  try {
+    await db.update(faqs).set(updatePayload).where(eq(faqs.id, id))
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error('Failed to update FAQ:', err)
     return NextResponse.json({ error: 'Failed to update FAQ' }, { status: 500 })
   }
-
-  return NextResponse.json({ ok: true })
 }
 
 export async function DELETE(
@@ -93,29 +85,22 @@ export async function DELETE(
 
   const { id } = await params
 
-  const adminClient = createAdminClient()
-
   // Check row exists
-  const { data: existing, error: fetchError } = await adminClient
-    .from('faqs')
-    .select('id')
-    .eq('id', id)
-    .maybeSingle()
+  const [existing] = await db
+    .select({ id: faqs.id })
+    .from(faqs)
+    .where(eq(faqs.id, id))
+    .limit(1)
 
-  if (fetchError) {
-    console.error('Failed to fetch FAQ:', fetchError)
-    return NextResponse.json({ error: 'Failed to fetch FAQ' }, { status: 500 })
-  }
   if (!existing) {
     return NextResponse.json({ error: 'FAQ not found' }, { status: 404 })
   }
 
-  const { error } = await adminClient.from('faqs').delete().eq('id', id)
-
-  if (error) {
-    console.error('Failed to delete FAQ:', error)
+  try {
+    await db.delete(faqs).where(eq(faqs.id, id))
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error('Failed to delete FAQ:', err)
     return NextResponse.json({ error: 'Failed to delete FAQ' }, { status: 500 })
   }
-
-  return NextResponse.json({ ok: true })
 }
