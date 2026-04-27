@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { blogPosts } from '@/db'
+import { desc } from 'drizzle-orm'
 
 export const metadata = {
   title: 'Blog Posts — Twinkle Locs Admin',
@@ -18,17 +20,42 @@ export default async function AdminBlogPage() {
     redirect('/admin/login')
   }
 
-  const adminClient = createAdminClient()
-  const { data: postsData, error } = await adminClient
-    .from('blog_posts')
-    .select('id, title, slug, tag, published, published_at, created_at')
-    .order('created_at', { ascending: false })
+  let posts: {
+    id: string
+    title: string
+    slug: string
+    tag: string | null
+    published: boolean
+    published_at: string | null
+    created_at: string
+  }[] = []
 
-  if (error) {
+  try {
+    const rows = await db
+      .select({
+        id: blogPosts.id,
+        title: blogPosts.title,
+        slug: blogPosts.slug,
+        tag: blogPosts.tag,
+        published: blogPosts.published,
+        publishedAt: blogPosts.publishedAt,
+        createdAt: blogPosts.createdAt,
+      })
+      .from(blogPosts)
+      .orderBy(desc(blogPosts.createdAt))
+
+    posts = rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      slug: r.slug,
+      tag: r.tag ?? null,
+      published: r.published,
+      published_at: r.publishedAt instanceof Date ? r.publishedAt.toISOString() : (r.publishedAt ?? null),
+      created_at: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+    }))
+  } catch (error) {
     console.error('Failed to fetch blog posts for admin:', error)
   }
-
-  const posts = postsData ?? []
 
   return (
     <div className="p-6 lg:p-8 space-y-6">

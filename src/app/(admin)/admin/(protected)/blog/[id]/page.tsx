@@ -1,6 +1,8 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { blogPosts } from '@/db'
+import { eq } from 'drizzle-orm'
 import { BlogPostForm } from '../../../../_components/BlogPostForm'
 
 export const metadata = {
@@ -24,18 +26,26 @@ export default async function EditBlogPostPage({ params }: EditBlogPostPageProps
 
   const { id } = await params
 
-  const adminClient = createAdminClient()
-  const result = await adminClient
-    .from('blog_posts')
-    .select('*')
-    .eq('id', id)
-    .single()
+  const [row] = await db.select().from(blogPosts).where(eq(blogPosts.id, id)).limit(1)
 
-  if (result.error || !result.data) {
+  if (!row) {
     notFound()
   }
 
-  const post = result.data
+  // Map camelCase Drizzle row to snake_case shape expected by BlogPostForm (BlogPost from @/types/supabase)
+  const post = {
+    id: row.id,
+    title: row.title,
+    slug: row.slug,
+    body: row.body,
+    excerpt: row.excerpt,
+    featured_image: row.featuredImage ?? null,
+    tag: row.tag ?? null,
+    published: row.published,
+    published_at: row.publishedAt instanceof Date ? row.publishedAt.toISOString() : (row.publishedAt ?? null),
+    created_at: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+    updated_at: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+  }
 
   return (
     <div className="p-6 lg:p-8 space-y-6">

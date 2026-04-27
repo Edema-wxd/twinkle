@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { settings } from '@/db'
+import { inArray } from 'drizzle-orm'
 import { ShippingForm } from '../../../_components/ShippingForm'
 
 export const metadata = {
@@ -27,19 +29,18 @@ export default async function AdminShippingPage() {
     redirect('/admin/login')
   }
 
-  const adminClient = createAdminClient()
-  const { data: rows, error } = await adminClient
-    .from('settings')
-    .select('key, value')
-    .in('key', [...SHIPPING_KEYS])
+  let settingsMap: Record<string, string> = {}
 
-  if (error) {
+  try {
+    const rows = await db
+      .select({ key: settings.key, value: settings.value })
+      .from(settings)
+      .where(inArray(settings.key, [...SHIPPING_KEYS]))
+
+    settingsMap = Object.fromEntries(rows.map((r) => [r.key, r.value]))
+  } catch (error) {
     console.error('Failed to fetch shipping settings:', error)
   }
-
-  const settings: Record<string, string> = Object.fromEntries(
-    (rows ?? []).map((r) => [r.key, r.value])
-  )
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-2xl">
@@ -51,7 +52,7 @@ export default async function AdminShippingPage() {
         </p>
       </div>
 
-      <ShippingForm settings={settings} />
+      <ShippingForm settings={settingsMap} />
     </div>
   )
 }
