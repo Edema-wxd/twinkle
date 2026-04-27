@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { newsletterSubscribers } from '@/db'
 
 export async function POST(req: NextRequest) {
   let body: unknown
@@ -23,23 +24,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'A valid email address is required' }, { status: 400 })
   }
 
-  const adminClient = createAdminClient()
-  const { error } = await adminClient
-    .from('newsletter_subscribers')
-    .insert({
-      first_name: first_name.trim(),
+  try {
+    await db.insert(newsletterSubscribers).values({
+      firstName: first_name.trim(),
       email: email.trim().toLowerCase(),
-      source_page: typeof source_page === 'string' ? source_page : null,
+      sourcePage: typeof source_page === 'string' ? source_page : null,
     })
-
-  if (error) {
-    // Postgres unique constraint violation — email already subscribed
-    if (error.code === '23505') {
+    return NextResponse.json({ ok: true }, { status: 201 })
+  } catch (err: unknown) {
+    const pgErr = err as { code?: string }
+    if (pgErr?.code === '23505') {
       return NextResponse.json({ error: 'already subscribed' }, { status: 409 })
     }
-    console.error('Newsletter subscribe error:', error)
+    console.error('Newsletter subscribe error:', err)
     return NextResponse.json({ error: 'Failed to subscribe. Please try again.' }, { status: 500 })
   }
-
-  return NextResponse.json({ ok: true }, { status: 201 })
 }

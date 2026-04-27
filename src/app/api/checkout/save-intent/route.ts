@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { Database, AbandonedOrderInsert } from '@/types/supabase'
+import { db } from '@/db'
+import { abandonedOrders } from '@/db'
 import { getShippingCost } from '@/lib/checkout/shipping'
 
 interface SaveIntentBody {
@@ -48,34 +48,27 @@ export async function POST(req: NextRequest) {
   const shippingCost = getShippingCost(deliveryState)
   const total = subtotal + shippingCost
 
-  const supabase = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
-  )
+  try {
+    const [data] = await db.insert(abandonedOrders).values({
+      customerName: customerName.trim(),
+      customerEmail: customerEmail.trim().toLowerCase(),
+      customerPhone: customerPhone.trim(),
+      deliveryAddress: deliveryAddress.trim(),
+      deliveryState: deliveryState,
+      shippingCost: shippingCost.toString(),
+      subtotal: subtotal.toString(),
+      total: total.toString(),
+      cartItems: cartItems as unknown,
+    }).returning({ id: abandonedOrders.id })
 
-  const insert: AbandonedOrderInsert = {
-    customer_name: customerName.trim(),
-    customer_email: customerEmail.trim().toLowerCase(),
-    customer_phone: customerPhone.trim(),
-    delivery_address: deliveryAddress.trim(),
-    delivery_state: deliveryState,
-    shipping_cost: shippingCost,
-    subtotal,
-    total,
-    cart_items: cartItems as Database['public']['Tables']['abandoned_orders']['Insert']['cart_items'],
-  }
+    if (!data) {
+      console.error('[save-intent] Failed to insert abandoned order: no data returned')
+      return NextResponse.json({ error: 'Failed to save' }, { status: 500 })
+    }
 
-  const { data, error } = await supabase
-    .from('abandoned_orders')
-    .insert(insert)
-    .select('id')
-    .single()
-
-  if (error || !data) {
-    console.error('[save-intent] Failed to insert abandoned order:', error)
+    return NextResponse.json({ id: data.id }, { status: 201 })
+  } catch (err) {
+    console.error('[save-intent] Failed to insert abandoned order:', err)
     return NextResponse.json({ error: 'Failed to save' }, { status: 500 })
   }
-
-  return NextResponse.json({ id: data.id }, { status: 201 })
 }
