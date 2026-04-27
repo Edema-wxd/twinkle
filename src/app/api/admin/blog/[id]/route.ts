@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { blogPosts } from '@/db'
 import { eq } from 'drizzle-orm'
@@ -9,12 +9,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   // Auth check — validate against auth server (not just local JWT)
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
+  const session = await getAdminSession()
+  if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -110,12 +106,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   // Auth check — validate against auth server (not just local JWT)
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
+  const session = await getAdminSession()
+  if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

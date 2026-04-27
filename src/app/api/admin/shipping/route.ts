@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { settings } from '@/db'
 import { sql } from 'drizzle-orm'
@@ -15,12 +15,8 @@ const ALLOWED_SHIPPING_KEYS = [
 
 export async function PUT(req: NextRequest) {
   // Auth check — validate against auth server (not just local JWT)
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
+  const session = await getAdminSession()
+  if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
