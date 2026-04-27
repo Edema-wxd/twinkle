@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { db, products as productsTable, reviews as reviewsTable } from '@/db'
+import { eq, desc, ne, and } from 'drizzle-orm'
 import { Product, ProductMaterial, ProductVariant } from '@/lib/types/product'
 import { Review } from '@/lib/types/review'
 import { ProductDetailClient } from '@/components/product/ProductDetailClient'
@@ -19,31 +20,36 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const supabase = await createClient()
 
-  const result = await supabase
-    .from('products')
-    .select('name, description, seo_description, image, images, slug')
-    .eq('slug', slug)
-    .single()
+  const [row] = await db
+    .select({
+      name: productsTable.name,
+      description: productsTable.description,
+      seoDescription: productsTable.seoDescription,
+      image: productsTable.image,
+      images: productsTable.images,
+      slug: productsTable.slug,
+    })
+    .from(productsTable)
+    .where(eq(productsTable.slug, slug))
+    .limit(1)
 
-  if (result.error || !result.data) return {}
+  if (!row) return {}
 
-  const p = result.data
-  const description = (p.seo_description ?? p.description).slice(0, 155)
-  const ogImage = (p.images && p.images.length > 0 ? p.images[0] : null) ?? p.image
+  const description = (row.seoDescription ?? row.description).slice(0, 155)
+  const ogImage = (row.images && row.images.length > 0 ? row.images[0] : null) ?? row.image
 
   return {
-    title: p.name,
+    title: row.name,
     description,
     openGraph: {
-      title: p.name,
+      title: row.name,
       description,
       images: ogImage ? [{ url: ogImage }] : [{ url: '/og-image.jpg', width: 1200, height: 630 }],
       type: 'website',
     },
     alternates: {
-      canonical: `/catalog/${p.slug}`,
+      canonical: `/catalog/${row.slug}`,
     },
   }
 }
@@ -53,16 +59,14 @@ export default async function ProductDetailPage({
 }: ProductDetailPageProps) {
   const { slug } = await params
 
-  const supabase = await createClient()
-  const result = await supabase
-    .from('products')
-    .select('*')
-    .eq('slug', slug)
-    .single()
+  const [row] = await db
+    .select()
+    .from(productsTable)
+    .where(eq(productsTable.slug, slug))
+    .limit(1)
 
-  if (result.error || !result.data) return notFound()
+  if (!row) return notFound()
 
-  const row = result.data
   const product: Product = {
     id: row.id,
     name: row.name,
@@ -70,22 +74,29 @@ export default async function ProductDetailPage({
     description: row.description,
     image: row.image,
     material: row.material as ProductMaterial,
-    is_featured: row.is_featured,
+    is_featured: row.isFeatured,
     variants: row.variants as unknown as ProductVariant[],
-    price_min: row.price_min,
-    price_max: row.price_max,
-    created_at: row.created_at,
+    price_min: row.priceMin,
+    price_max: row.priceMax,
+    created_at: row.createdAt.toISOString(),
     images: row.images?.length ? row.images : undefined,
   }
 
   // Fetch reviews for this product
-  const { data: reviewsData } = await supabase
-    .from('reviews')
-    .select('*')
-    .eq('product_id', product.id)
-    .order('created_at', { ascending: false })
+  const reviewsData = await db
+    .select()
+    .from(reviewsTable)
+    .where(eq(reviewsTable.productId, product.id))
+    .orderBy(desc(reviewsTable.createdAt))
 
-  const reviews = (reviewsData ?? []) as Review[]
+  const reviews: Review[] = reviewsData.map((r) => ({
+    id: r.id,
+    product_id: r.productId,
+    author_name: r.authorName,
+    body: r.body,
+    rating: r.rating,
+    created_at: r.createdAt.toISOString(),
+  }))
 
   // Build JSON-LD structured data
   const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com'
@@ -135,11 +146,11 @@ export default async function ProductDetailPage({
   // Fetch shears for upsell — only when viewing a non-Tools product
   let shearsProduct: Product | null = null
   if (product.material !== 'Tools') {
-    const { data: shearsData } = await supabase
-      .from('products')
-      .select('*')
-      .eq('slug', 'shears')
-      .single()
+    const [shearsData] = await db
+      .select()
+      .from(productsTable)
+      .where(eq(productsTable.slug, 'shears'))
+      .limit(1)
 
     if (shearsData) {
       shearsProduct = {
@@ -149,38 +160,42 @@ export default async function ProductDetailPage({
         description: shearsData.description,
         image: shearsData.image,
         material: shearsData.material as ProductMaterial,
-        is_featured: shearsData.is_featured,
+        is_featured: shearsData.isFeatured,
         variants: shearsData.variants as unknown as ProductVariant[],
-        price_min: shearsData.price_min,
-        price_max: shearsData.price_max,
-        created_at: shearsData.created_at,
+        price_min: shearsData.priceMin,
+        price_max: shearsData.priceMax,
+        created_at: shearsData.createdAt.toISOString(),
         images: shearsData.images?.length ? shearsData.images : undefined,
       }
     }
   }
 
   // Fetch related products — exclude current product and shears (handled separately)
-  const { data: relatedData } = await supabase
-    .from('products')
-    .select('*')
-    .neq('slug', slug)
-    .neq('slug', 'shears')
-    .neq('material', 'Tools')
-    .order('is_featured', { ascending: false })
+  const relatedData = await db
+    .select()
+    .from(productsTable)
+    .where(
+      and(
+        ne(productsTable.slug, slug),
+        ne(productsTable.slug, 'shears'),
+        ne(productsTable.material, 'Tools'),
+      )
+    )
+    .orderBy(desc(productsTable.isFeatured))
     .limit(4)
 
-  const relatedProducts: Product[] = (relatedData ?? []).map((r) => ({
+  const relatedProducts: Product[] = relatedData.map((r) => ({
     id: r.id,
     name: r.name,
     slug: r.slug,
     description: r.description,
     image: r.image,
     material: r.material as ProductMaterial,
-    is_featured: r.is_featured,
+    is_featured: r.isFeatured,
     variants: r.variants as unknown as ProductVariant[],
-    price_min: r.price_min,
-    price_max: r.price_max,
-    created_at: r.created_at,
+    price_min: r.priceMin,
+    price_max: r.priceMax,
+    created_at: r.createdAt.toISOString(),
     images: r.images?.length ? r.images : undefined,
   }))
 

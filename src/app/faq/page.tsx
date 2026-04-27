@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { db, faqs as faqsTable } from '@/db'
+import { asc } from 'drizzle-orm'
 import { FaqAccordion } from '@/components/faq/FaqAccordion'
+import { Faq } from '@/types/supabase'
 
 export const metadata: Metadata = {
   title: 'FAQs',
@@ -14,17 +16,30 @@ export const metadata: Metadata = {
 }
 
 export default async function FaqPage() {
-  const supabase = await createClient()
-  const { data: faqs } = await supabase
-    .from('faqs')
-    .select('*')
-    .order('category')
-    .order('display_order')
+  let rows: typeof faqsTable.$inferSelect[] = []
+  try {
+    rows = await db
+      .select()
+      .from(faqsTable)
+      .orderBy(asc(faqsTable.category), asc(faqsTable.displayOrder))
+  } catch (err) {
+    console.error('Failed to fetch faqs:', err)
+  }
+
+  // Map Drizzle camelCase to snake_case shape expected by FaqAccordion component
+  const faqs: Faq[] = rows.map((r) => ({
+    id: r.id,
+    category: r.category,
+    question: r.question,
+    answer: r.answer,
+    display_order: r.displayOrder,
+    created_at: r.createdAt.toISOString(),
+  }))
 
   const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: (faqs ?? []).map((faq) => ({
+    mainEntity: faqs.map((faq) => ({
       '@type': 'Question',
       name: faq.question,
       acceptedAnswer: {
@@ -48,7 +63,7 @@ export default async function FaqPage() {
       <p className="text-charcoal/60 mb-12">
         Can&apos;t find your answer here? Reach us on WhatsApp and we&apos;ll be happy to help.
       </p>
-      <FaqAccordion faqs={faqs ?? []} />
+      <FaqAccordion faqs={faqs} />
     </main>
   )
 }

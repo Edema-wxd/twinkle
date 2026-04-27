@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { db, products as productsTable } from '@/db'
+import { eq, desc } from 'drizzle-orm'
 import { Product, ProductMaterial, ProductVariant } from '@/lib/types/product'
 import { CatalogClient } from '@/components/catalog/CatalogClient'
 
@@ -15,26 +16,24 @@ export const metadata: Metadata = {
 }
 
 export default async function CatalogPage() {
-  const supabase = await createClient()
+  const productsData = await db
+    .select()
+    .from(productsTable)
+    .where(eq(productsTable.isActive, true))
+    .orderBy(desc(productsTable.createdAt))
 
-  const { data: productsData } = await supabase
-    .from('products')
-    .select('*')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
-
-  const products: Product[] = (productsData ?? []).map((row) => ({
+  const products: Product[] = productsData.map((row) => ({
     id: row.id,
     name: row.name,
     slug: row.slug,
     description: row.description,
     image: row.image,
     material: row.material as ProductMaterial,
-    is_featured: row.is_featured,
+    is_featured: row.isFeatured,
     variants: row.variants as unknown as ProductVariant[],
-    price_min: row.price_min,
-    price_max: row.price_max,
-    created_at: row.created_at,
+    price_min: row.priceMin,
+    price_max: row.priceMax,
+    created_at: row.createdAt.toISOString(),
     images: row.images?.length ? row.images : undefined,
   }))
 

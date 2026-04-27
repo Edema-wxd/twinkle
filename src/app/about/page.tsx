@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { db, aboutSections as aboutSectionsTable } from '@/db'
+import { asc } from 'drizzle-orm'
 import { AboutSection } from '@/components/about/AboutSection'
 import { AboutStickyNav } from '@/components/about/AboutStickyNav'
 import { AboutSection as AboutSectionType } from '@/types/supabase'
@@ -51,18 +52,28 @@ const FALLBACK_SECTIONS: AboutSectionType[] = [
 ]
 
 export default async function AboutPage() {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('about_sections')
-    .select('*')
-    .order('display_order')
-
-  if (error) {
-    console.error('Failed to fetch about_sections:', error)
+  let rows: typeof aboutSectionsTable.$inferSelect[] = []
+  try {
+    rows = await db
+      .select()
+      .from(aboutSectionsTable)
+      .orderBy(asc(aboutSectionsTable.displayOrder))
+  } catch (err) {
+    console.error('Failed to fetch about_sections:', err)
   }
 
+  // Map Drizzle camelCase to snake_case shape expected by AboutSection component
   const sections: AboutSectionType[] =
-    data && data.length > 0 ? data : FALLBACK_SECTIONS
+    rows.length > 0
+      ? rows.map((r) => ({
+          id: r.id,
+          title: r.title,
+          body: r.body,
+          image_url: r.imageUrl,
+          display_order: r.displayOrder,
+          updated_at: r.updatedAt.toISOString(),
+        }))
+      : FALLBACK_SECTIONS
 
   return (
     <main>

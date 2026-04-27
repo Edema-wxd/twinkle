@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { db, settings as settingsTable } from '@/db'
+import { inArray } from 'drizzle-orm'
 import { BUSINESS } from '@/lib/config/business'
 
 export const metadata: Metadata = {
@@ -32,15 +33,19 @@ const defaults = {
 }
 
 export default async function ShippingPage() {
-  const supabase = await createClient()
-  const { data: rows } = await supabase
-    .from('settings')
-    .select('key, value')
-    .in('key', [...SHIPPING_KEYS])
+  let rows: { key: string; value: string }[] = []
+  try {
+    rows = await db
+      .select()
+      .from(settingsTable)
+      .where(inArray(settingsTable.key, [...SHIPPING_KEYS]))
+  } catch (err) {
+    console.error('Failed to fetch shipping settings:', err)
+  }
 
   // Merge fetched rows over defaults — any missing key falls back to default
   const raw: Record<string, string> = { ...defaults }
-  for (const row of rows ?? []) {
+  for (const row of rows) {
     raw[row.key] = row.value
   }
 

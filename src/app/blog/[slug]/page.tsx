@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { db, blogPosts as blogPostsTable } from '@/db'
+import { eq, desc, ne, and } from 'drizzle-orm'
+import { Tables } from '@/types/supabase'
 import { BlogShareButtons } from '@/components/blog/BlogShareButtons'
 import { BlogPostCard } from '@/components/blog/BlogPostCard'
 
@@ -10,39 +12,46 @@ interface BlogPostPageProps {
   params: Promise<{ slug: string }>
 }
 
+type BlogPostCardShape = Pick<
+  Tables<'blog_posts'>,
+  'id' | 'title' | 'slug' | 'excerpt' | 'featured_image' | 'tag' | 'published_at'
+>
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const supabase = await createClient()
 
-  const result = await supabase
-    .from('blog_posts')
-    .select('title, excerpt, featured_image, slug, published_at')
-    .eq('slug', slug)
-    .eq('published', true)
-    .single()
+  const [row] = await db
+    .select({
+      title: blogPostsTable.title,
+      excerpt: blogPostsTable.excerpt,
+      featuredImage: blogPostsTable.featuredImage,
+      slug: blogPostsTable.slug,
+      publishedAt: blogPostsTable.publishedAt,
+    })
+    .from(blogPostsTable)
+    .where(and(eq(blogPostsTable.slug, slug), eq(blogPostsTable.published, true)))
+    .limit(1)
 
-  if (result.error || !result.data) return {}
-
-  const post = result.data
+  if (!row) return {}
 
   return {
-    title: post.title,
-    description: post.excerpt ?? undefined,
+    title: row.title,
+    description: row.excerpt ?? undefined,
     openGraph: {
-      title: post.title,
-      description: post.excerpt ?? undefined,
-      images: post.featured_image
-        ? [{ url: post.featured_image }]
+      title: row.title,
+      description: row.excerpt ?? undefined,
+      images: row.featuredImage
+        ? [{ url: row.featuredImage }]
         : [{ url: '/og-image.jpg', width: 1200, height: 630 }],
       type: 'article',
-      publishedTime: post.published_at ?? undefined,
+      publishedTime: row.publishedAt ? row.publishedAt.toISOString() : undefined,
     },
     alternates: {
-      canonical: `/blog/${post.slug}`,
+      canonical: `/blog/${row.slug}`,
     },
   }
 }
@@ -50,33 +59,42 @@ export async function generateMetadata({
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params
 
-  const supabase = await createClient()
-
   // Fetch the post — must be published; draft posts are 404
-  const result = await supabase
-    .from('blog_posts')
-    .select('*')
-    .eq('slug', slug)
-    .eq('published', true)
-    .single()
+  const [post] = await db
+    .select()
+    .from(blogPostsTable)
+    .where(and(eq(blogPostsTable.slug, slug), eq(blogPostsTable.published, true)))
+    .limit(1)
 
-  if (result.error || !result.data) return notFound()
-
-  const post = result.data
+  if (!post) return notFound()
 
   // Fetch related posts from same tag (skip if no tag)
-  const relatedPosts =
-    post.tag
-      ? await supabase
-          .from('blog_posts')
-          .select('id, title, slug, excerpt, featured_image, tag, published_at')
-          .eq('published', true)
-          .eq('tag', post.tag)
-          .neq('id', post.id)
-          .order('published_at', { ascending: false })
-          .limit(3)
-          .then(({ data }) => data ?? [])
-      : []
+  let relatedPostsRaw: typeof blogPostsTable.$inferSelect[] = []
+  if (post.tag) {
+    relatedPostsRaw = await db
+      .select()
+      .from(blogPostsTable)
+      .where(
+        and(
+          eq(blogPostsTable.published, true),
+          eq(blogPostsTable.tag, post.tag),
+          ne(blogPostsTable.id, post.id),
+        )
+      )
+      .orderBy(desc(blogPostsTable.publishedAt))
+      .limit(3)
+  }
+
+  // Map Drizzle camelCase to snake_case shape expected by BlogPostCard component
+  const relatedPosts: BlogPostCardShape[] = relatedPostsRaw.map((r) => ({
+    id: r.id,
+    title: r.title,
+    slug: r.slug,
+    excerpt: r.excerpt,
+    featured_image: r.featuredImage,
+    tag: r.tag,
+    published_at: r.publishedAt ? r.publishedAt.toISOString() : null,
+  }))
 
   const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com'}/blog/${post.slug}`
   const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com'
@@ -86,9 +104,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     '@type': 'BlogPosting',
     headline: post.title,
     description: post.excerpt ?? undefined,
-    image: post.featured_image ?? undefined,
-    datePublished: post.published_at ?? undefined,
-    dateModified: post.updated_at ?? undefined,
+    image: post.featuredImage ?? undefined,
+    datePublished: post.publishedAt ? post.publishedAt.toISOString() : undefined,
+    dateModified: post.updatedAt ? post.updatedAt.toISOString() : undefined,
     author: {
       '@type': 'Organization',
       name: 'Twinkle Locs',
@@ -106,8 +124,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     },
   }
 
-  const formattedDate = post.published_at
-    ? new Date(post.published_at).toLocaleDateString('en-NG', {
+  const formattedDate = post.publishedAt
+    ? new Date(post.publishedAt).toLocaleDateString('en-NG', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -147,10 +165,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       </div>
 
       {/* Featured image */}
-      {post.featured_image && (
+      {post.featuredImage && (
         <div className="relative w-full aspect-video mb-8 rounded-xl overflow-hidden">
           <Image
-            src={post.featured_image}
+            src={post.featuredImage}
             alt={post.title}
             fill
             className="object-cover"

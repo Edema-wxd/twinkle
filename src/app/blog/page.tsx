@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
-import { createClient } from '@/lib/supabase/server'
+import { db, blogPosts as blogPostsTable } from '@/db'
+import { eq, desc, isNotNull } from 'drizzle-orm'
+import { Tables } from '@/types/supabase'
 import { BlogPostCard } from '@/components/blog/BlogPostCard'
 import { BlogCategoryFilter } from '@/components/blog/BlogCategoryFilter'
 
@@ -19,37 +21,59 @@ interface BlogPageProps {
   searchParams: Promise<{ category?: string }>
 }
 
+type BlogPostCardShape = Pick<
+  Tables<'blog_posts'>,
+  'id' | 'title' | 'slug' | 'excerpt' | 'featured_image' | 'tag' | 'published_at'
+>
+
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const { category } = await searchParams
 
-  const supabase = await createClient()
-
   // Fetch posts — filter by tag if category param present
-  const postsQuery = supabase
-    .from('blog_posts')
-    .select('id, title, slug, excerpt, featured_image, tag, published_at')
-    .eq('published', true)
-    .order('published_at', { ascending: false })
+  let postsQuery = db
+    .select({
+      id: blogPostsTable.id,
+      title: blogPostsTable.title,
+      slug: blogPostsTable.slug,
+      excerpt: blogPostsTable.excerpt,
+      featuredImage: blogPostsTable.featuredImage,
+      tag: blogPostsTable.tag,
+      publishedAt: blogPostsTable.publishedAt,
+    })
+    .from(blogPostsTable)
+    .where(eq(blogPostsTable.published, true))
+    .orderBy(desc(blogPostsTable.publishedAt))
+    .$dynamic()
 
   if (category) {
-    postsQuery.eq('tag', category)
+    const { and, eq: eqFn } = await import('drizzle-orm')
+    postsQuery = postsQuery.where(and(eq(blogPostsTable.published, true), eqFn(blogPostsTable.tag, category)))
   }
 
-  const { data: postsData } = await postsQuery
-
-  // Fetch all distinct tags from published posts
-  const { data: tagRows } = await supabase
-    .from('blog_posts')
-    .select('tag')
-    .eq('published', true)
+  const [postsData, tagRows] = await Promise.all([
+    postsQuery,
+    db
+      .select({ tag: blogPostsTable.tag })
+      .from(blogPostsTable)
+      .where(eq(blogPostsTable.published, true)),
+  ])
 
   const tags: string[] = [
     ...new Set(
-      (tagRows ?? []).map((r) => r.tag).filter((t): t is string => Boolean(t))
+      tagRows.map((r) => r.tag).filter((t): t is string => Boolean(t))
     ),
   ]
 
-  const posts = postsData ?? []
+  // Map Drizzle camelCase to snake_case shape expected by BlogPostCard component
+  const posts: BlogPostCardShape[] = postsData.map((r) => ({
+    id: r.id,
+    title: r.title,
+    slug: r.slug,
+    excerpt: r.excerpt,
+    featured_image: r.featuredImage,
+    tag: r.tag,
+    published_at: r.publishedAt ? r.publishedAt.toISOString() : null,
+  }))
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-12">
