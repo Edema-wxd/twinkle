@@ -1,7 +1,7 @@
 import { db } from '@/db'
 import { orders } from '@/db'
 import { eq } from 'drizzle-orm'
-import { Order, OrderItem } from '@/types/supabase'
+import { Order, OrderItem, Json } from '@/types/supabase'
 import { OrderConfirmationView } from './OrderConfirmationView'
 import { OrderPoller } from './OrderPoller'
 
@@ -22,7 +22,7 @@ async function fetchOrderByReference(
     id: result.id,
     created_at: result.createdAt.toISOString(),
     paystack_reference: result.paystackReference,
-    paystack_payload: result.paystackPayload,
+    paystack_payload: result.paystackPayload as Json,
     status: result.status,
     customer_name: result.customerName,
     customer_email: result.customerEmail,

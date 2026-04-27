@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { db } from '@/db'
 import { orders } from '@/db'
 import { eq } from 'drizzle-orm'
-import { Order, OrderItem } from '@/types/supabase'
+import { Order, OrderItem, Json } from '@/types/supabase'
 import { OrderStatusSelect } from '../../../../_components/OrderStatusSelect'
 
 type FullOrder = Order & { order_items: OrderItem[] }
@@ -68,7 +68,7 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
     id: result.id,
     created_at: result.createdAt instanceof Date ? result.createdAt.toISOString() : String(result.createdAt),
     paystack_reference: result.paystackReference,
-    paystack_payload: result.paystackPayload,
+    paystack_payload: result.paystackPayload as Json,
     status: result.status,
     customer_name: result.customerName,
     customer_email: result.customerEmail,
