@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { reviews, products } from '@/db'
+import { desc, asc, eq } from 'drizzle-orm'
 import { ReviewForm } from '../../../_components/ReviewForm'
 import { ReviewsTable, type ReviewRow } from '../../../_components/ReviewsTable'
 
@@ -19,33 +21,40 @@ export default async function AdminReviewsPage() {
     redirect('/admin/login')
   }
 
-  const adminClient = createAdminClient()
-
-  // Fetch reviews + product name in one query
-  const [{ data: reviewsRaw }, { data: productsData }] = await Promise.all([
-    adminClient
-      .from('reviews')
-      .select('id, product_id, author_name, body, rating, created_at, products(name)')
-      .order('created_at', { ascending: false }),
-    adminClient
-      .from('products')
-      .select('id, name')
-      .eq('is_active', true)
-      .order('name', { ascending: true }),
+  const [reviewRows, productRows] = await Promise.all([
+    db
+      .select({
+        id: reviews.id,
+        productId: reviews.productId,
+        authorName: reviews.authorName,
+        body: reviews.body,
+        rating: reviews.rating,
+        createdAt: reviews.createdAt,
+        productName: products.name,
+      })
+      .from(reviews)
+      .leftJoin(products, eq(reviews.productId, products.id))
+      .orderBy(desc(reviews.createdAt))
+      .catch((e) => { console.error('Failed to fetch reviews:', e); return [] }),
+    db
+      .select({ id: products.id, name: products.name })
+      .from(products)
+      .where(eq(products.isActive, true))
+      .orderBy(asc(products.name))
+      .catch((e) => { console.error('Failed to fetch products:', e); return [] }),
   ])
 
-  const reviews: ReviewRow[] = (reviewsRaw ?? []).map((r) => ({
+  const reviewsList: ReviewRow[] = reviewRows.map((r) => ({
     id: r.id,
-    product_id: r.product_id,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    product_name: (r as any).products?.name ?? 'Unknown product',
-    author_name: r.author_name,
+    product_id: r.productId,
+    product_name: r.productName ?? 'Unknown product',
+    author_name: r.authorName,
     body: r.body,
     rating: r.rating,
-    created_at: r.created_at,
+    created_at: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
   }))
 
-  const products = productsData ?? []
+  const productOptions = productRows.map((p) => ({ id: p.id, name: p.name }))
 
   return (
     <div className="p-6 lg:p-8 space-y-10 max-w-5xl">
@@ -59,15 +68,15 @@ export default async function AdminReviewsPage() {
       <section className="space-y-4">
         <h2 className="text-base font-semibold text-white">
           All reviews
-          <span className="ml-2 text-sm font-normal text-stone-500">({reviews.length})</span>
+          <span className="ml-2 text-sm font-normal text-stone-500">({reviewsList.length})</span>
         </h2>
-        <ReviewsTable reviews={reviews} />
+        <ReviewsTable reviews={reviewsList} />
       </section>
 
       <section className="space-y-4 border-t border-stone-700 pt-8">
         <h2 className="text-base font-semibold text-white">Add a review</h2>
         <div className="max-w-2xl">
-          <ReviewForm products={products} />
+          <ReviewForm products={productOptions} />
         </div>
       </section>
     </div>

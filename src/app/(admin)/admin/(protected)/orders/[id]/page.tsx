@@ -1,7 +1,9 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { orders } from '@/db'
+import { eq } from 'drizzle-orm'
 import { Order, OrderItem } from '@/types/supabase'
 import { OrderStatusSelect } from '../../../../_components/OrderStatusSelect'
 
@@ -51,19 +53,47 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
   }
 
   const { id } = await params
-  const adminClient = createAdminClient()
 
-  const result = await adminClient
-    .from('orders')
-    .select('*, order_items(*)')
-    .eq('id', id)
-    .single()
+  const result = await db.query.orders.findFirst({
+    where: eq(orders.id, id),
+    with: { orderItems: true },
+  })
 
-  if (result.error || !result.data) {
+  if (!result) {
     notFound()
   }
 
-  const order = result.data as unknown as FullOrder
+  // Map camelCase Drizzle row to snake_case FullOrder shape
+  const order: FullOrder = {
+    id: result.id,
+    created_at: result.createdAt instanceof Date ? result.createdAt.toISOString() : String(result.createdAt),
+    paystack_reference: result.paystackReference,
+    paystack_payload: result.paystackPayload,
+    status: result.status,
+    customer_name: result.customerName,
+    customer_email: result.customerEmail,
+    customer_phone: result.customerPhone,
+    customer_ip: result.customerIp ?? null,
+    delivery_address: result.deliveryAddress,
+    delivery_state: result.deliveryState,
+    shipping_cost: result.shippingCost,
+    subtotal: result.subtotal,
+    total: result.total,
+    order_items: result.orderItems.map((item) => ({
+      id: item.id,
+      order_id: item.orderId,
+      created_at: item.createdAt instanceof Date ? item.createdAt.toISOString() : String(item.createdAt),
+      product_id: item.productId,
+      product_name: item.productName,
+      variant_id: item.variantId,
+      variant_name: item.variantName,
+      tier_qty: item.tierQty,
+      thread_colour: item.threadColour ?? null,
+      unit_price: item.unitPrice,
+      quantity: item.quantity,
+      line_total: item.lineTotal,
+    })),
+  }
 
   const subtotal = order.order_items.reduce(
     (sum, item) => sum + item.line_total,
