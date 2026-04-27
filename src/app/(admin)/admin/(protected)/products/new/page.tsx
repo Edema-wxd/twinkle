@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdminSession } from '@/lib/auth/server'
 import { ProductForm } from '../../../../_components/ProductForm'
 
 export const metadata = {
@@ -8,14 +7,7 @@ export const metadata = {
 
 export default async function NewProductPage() {
   // Belt-and-braces auth check (CVE-2025-29927 — layout.tsx also checks)
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/admin/login')
-  }
+  await requireAdminSession()
 
   return (
     <div className="p-6 lg:p-8 space-y-6">

@@ -1,5 +1,5 @@
-import { notFound, redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { notFound } from 'next/navigation'
+import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { products } from '@/db'
 import { eq } from 'drizzle-orm'
@@ -15,14 +15,7 @@ interface EditProductPageProps {
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
   // Belt-and-braces auth check (CVE-2025-29927 — layout.tsx also checks)
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/admin/login')
-  }
+  await requireAdminSession()
 
   const { id } = await params
 

@@ -1,6 +1,5 @@
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { products } from '@/db'
 import { desc } from 'drizzle-orm'
@@ -12,14 +11,7 @@ export const metadata = {
 
 export default async function AdminProductsPage() {
   // Belt-and-braces auth check (CVE-2025-29927 — layout.tsx also checks)
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/admin/login')
-  }
+  await requireAdminSession()
 
   // Fetch all products — NOT filtered by is_active (admin sees everything)
   let productsData: {

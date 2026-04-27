@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { orders } from '@/db'
 import { desc } from 'drizzle-orm'
@@ -10,14 +9,7 @@ import RecentOrdersTable from '../../_components/RecentOrdersTable'
 // Belt-and-braces auth check — layout.tsx also checks, but individual pages
 // should never trust the layout alone (CVE-2025-29927).
 export default async function AdminDashboardPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/admin/login')
-  }
+  await requireAdminSession()
 
   // Fetch all orders ordered by most recent first
   let ordersData: Order[] = []
