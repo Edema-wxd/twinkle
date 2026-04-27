@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { aboutSections } from '@/db'
+import { asc } from 'drizzle-orm'
 import { AboutPagesForm } from '../../../_components/AboutPagesForm'
 import { AboutSection } from '@/types/supabase'
 
@@ -54,18 +56,27 @@ export default async function AdminPagesPage() {
     redirect('/admin/login')
   }
 
-  const adminClient = createAdminClient()
-  const { data: rows, error } = await adminClient
-    .from('about_sections')
-    .select('*')
-    .order('display_order')
+  let sections: AboutSection[] = DEFAULT_SECTIONS
 
-  if (error) {
+  try {
+    const rows = await db
+      .select()
+      .from(aboutSections)
+      .orderBy(asc(aboutSections.displayOrder))
+
+    if (rows.length > 0) {
+      sections = rows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        body: r.body,
+        image_url: r.imageUrl ?? null,
+        display_order: r.displayOrder,
+        updated_at: r.updatedAt instanceof Date ? r.updatedAt.toISOString() : String(r.updatedAt),
+      }))
+    }
+  } catch (error) {
     console.error('Failed to fetch about_sections:', error)
   }
-
-  // If no rows exist (fresh install), use default placeholders
-  const sections: AboutSection[] = rows && rows.length > 0 ? rows : DEFAULT_SECTIONS
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-3xl">

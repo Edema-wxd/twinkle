@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { faqs } from '@/db'
+import { asc } from 'drizzle-orm'
 import { FaqForm } from '../../../_components/FaqForm'
 
 export const metadata = {
@@ -19,18 +21,32 @@ export default async function AdminFaqsPage() {
     redirect('/admin/login')
   }
 
-  const adminClient = createAdminClient()
-  const { data: faqs, error } = await adminClient
-    .from('faqs')
-    .select('*')
-    .order('category')
-    .order('display_order')
+  let faqList: {
+    id: string
+    category: string
+    question: string
+    answer: string
+    display_order: number
+    created_at: string
+  }[] = []
 
-  if (error) {
+  try {
+    const rows = await db
+      .select()
+      .from(faqs)
+      .orderBy(asc(faqs.category), asc(faqs.displayOrder))
+
+    faqList = rows.map((r) => ({
+      id: r.id,
+      category: r.category,
+      question: r.question,
+      answer: r.answer,
+      display_order: r.displayOrder,
+      created_at: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+    }))
+  } catch (error) {
     console.error('Failed to fetch FAQs:', error)
   }
-
-  const faqList = faqs ?? []
 
   // Group by category for display
   const grouped = faqList.reduce<Record<string, typeof faqList>>(

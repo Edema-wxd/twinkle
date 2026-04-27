@@ -1,6 +1,8 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { faqs } from '@/db'
+import { eq } from 'drizzle-orm'
 import { FaqForm } from '../../../../_components/FaqForm'
 
 export const metadata = {
@@ -24,18 +26,21 @@ export default async function EditFaqPage({
 
   const { id } = await params
 
-  const adminClient = createAdminClient()
-  const result = await adminClient
-    .from('faqs')
-    .select('*')
-    .eq('id', id)
-    .single()
+  const [row] = await db.select().from(faqs).where(eq(faqs.id, id)).limit(1)
 
-  if (result.error || !result.data) {
+  if (!row) {
     notFound()
   }
 
-  const faq = result.data
+  // Map camelCase Drizzle row to snake_case shape expected by FaqForm (Faq from @/types/supabase)
+  const faq = {
+    id: row.id,
+    category: row.category,
+    question: row.question,
+    answer: row.answer,
+    display_order: row.displayOrder,
+    created_at: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+  }
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-2xl">
