@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { blogPosts } from '@/db'
+import { eq } from 'drizzle-orm'
 
 export async function PUT(
   req: NextRequest,
@@ -36,16 +38,14 @@ export async function PUT(
     published_at?: unknown
   }
 
-  const adminClient = createAdminClient()
-
   // Fetch current post to detect published transition
-  const { data: currentPost, error: fetchError } = await adminClient
-    .from('blog_posts')
-    .select('id, published, published_at')
-    .eq('id', id)
-    .single()
+  const [currentPost] = await db
+    .select({ id: blogPosts.id, published: blogPosts.published, publishedAt: blogPosts.publishedAt })
+    .from(blogPosts)
+    .where(eq(blogPosts.id, id))
+    .limit(1)
 
-  if (fetchError || !currentPost) {
+  if (!currentPost) {
     return NextResponse.json({ error: 'Post not found' }, { status: 404 })
   }
 
@@ -64,7 +64,7 @@ export async function PUT(
     updates.excerpt = excerpt
   }
   if (featured_image === null || (typeof featured_image === 'string')) {
-    updates.featured_image = featured_image || null
+    updates.featuredImage = featured_image || null
   }
   if (tag === null || typeof tag === 'string') {
     updates.tag = typeof tag === 'string' && tag.trim() ? tag.trim() : null
@@ -72,33 +72,37 @@ export async function PUT(
   if (typeof published === 'boolean') {
     updates.published = published
 
-    // Auto-set published_at when transitioning from unpublished to published
+    // Auto-set publishedAt when transitioning from unpublished to published
     if (published && !currentPost.published) {
-      updates.published_at =
+      updates.publishedAt =
         typeof published_at === 'string' && published_at
-          ? published_at
-          : new Date().toISOString()
+          ? new Date(published_at)
+          : new Date()
     }
   }
 
-  updates.updated_at = new Date().toISOString()
+  updates.updatedAt = new Date()
 
-  const { data, error } = await adminClient
-    .from('blog_posts')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single()
+  try {
+    const [data] = await db
+      .update(blogPosts)
+      .set(updates)
+      .where(eq(blogPosts.id, id))
+      .returning()
 
-  if (error) {
-    console.error('Failed to update blog post:', error)
-    if (error.code === '23505') {
+    if (!data) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ ok: true, post: data })
+  } catch (err: unknown) {
+    console.error('Failed to update blog post:', err)
+    const pgErr = err as { code?: string }
+    if (pgErr?.code === '23505') {
       return NextResponse.json({ error: 'A post with this slug already exists' }, { status: 409 })
     }
     return NextResponse.json({ error: 'Failed to update blog post' }, { status: 500 })
   }
-
-  return NextResponse.json({ ok: true, post: data })
 }
 
 export async function DELETE(
@@ -116,14 +120,12 @@ export async function DELETE(
   }
 
   const { id } = await params
-  const adminClient = createAdminClient()
 
-  const { error } = await adminClient.from('blog_posts').delete().eq('id', id)
-
-  if (error) {
-    console.error('Failed to delete blog post:', error)
+  try {
+    await db.delete(blogPosts).where(eq(blogPosts.id, id))
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error('Failed to delete blog post:', err)
     return NextResponse.json({ error: 'Failed to delete blog post' }, { status: 500 })
   }
-
-  return NextResponse.json({ ok: true })
 }

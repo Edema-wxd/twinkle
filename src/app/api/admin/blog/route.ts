@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { blogPosts } from '@/db'
 
 function generateSlug(title: string): string {
   return title
@@ -58,34 +59,32 @@ export async function POST(req: NextRequest) {
   // Auto-set published_at when publishing and not explicitly provided
   const resolvedPublishedAt =
     isPublished
-      ? (typeof published_at === 'string' && published_at ? published_at : new Date().toISOString())
+      ? (typeof published_at === 'string' && published_at ? new Date(published_at) : new Date())
       : null
 
-  const adminClient = createAdminClient()
-
-  const { data, error } = await adminClient
-    .from('blog_posts')
-    .insert({
+  try {
+    const [data] = await db.insert(blogPosts).values({
       title: trimmedTitle,
       slug,
       body: typeof postBody === 'string' ? postBody : '',
       excerpt: typeof excerpt === 'string' ? excerpt : '',
-      featured_image: typeof featured_image === 'string' && featured_image ? featured_image : null,
+      featuredImage: typeof featured_image === 'string' && featured_image ? featured_image : null,
       tag: typeof tag === 'string' && tag.trim() ? tag.trim() : null,
       published: isPublished,
-      published_at: resolvedPublishedAt,
-    })
-    .select()
-    .single()
+      publishedAt: resolvedPublishedAt,
+    }).returning()
 
-  if (error) {
-    console.error('Failed to create blog post:', error)
-    // Unique constraint violation on slug
-    if (error.code === '23505') {
+    if (!data) {
+      return NextResponse.json({ error: 'Failed to create blog post' }, { status: 500 })
+    }
+
+    return NextResponse.json({ post: data }, { status: 201 })
+  } catch (err: unknown) {
+    console.error('Failed to create blog post:', err)
+    const pgErr = err as { code?: string }
+    if (pgErr?.code === '23505') {
       return NextResponse.json({ error: 'A post with this slug already exists' }, { status: 409 })
     }
     return NextResponse.json({ error: 'Failed to create blog post' }, { status: 500 })
   }
-
-  return NextResponse.json({ post: data }, { status: 201 })
 }
