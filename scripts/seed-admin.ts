@@ -3,7 +3,6 @@
  * Run once: `npx tsx scripts/seed-admin.ts`
  * Reads ADMIN_EMAIL + ADMIN_PASSWORD from environment.
  */
-import 'dotenv/config'
 import { auth } from '@/lib/auth'
 
 async function main() {

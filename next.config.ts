@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['better-auth'],
   devIndicators: false,
   images: {
     dangerouslyAllowSVG: true,
