@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
-import { APIError } from 'better-auth/api'
+import { APIError } from 'better-auth'
 
 export async function loginAction(formData: FormData) {
   const email = (formData.get('email') as string ?? '').trim()
