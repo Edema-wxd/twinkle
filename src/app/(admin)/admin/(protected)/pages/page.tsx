@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { aboutSections } from '@/db'
 import { asc } from 'drizzle-orm'
@@ -47,14 +46,7 @@ const DEFAULT_SECTIONS: AboutSection[] = [
 
 export default async function AdminPagesPage() {
   // Belt-and-braces auth check (CVE-2025-29927 — layout.tsx also checks)
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/admin/login')
-  }
+  await requireAdminSession()
 
   let sections: AboutSection[] = DEFAULT_SECTIONS
 
