@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { products } from '@/db'
 
 function generateSlug(name: string): string {
   return name
@@ -86,33 +87,35 @@ export async function POST(req: NextRequest) {
 
   // Compute price_min / price_max from variants
   const allPrices = processedVariants.flatMap((v) => v.price_tiers.map((t) => t.price))
-  const price_min = allPrices.length > 0 ? Math.min(...allPrices) : 0
-  const price_max = allPrices.length > 0 ? Math.max(...allPrices) : 0
+  const priceMin = allPrices.length > 0 ? Math.min(...allPrices) : 0
+  const priceMax = allPrices.length > 0 ? Math.max(...allPrices) : 0
 
-  const adminClient = createAdminClient()
-
-  const { data, error } = await adminClient
-    .from('products')
-    .insert({
+  try {
+    const [data] = await db.insert(products).values({
       name: trimmedName,
       slug,
       description: typeof description === 'string' ? description : '',
       material,
-      is_featured: typeof is_featured === 'boolean' ? is_featured : false,
-      is_active: typeof is_active === 'boolean' ? is_active : true,
+      isFeatured: typeof is_featured === 'boolean' ? is_featured : false,
+      isActive: typeof is_active === 'boolean' ? is_active : true,
       variants: processedVariants,
-      price_min,
-      price_max,
+      priceMin,
+      priceMax,
       image: '/images/products/placeholder-bead.svg',
       images: [],
-    })
-    .select()
-    .single()
+    }).returning()
 
-  if (error) {
-    console.error('Failed to create product:', error)
+    if (!data) {
+      return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })
+    }
+
+    return NextResponse.json(data, { status: 201 })
+  } catch (err: unknown) {
+    console.error('Failed to create product:', err)
+    const pgErr = err as { code?: string }
+    if (pgErr?.code === '23505') {
+      return NextResponse.json({ error: 'A product with this slug already exists' }, { status: 409 })
+    }
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })
   }
-
-  return NextResponse.json(data, { status: 201 })
 }

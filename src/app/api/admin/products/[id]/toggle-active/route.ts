@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { products } from '@/db'
+import { eq } from 'drizzle-orm'
 
 export async function PATCH(
   _req: NextRequest,
@@ -17,29 +19,28 @@ export async function PATCH(
   }
 
   const { id } = await params
-  const adminClient = createAdminClient()
 
-  // Fetch current is_active value
-  const { data: product, error: fetchError } = await adminClient
-    .from('products')
-    .select('id, is_active')
-    .eq('id', id)
-    .single()
+  // Fetch current isActive value
+  const [product] = await db
+    .select({ id: products.id, isActive: products.isActive })
+    .from(products)
+    .where(eq(products.id, id))
+    .limit(1)
 
-  if (fetchError || !product) {
+  if (!product) {
     return NextResponse.json({ error: 'Product not found' }, { status: 404 })
   }
 
-  const newValue = !product.is_active
+  const newValue = !product.isActive
 
-  // Update is_active
-  const { error: updateError } = await adminClient
-    .from('products')
-    .update({ is_active: newValue })
-    .eq('id', id)
-
-  if (updateError) {
-    console.error('Failed to toggle product is_active:', updateError)
+  // Update isActive
+  try {
+    await db
+      .update(products)
+      .set({ isActive: newValue })
+      .where(eq(products.id, id))
+  } catch (err) {
+    console.error('Failed to toggle product isActive:', err)
     return NextResponse.json(
       { error: 'Failed to update product' },
       { status: 500 }

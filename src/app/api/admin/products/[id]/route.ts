@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { products } from '@/db'
+import { eq } from 'drizzle-orm'
 
 export async function PUT(
   req: NextRequest,
@@ -88,21 +90,19 @@ export async function PUT(
 
   // Recompute price_min / price_max
   const allPrices = processedVariants.flatMap((v) => v.price_tiers.map((t) => t.price))
-  const price_min = allPrices.length > 0 ? Math.min(...allPrices) : 0
-  const price_max = allPrices.length > 0 ? Math.max(...allPrices) : 0
-
-  const adminClient = createAdminClient()
+  const priceMin = allPrices.length > 0 ? Math.min(...allPrices) : 0
+  const priceMax = allPrices.length > 0 ? Math.max(...allPrices) : 0
 
   const updatePayload: Record<string, unknown> = {
-    name: name.trim(),
-    slug: slug.trim(),
+    name: (name as string).trim(),
+    slug: (slug as string).trim(),
     description: typeof description === 'string' ? description : '',
     material,
-    is_featured: typeof is_featured === 'boolean' ? is_featured : false,
-    is_active: typeof is_active === 'boolean' ? is_active : true,
+    isFeatured: typeof is_featured === 'boolean' ? is_featured : false,
+    isActive: typeof is_active === 'boolean' ? is_active : true,
     variants: processedVariants,
-    price_min,
-    price_max,
+    priceMin,
+    priceMax,
   }
 
   if (typeof image === 'string') {
@@ -112,19 +112,26 @@ export async function PUT(
     updatePayload.images = images
   }
 
-  const { data, error } = await adminClient
-    .from('products')
-    .update(updatePayload)
-    .eq('id', id)
-    .select()
-    .single()
+  try {
+    const [data] = await db
+      .update(products)
+      .set(updatePayload)
+      .where(eq(products.id, id))
+      .returning()
 
-  if (error) {
-    console.error('Failed to update product:', error)
+    if (!data) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+    }
+
+    return NextResponse.json(data)
+  } catch (err: unknown) {
+    console.error('Failed to update product:', err)
+    const pgErr = err as { code?: string }
+    if (pgErr?.code === '23505') {
+      return NextResponse.json({ error: 'A product with this slug already exists' }, { status: 409 })
+    }
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 })
   }
-
-  return NextResponse.json(data)
 }
 
 export async function DELETE(
@@ -142,14 +149,12 @@ export async function DELETE(
   }
 
   const { id } = await params
-  const adminClient = createAdminClient()
 
-  const { error } = await adminClient.from('products').delete().eq('id', id)
-
-  if (error) {
-    console.error('Failed to delete product:', error)
+  try {
+    await db.delete(products).where(eq(products.id, id))
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    console.error('Failed to delete product:', err)
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 })
   }
-
-  return NextResponse.json({ success: true })
 }
