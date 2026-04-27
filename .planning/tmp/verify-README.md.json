@@ -1,0 +1,20 @@
+{
+  "doc_path": "README.md",
+  "claims_checked": 15,
+  "claims_passed": 13,
+  "claims_failed": 2,
+  "failures": [
+    {
+      "line": 22,
+      "claim": ".env.example",
+      "expected": "file exists",
+      "actual": "file not found at /Users/mac/Documents/GitHub/twinkle/.env.example (actual file is .env.local.example)"
+    },
+    {
+      "line": 43,
+      "claim": "PAYSTACK_SECRET_KEY env var table is complete",
+      "expected": "NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY also listed (used in src/components/checkout/PaystackButton.tsx line 23)",
+      "actual": "README env var table omits NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY which is actively used in the codebase"
+    }
+  ]
+}
