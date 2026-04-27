@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { orders } from '@/db'
+import { desc } from 'drizzle-orm'
 import { Order } from '@/types/supabase'
 import StatsPanel from '../../_components/StatsPanel'
 import RecentOrdersTable from '../../_components/RecentOrdersTable'
@@ -18,15 +20,37 @@ export default async function AdminDashboardPage() {
   }
 
   // Fetch all orders ordered by most recent first
-  const adminClient = createAdminClient()
-  const { data: ordersData, error } = await adminClient
-    .from('orders')
-    .select('id, created_at, status, customer_name, total, paystack_reference')
-    .order('created_at', { ascending: false })
+  let ordersData: Order[] = []
+  try {
+    const rows = await db
+      .select({
+        id: orders.id,
+        created_at: orders.createdAt,
+        status: orders.status,
+        customer_name: orders.customerName,
+        total: orders.total,
+        paystack_reference: orders.paystackReference,
+      })
+      .from(orders)
+      .orderBy(desc(orders.createdAt))
 
-  const orders: Order[] = (ordersData as Order[]) ?? []
-
-  if (error) {
+    ordersData = rows.map((r) => ({
+      id: r.id,
+      created_at: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at as string,
+      paystack_reference: r.paystack_reference,
+      paystack_payload: null,
+      status: r.status,
+      customer_name: r.customer_name,
+      customer_email: '',
+      customer_phone: '',
+      customer_ip: null,
+      delivery_address: '',
+      delivery_state: '',
+      shipping_cost: 0,
+      subtotal: 0,
+      total: r.total,
+    }))
+  } catch (error) {
     console.error('Failed to fetch orders for dashboard:', error)
   }
 
@@ -43,7 +67,7 @@ export default async function AdminDashboardPage() {
   // Helper to compute stats for a date range
   function computeStats(startDate: Date) {
     const startISO = startDate.toISOString()
-    const filtered = orders.filter((o) => o.created_at >= startISO)
+    const filtered = ordersData.filter((o) => o.created_at >= startISO)
     return {
       count: filtered.length,
       totalSales: filtered.reduce((sum, o) => sum + (o.total ?? 0), 0),
@@ -73,7 +97,7 @@ export default async function AdminDashboardPage() {
         <h2 className="text-lg font-semibold text-white mb-4">
           Recent Orders
         </h2>
-        <RecentOrdersTable orders={orders.slice(0, 10)} />
+        <RecentOrdersTable orders={ordersData.slice(0, 10)} />
       </div>
     </div>
   )

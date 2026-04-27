@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { products } from '@/db'
+import { desc } from 'drizzle-orm'
 import { ProductListTable } from '../../../_components/ProductListTable'
 
 export const metadata = {
@@ -20,17 +22,48 @@ export default async function AdminProductsPage() {
   }
 
   // Fetch all products — NOT filtered by is_active (admin sees everything)
-  const adminClient = createAdminClient()
-  const { data: productsData, error } = await adminClient
-    .from('products')
-    .select('id, name, slug, material, is_active, is_featured, price_min, price_max, created_at')
-    .order('created_at', { ascending: false })
+  let productsData: {
+    id: string
+    name: string
+    slug: string
+    material: string
+    is_active: boolean
+    is_featured: boolean
+    price_min: number
+    price_max: number
+    created_at: string
+  }[] = []
 
-  if (error) {
+  try {
+    const rows = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        material: products.material,
+        isActive: products.isActive,
+        isFeatured: products.isFeatured,
+        priceMin: products.priceMin,
+        priceMax: products.priceMax,
+        createdAt: products.createdAt,
+      })
+      .from(products)
+      .orderBy(desc(products.createdAt))
+
+    productsData = rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      material: r.material,
+      is_active: r.isActive,
+      is_featured: r.isFeatured,
+      price_min: r.priceMin,
+      price_max: r.priceMax,
+      created_at: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+    }))
+  } catch (error) {
     console.error('Failed to fetch products for admin:', error)
   }
-
-  const products = productsData ?? []
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -51,7 +84,7 @@ export default async function AdminProductsPage() {
         </Link>
       </div>
 
-      <ProductListTable products={products} />
+      <ProductListTable products={productsData} />
     </div>
   )
 }

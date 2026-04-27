@@ -1,6 +1,8 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { db } from '@/db'
+import { products } from '@/db'
+import { eq } from 'drizzle-orm'
 import { ProductForm } from '../../../../_components/ProductForm'
 
 export const metadata = {
@@ -24,19 +26,30 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
 
   const { id } = await params
 
-  // Fetch product by ID using service-role client
-  const adminClient = createAdminClient()
-  const result = await adminClient
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .single()
+  // Fetch product by ID using Drizzle
+  const [row] = await db.select().from(products).where(eq(products.id, id)).limit(1)
 
-  if (result.error || !result.data) {
+  if (!row) {
     notFound()
   }
 
-  const product = result.data
+  // Map camelCase Drizzle row to snake_case shape expected by ProductForm
+  const product = {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description,
+    material: row.material,
+    is_featured: row.isFeatured,
+    is_active: row.isActive,
+    price_min: row.priceMin,
+    price_max: row.priceMax,
+    image: row.image,
+    images: row.images,
+    variants: row.variants,
+    seo_description: row.seoDescription ?? null,
+    created_at: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+  }
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
