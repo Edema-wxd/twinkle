@@ -4,8 +4,8 @@ import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { RichTextEditor } from './RichTextEditor'
-import { createClient } from '@/lib/supabase/client'
-import type { BlogPost } from '@/types/supabase'
+import { useUploadThing } from '@/lib/uploadthing'
+import type { BlogPost } from '@/types/db'
 
 interface BlogPostFormProps {
   post?: BlogPost
@@ -36,6 +36,14 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { startUpload } = useUploadThing('contentImages', {
+    onClientUploadComplete: (res) => {
+      if (res?.[0]) setFeaturedImage(res[0].ufsUrl)
+    },
+    onUploadError: (err) => {
+      setUploadError(`Upload failed: ${err.message}`)
+    },
+  })
 
   function showToast(type: 'success' | 'error', message: string) {
     setToast({ type, message })
@@ -57,20 +65,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
     setUploading(true)
 
     try {
-      const supabase = createClient()
-      const path = `blog/${Date.now()}-${file.name}`
-
-      const { error: uploadErr } = await supabase.storage
-        .from('content-images')
-        .upload(path, file, { upsert: false })
-
-      if (uploadErr) {
-        setUploadError(`Upload failed: ${uploadErr.message}`)
-        return
-      }
-
-      const { data } = supabase.storage.from('content-images').getPublicUrl(path)
-      setFeaturedImage(data.publicUrl)
+      await startUpload([file])
     } finally {
       setUploading(false)
       // Reset input so same file can be re-selected if removed then re-added

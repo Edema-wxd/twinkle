@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import {
   DndContext,
@@ -17,7 +17,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { createClient } from '@/lib/supabase/client'
+import { useUploadThing } from '@/lib/uploadthing'
 
 interface ImageItem {
   id: string
@@ -87,14 +87,25 @@ interface ImageUploaderProps {
   onImagesChange: (urls: string[]) => void
 }
 
-export function ImageUploader({ productId, initialImages, onImagesChange }: ImageUploaderProps) {
-  const [tempId] = useState(() => crypto.randomUUID())
+export function ImageUploader({ productId: _productId, initialImages, onImagesChange }: ImageUploaderProps) {
   const [images, setImages] = useState<ImageItem[]>(() =>
     initialImages.map((url) => ({ id: crypto.randomUUID(), url }))
   )
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { startUpload } = useUploadThing('productImages', {
+    onClientUploadComplete: (res) => {
+      if (!res?.length) return
+      setImages((prev) => [
+        ...prev,
+        ...res.map((file) => ({ id: crypto.randomUUID(), url: file.ufsUrl })),
+      ])
+    },
+    onUploadError: (uploadError) => {
+      setError(`Upload failed: ${uploadError.message}`)
+    },
+  })
 
   const sensors = useSensors(useSensor(PointerSensor))
 
@@ -103,29 +114,6 @@ export function ImageUploader({ productId, initialImages, onImagesChange }: Imag
     onImagesChange(images.map((i) => i.url))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [images])
-
-  const uploadFile = useCallback(
-    async (file: File) => {
-      setError(null)
-      const supabase = createClient()
-      const effectiveProductId = productId ?? tempId
-      const path = `${effectiveProductId}/${Date.now()}-${file.name}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('product-images')
-        .upload(path, file, { upsert: false })
-
-      if (uploadError) {
-        setError(`Upload failed: ${uploadError.message}`)
-        return
-      }
-
-      const { data } = supabase.storage.from('product-images').getPublicUrl(path)
-
-      setImages((prev) => [...prev, { id: crypto.randomUUID(), url: data.publicUrl }])
-    },
-    [productId, tempId]
-  )
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return
@@ -138,10 +126,8 @@ export function ImageUploader({ productId, initialImages, onImagesChange }: Imag
     setUploading(true)
     try {
       const filesToUpload = Array.from(files).slice(0, 5 - images.length)
-      for (const file of filesToUpload) {
-        if (images.length >= 5) break
-        await uploadFile(file)
-      }
+      setError(null)
+      await startUpload(filesToUpload)
     } finally {
       setUploading(false)
     }

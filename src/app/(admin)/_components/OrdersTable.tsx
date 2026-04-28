@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Order } from '@/types/supabase'
+import { Order } from '@/types/db'
 import { OrderStatusSelect } from './OrderStatusSelect'
 
 type StatusTab = 'All' | 'Paid' | 'Processing' | 'Shipped' | 'Delivered'

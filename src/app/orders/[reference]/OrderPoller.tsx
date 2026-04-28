@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Order, OrderItem } from '@/types/supabase';
+import { Order, OrderItem } from '@/types/db';
 import { OrderConfirmationView } from './OrderConfirmationView';
 import { BUSINESS } from '@/lib/config/business';
 

@@ -3,6 +3,7 @@ import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { blogPosts } from '@/db'
 import { eq } from 'drizzle-orm'
+import { deleteUploadthingFilesByUrls } from '@/lib/uploadthing/server'
 
 export async function PUT(
   req: NextRequest,
@@ -34,9 +35,14 @@ export async function PUT(
     published_at?: unknown
   }
 
-  // Fetch current post to detect published transition
+  // Fetch current post to detect published transition + cleanup replaced featured image
   const [currentPost] = await db
-    .select({ id: blogPosts.id, published: blogPosts.published, publishedAt: blogPosts.publishedAt })
+    .select({
+      id: blogPosts.id,
+      published: blogPosts.published,
+      publishedAt: blogPosts.publishedAt,
+      featuredImage: blogPosts.featuredImage,
+    })
     .from(blogPosts)
     .where(eq(blogPosts.id, id))
     .limit(1)
@@ -90,6 +96,23 @@ export async function PUT(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
+    // Delete replaced/removed featured image (best-effort).
+    const previous = currentPost.featuredImage
+    const next =
+      typeof featured_image === 'string'
+        ? (featured_image || null)
+        : featured_image === null
+          ? null
+          : previous
+
+    if (previous && previous !== next) {
+      try {
+        await deleteUploadthingFilesByUrls([previous])
+      } catch (err) {
+        console.error('UploadThing cleanup failed (blog featured image):', err)
+      }
+    }
+
     return NextResponse.json({ ok: true, post: data })
   } catch (err: unknown) {
     console.error('Failed to update blog post:', err)
@@ -114,7 +137,22 @@ export async function DELETE(
   const { id } = await params
 
   try {
+    const [before] = await db
+      .select({ featuredImage: blogPosts.featuredImage })
+      .from(blogPosts)
+      .where(eq(blogPosts.id, id))
+      .limit(1)
+
     await db.delete(blogPosts).where(eq(blogPosts.id, id))
+
+    if (before?.featuredImage) {
+      try {
+        await deleteUploadthingFilesByUrls([before.featuredImage])
+      } catch (err) {
+        console.error('UploadThing cleanup failed (blog delete):', err)
+      }
+    }
+
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('Failed to delete blog post:', err)

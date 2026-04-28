@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { db, faqs as faqsTable } from '@/db'
 import { asc } from 'drizzle-orm'
 import { FaqAccordion } from '@/components/faq/FaqAccordion'
-import { Faq } from '@/types/supabase'
+import { Faq } from '@/types/db'
 
 export const metadata: Metadata = {
   title: 'FAQs',

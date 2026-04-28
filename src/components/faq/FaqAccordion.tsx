@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Faq } from '@/types/supabase'
+import { Faq } from '@/types/db'
 
 interface FaqAccordionProps {
   faqs: Faq[]

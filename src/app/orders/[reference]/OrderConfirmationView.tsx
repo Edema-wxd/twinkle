@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Order, OrderItem } from '@/types/supabase';
+import { Order, OrderItem } from '@/types/db';
 import { THREAD_COLOURS } from '@/lib/cart/threadColours';
 
 interface OrderConfirmationViewProps {

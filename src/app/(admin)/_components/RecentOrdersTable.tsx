@@ -1,4 +1,4 @@
-import { Order } from '@/types/supabase'
+import { Order } from '@/types/db'
 
 type RecentOrdersTableProps = {
   orders: Order[]

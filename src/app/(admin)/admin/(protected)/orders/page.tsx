@@ -2,7 +2,7 @@ import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { orders, abandonedOrders as abandonedOrdersTable } from '@/db'
 import { desc } from 'drizzle-orm'
-import { Order, AbandonedOrder } from '@/types/supabase'
+import { Order, AbandonedOrder } from '@/types/db'
 import { OrdersTable } from '../../../_components/OrdersTable'
 import { AbandonedOrdersTable } from '../../../_components/AbandonedOrdersTable'
 

@@ -15,12 +15,13 @@ export async function middleware(request: NextRequest) {
   // every API route via auth.api.getSession() — middleware is fast filter only.
   const isAdminPath = pathname.startsWith('/admin')
   const isLoginPage = pathname === '/admin/login'
+  const isSetupPage = pathname === '/admin/setup'
 
   const sessionCookie = getSessionCookie(request, {
     cookiePrefix: 'twinkle',
   })
 
-  if (isAdminPath && !isLoginPage && !sessionCookie) {
+  if (isAdminPath && !isLoginPage && !isSetupPage && !sessionCookie) {
     return NextResponse.redirect(new URL('/admin/login', request.url))
   }
 

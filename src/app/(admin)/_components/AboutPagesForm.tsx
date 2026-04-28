@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from 'react'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/client'
 import { RichTextEditor } from './RichTextEditor'
-import { AboutSection } from '@/types/supabase'
+import { useUploadThing } from '@/lib/uploadthing'
+import type { AboutSection } from '@/types/db'
 
 interface AboutPagesFormProps {
   sections: AboutSection[]
@@ -34,8 +34,20 @@ export function AboutPagesForm({ sections }: AboutPagesFormProps) {
     () => Object.fromEntries(sections.map((s) => [s.id, true]))
   )
   const [uploading, setUploading] = useState<Record<string, boolean>>({})
+  const [activeUploadSectionId, setActiveUploadSectionId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [isPending, startTransition] = useTransition()
+  const { startUpload } = useUploadThing('contentImages', {
+    onClientUploadComplete: (res) => {
+      if (!res?.[0] || !activeUploadSectionId) return
+      updateSection(activeUploadSectionId, { image_url: res[0].ufsUrl })
+      setActiveUploadSectionId(null)
+    },
+    onUploadError: (err) => {
+      showToast('error', `Image upload failed: ${err.message}`)
+      setActiveUploadSectionId(null)
+    },
+  })
 
   function showToast(type: 'success' | 'error', message: string) {
     setToast({ type, message })
@@ -54,23 +66,12 @@ export function AboutPagesForm({ sections }: AboutPagesFormProps) {
 
   async function handleImageUpload(sectionId: string, file: File) {
     setUploading((prev) => ({ ...prev, [sectionId]: true }))
+    setActiveUploadSectionId(sectionId)
     try {
-      const supabase = createClient()
-      const path = `about/${sectionId}/${Date.now()}-${file.name}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('content-images')
-        .upload(path, file, { upsert: true })
-
-      if (uploadError) {
-        showToast('error', `Image upload failed: ${uploadError.message}`)
-        return
-      }
-
-      const { data } = supabase.storage.from('content-images').getPublicUrl(path)
-      updateSection(sectionId, { image_url: data.publicUrl })
+      await startUpload([file])
     } catch {
       showToast('error', 'Image upload failed — please try again')
+      setActiveUploadSectionId(null)
     } finally {
       setUploading((prev) => ({ ...prev, [sectionId]: false }))
     }

@@ -31,5 +31,5 @@ export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect
 export type AbandonedOrder = typeof abandonedOrders.$inferSelect
 export type AbandonedOrderInsert = typeof abandonedOrders.$inferInsert
 
-// Json type re-export for files that import Json from @/types/supabase
+// Json type re-export for view-model types
 export type Json = unknown

@@ -2,7 +2,7 @@ import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { orders } from '@/db'
 import { desc } from 'drizzle-orm'
-import { Order } from '@/types/supabase'
+import { Order } from '@/types/db'
 import StatsPanel from '../../_components/StatsPanel'
 import RecentOrdersTable from '../../_components/RecentOrdersTable'
 

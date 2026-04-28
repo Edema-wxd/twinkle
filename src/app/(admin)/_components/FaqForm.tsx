@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Faq } from '@/types/supabase'
+import { Faq } from '@/types/db'
 
 interface FaqFormProps {
   faq?: Faq

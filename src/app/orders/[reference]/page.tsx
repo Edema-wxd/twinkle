@@ -1,7 +1,7 @@
 import { db } from '@/db'
 import { orders } from '@/db'
 import { eq } from 'drizzle-orm'
-import { Order, OrderItem, Json } from '@/types/supabase'
+import { Order, OrderItem, Json } from '@/types/db'
 import { OrderConfirmationView } from './OrderConfirmationView'
 import { OrderPoller } from './OrderPoller'
 

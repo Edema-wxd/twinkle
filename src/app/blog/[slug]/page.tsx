@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { db, blogPosts as blogPostsTable } from '@/db'
 import { eq, desc, ne, and } from 'drizzle-orm'
-import { Tables } from '@/types/supabase'
+import { Tables } from '@/types/db'
 import { BlogShareButtons } from '@/components/blog/BlogShareButtons'
 import { BlogPostCard } from '@/components/blog/BlogPostCard'
 

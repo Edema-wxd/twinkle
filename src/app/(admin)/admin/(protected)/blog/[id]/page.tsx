@@ -25,7 +25,7 @@ export default async function EditBlogPostPage({ params }: EditBlogPostPageProps
     notFound()
   }
 
-  // Map camelCase Drizzle row to snake_case shape expected by BlogPostForm (BlogPost from @/types/supabase)
+  // Map camelCase Drizzle row to snake_case shape expected by BlogPostForm
   const post = {
     id: row.id,
     title: row.title,

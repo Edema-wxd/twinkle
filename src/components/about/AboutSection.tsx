@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import sanitizeHtml from 'sanitize-html'
-import { AboutSection as AboutSectionType } from '@/types/supabase'
+import { AboutSection as AboutSectionType } from '@/types/db'
 import { BUSINESS } from '@/lib/config/business'
 
 interface AboutSectionProps {

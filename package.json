@@ -14,18 +14,18 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@neondatabase/serverless": "^1.1.0",
     "@paystack/inline-js": "^2.22.8",
-    "@supabase/ssr": "latest",
-    "@supabase/supabase-js": "latest",
     "@tiptap/pm": "^2.27.2",
     "@tiptap/react": "^2.27.2",
     "@tiptap/starter-kit": "^2.27.2",
     "@types/sanitize-html": "^2.16.1",
+    "@uploadthing/react": "^7.3.3",
     "better-auth": "^1.6.9",
     "drizzle-orm": "^0.45.2",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "sanitize-html": "^2.17.3"
+    "sanitize-html": "^2.17.3",
+    "uploadthing": "^7.7.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -37,7 +37,6 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "^15",
-    "supabase": "latest",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"

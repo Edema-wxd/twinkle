@@ -4,7 +4,7 @@ import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { orders } from '@/db'
 import { eq } from 'drizzle-orm'
-import { Order, OrderItem, Json } from '@/types/supabase'
+import { Order, OrderItem, Json } from '@/types/db'
 import { OrderStatusSelect } from '../../../../_components/OrderStatusSelect'
 
 type FullOrder = Order & { order_items: OrderItem[] }

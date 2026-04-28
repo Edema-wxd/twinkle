@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { AbandonedOrder } from '@/types/supabase'
+import { AbandonedOrder } from '@/types/db'
 
 function formatNaira(amount: number): string {
   return '₦' + amount.toLocaleString('en-NG')

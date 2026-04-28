@@ -3,7 +3,7 @@ import { db } from '@/db'
 import { aboutSections } from '@/db'
 import { asc } from 'drizzle-orm'
 import { AboutPagesForm } from '../../../_components/AboutPagesForm'
-import { AboutSection } from '@/types/supabase'
+import { AboutSection } from '@/types/db'
 
 export const metadata = {
   title: 'About Page — Twinkle Locs Admin',

@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Tables } from '@/types/supabase'
+import { Tables } from '@/types/db'
 
 type BlogPostCardProps = {
   post: Pick<

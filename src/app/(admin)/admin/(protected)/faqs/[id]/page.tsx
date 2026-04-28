@@ -25,7 +25,7 @@ export default async function EditFaqPage({
     notFound()
   }
 
-  // Map camelCase Drizzle row to snake_case shape expected by FaqForm (Faq from @/types/supabase)
+  // Map camelCase Drizzle row to snake_case shape expected by FaqForm
   const faq = {
     id: row.id,
     category: row.category,

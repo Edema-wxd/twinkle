@@ -3,7 +3,7 @@ import { db, aboutSections as aboutSectionsTable } from '@/db'
 import { asc } from 'drizzle-orm'
 import { AboutSection } from '@/components/about/AboutSection'
 import { AboutStickyNav } from '@/components/about/AboutStickyNav'
-import { AboutSection as AboutSectionType } from '@/types/supabase'
+import { AboutSection as AboutSectionType } from '@/types/db'
 
 export const metadata: Metadata = {
   title: 'About Us',

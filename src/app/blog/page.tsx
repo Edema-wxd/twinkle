@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { db, blogPosts as blogPostsTable } from '@/db'
 import { eq, desc, isNotNull } from 'drizzle-orm'
-import { Tables } from '@/types/supabase'
+import { Tables } from '@/types/db'
 import { BlogPostCard } from '@/components/blog/BlogPostCard'
 import { BlogCategoryFilter } from '@/components/blog/BlogCategoryFilter'
 

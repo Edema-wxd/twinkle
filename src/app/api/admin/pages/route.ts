@@ -3,6 +3,7 @@ import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { aboutSections } from '@/db'
 import { sql } from 'drizzle-orm'
+import { deleteUploadthingFilesByUrls } from '@/lib/uploadthing/server'
 
 interface SectionPayload {
   id: string
@@ -70,6 +71,10 @@ export async function PUT(req: NextRequest) {
   }))
 
   try {
+    const existing = await db
+      .select({ id: aboutSections.id, imageUrl: aboutSections.imageUrl })
+      .from(aboutSections)
+
     await db.insert(aboutSections).values(insertRows).onConflictDoUpdate({
       target: aboutSections.id,
       set: {
@@ -79,6 +84,23 @@ export async function PUT(req: NextRequest) {
         displayOrder: sql`excluded.display_order`,
       },
     })
+
+    // Cleanup removed/replaced images (best-effort).
+    const prevById = new Map(existing.map((r) => [r.id, r.imageUrl]))
+    const removed: string[] = []
+    for (const r of rows) {
+      const prev = prevById.get(r.id) ?? null
+      const next = r.image_url ?? null
+      if (prev && prev !== next) removed.push(prev)
+    }
+    if (removed.length > 0) {
+      try {
+        await deleteUploadthingFilesByUrls(removed)
+      } catch (err) {
+        console.error('UploadThing cleanup failed (about sections):', err)
+      }
+    }
+
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('Failed to upsert about_sections:', err)

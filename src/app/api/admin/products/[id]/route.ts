@@ -3,6 +3,7 @@ import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { products } from '@/db'
 import { eq } from 'drizzle-orm'
+import { deleteUploadthingFilesByUrls } from '@/lib/uploadthing/server'
 
 export async function PUT(
   req: NextRequest,
@@ -109,6 +110,12 @@ export async function PUT(
   }
 
   try {
+    const [before] = await db
+      .select({ images: products.images })
+      .from(products)
+      .where(eq(products.id, id))
+      .limit(1)
+
     const [data] = await db
       .update(products)
       .set(updatePayload)
@@ -117,6 +124,18 @@ export async function PUT(
 
     if (!data) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+    }
+
+    // Delete removed UploadThing files (best-effort; never touches legacy URLs).
+    const prevImages = before?.images ?? []
+    const nextImages = Array.isArray(images) ? images.filter((u): u is string => typeof u === 'string') : prevImages
+    const removed = prevImages.filter((u) => !nextImages.includes(u))
+    if (removed.length > 0) {
+      try {
+        await deleteUploadthingFilesByUrls(removed)
+      } catch (err) {
+        console.error('UploadThing cleanup failed (product images):', err)
+      }
     }
 
     return NextResponse.json(data)
@@ -143,7 +162,23 @@ export async function DELETE(
   const { id } = await params
 
   try {
+    const [before] = await db
+      .select({ images: products.images })
+      .from(products)
+      .where(eq(products.id, id))
+      .limit(1)
+
     await db.delete(products).where(eq(products.id, id))
+
+    const prevImages = before?.images ?? []
+    if (prevImages.length > 0) {
+      try {
+        await deleteUploadthingFilesByUrls(prevImages)
+      } catch (err) {
+        console.error('UploadThing cleanup failed (product delete):', err)
+      }
+    }
+
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Failed to delete product:', err)
