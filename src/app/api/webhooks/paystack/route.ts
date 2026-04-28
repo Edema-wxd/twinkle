@@ -84,8 +84,9 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error('[webhook] Unhandled error in handleChargeSuccess:', err)
-    // Return 200 to prevent infinite Paystack retries for a payload we cannot parse.
-    return NextResponse.json({ received: true, warning: 'processing_error' }, { status: 200 })
+    // Return non-2xx so Paystack retries. Payload-level issues should be handled
+    // inside handleChargeSuccess without throwing (idempotent + safe no-op).
+    return NextResponse.json({ error: 'processing_error' }, { status: 500 })
   }
 
   return NextResponse.json({ received: true }, { status: 200 })
@@ -119,7 +120,7 @@ async function handleChargeSuccess(data: PaystackChargeData) {
       paystackPayload: data as unknown,
       status: 'paid',
       customerName: `${customer_details.first_name} ${customer_details.last_name}`.trim(),
-      customerEmail: data.customer.email,
+      customerEmail: data.customer.email.toLowerCase(),
       customerPhone: customer_details.phone,
       customerIp: data.ip_address,
       deliveryAddress: customer_details.delivery_address,
