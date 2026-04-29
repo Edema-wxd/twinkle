@@ -7,6 +7,7 @@ import {
   jsonb,
   numeric,
   timestamp,
+  unique,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
@@ -182,6 +183,24 @@ export const abandonedOrders = pgTable('abandoned_orders', {
   recovered: boolean('recovered').notNull().default(false),
   recoveredAt: timestamp('recovered_at', { withTimezone: true }),
 })
+
+export const orderNotifications = pgTable(
+  'order_notifications',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orderId: uuid('order_id')
+      .notNull()
+      .references(() => orders.id, { onDelete: 'cascade' }),
+    channel: text('channel').notNull(), // 'email' | 'whatsapp'
+    status: text('status').notNull().default('pending'), // 'pending' | 'sent' | 'failed'
+    attempts: integer('attempts').notNull().default(0),
+    lastError: text('last_error'), // nullable — last provider error string
+    sentAt: timestamp('sent_at', { withTimezone: true }), // nullable
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique('order_notifications_order_id_channel_unique').on(t.orderId, t.channel)]
+)
 
 // Drizzle relations for nested queries (orders → orderItems used by /orders/[reference])
 export const ordersRelations = relations(orders, ({ many }) => ({

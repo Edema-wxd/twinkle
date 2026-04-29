@@ -8,6 +8,13 @@
       "when": 1777289463408,
       "tag": "0000_tricky_karma",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777475640887,
+      "tag": "0001_order_notifications",
+      "breakpoints": true
     }
   ]
 }
