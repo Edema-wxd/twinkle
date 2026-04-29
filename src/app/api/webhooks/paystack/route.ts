@@ -3,6 +3,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { orders, orderItems, abandonedOrders } from '@/db'
 import { eq, and, gte } from 'drizzle-orm'
+import {
+  ensureOrderNotification,
+  getAdminNotificationEmail,
+  markOrderNotificationFailed,
+  markOrderNotificationSent,
+} from '@/lib/notifications/notificationState'
+import { sendAdminOrderEmail } from '@/lib/notifications/adminOrderEmail'
 
 // ── Paystack webhook payload types ──────────────────────────────────────────
 
@@ -95,81 +102,156 @@ export async function POST(req: NextRequest) {
 // ── Order creation ───────────────────────────────────────────────────────────
 
 async function handleChargeSuccess(data: PaystackChargeData) {
-  // Idempotency guard — ignore duplicate webhook fires
+  // Idempotency guard — do not re-insert order/items on duplicates,
+  // but still proceed to the notification path.
   const [existing] = await db
-    .select({ id: orders.id })
+    .select({
+      id: orders.id,
+      customerName: orders.customerName,
+      customerEmail: orders.customerEmail,
+      customerPhone: orders.customerPhone,
+      deliveryState: orders.deliveryState,
+      total: orders.total,
+    })
     .from(orders)
     .where(eq(orders.paystackReference, data.reference))
     .limit(1)
 
+  let orderId: string
+  let orderForEmail: {
+    customerName: string
+    customerEmail: string
+    customerPhone: string
+    deliveryState: string
+    totalKobo: number
+  }
+
   if (existing) {
-    // Order already created from a previous delivery of this webhook
-    return
-  }
+    orderId = existing.id
+    orderForEmail = {
+      customerName: existing.customerName,
+      customerEmail: existing.customerEmail,
+      customerPhone: existing.customerPhone,
+      deliveryState: existing.deliveryState,
+      totalKobo: existing.total,
+    }
+  } else {
+    const { customer_details, cart_items, subtotal, shipping_cost } = data.metadata ?? {}
+    if (!customer_details || !Array.isArray(cart_items) || cart_items.length === 0) {
+      console.error('[webhook] Missing metadata fields for reference:', data.reference)
+      return
+    }
 
-  const { customer_details, cart_items, subtotal, shipping_cost } = data.metadata ?? {}
-  if (!customer_details || !Array.isArray(cart_items) || cart_items.length === 0) {
-    console.error('[webhook] Missing metadata fields for reference:', data.reference)
-    return
-  }
+    const [order] = await db
+      .insert(orders)
+      .values({
+        paystackReference: data.reference,
+        paystackPayload: data as unknown,
+        status: 'paid',
+        customerName: `${customer_details.first_name} ${customer_details.last_name}`.trim(),
+        customerEmail: data.customer.email.toLowerCase(),
+        customerPhone: customer_details.phone,
+        customerIp: data.ip_address,
+        deliveryAddress: customer_details.delivery_address,
+        deliveryState: customer_details.state,
+        shippingCost: shipping_cost,
+        subtotal,
+        total: subtotal + shipping_cost,
+      })
+      .returning({
+        id: orders.id,
+        customerName: orders.customerName,
+        customerEmail: orders.customerEmail,
+        customerPhone: orders.customerPhone,
+        deliveryState: orders.deliveryState,
+        total: orders.total,
+      })
 
-  const [order] = await db
-    .insert(orders)
-    .values({
-      paystackReference: data.reference,
-      paystackPayload: data as unknown,
-      status: 'paid',
-      customerName: `${customer_details.first_name} ${customer_details.last_name}`.trim(),
-      customerEmail: data.customer.email.toLowerCase(),
-      customerPhone: customer_details.phone,
-      customerIp: data.ip_address,
-      deliveryAddress: customer_details.delivery_address,
-      deliveryState: customer_details.state,
-      shippingCost: shipping_cost,
-      subtotal,
-      total: subtotal + shipping_cost,
-    })
-    .returning({ id: orders.id })
+    if (!order) {
+      // Log error and abort — cannot insert items without an order ID
+      console.error('[webhook] Failed to insert order: no data returned')
+      return
+    }
 
-  if (!order) {
-    // Log error and abort — cannot insert items without an order ID
-    console.error('[webhook] Failed to insert order: no data returned')
-    return
-  }
+    orderId = order.id
+    orderForEmail = {
+      customerName: order.customerName,
+      customerEmail: order.customerEmail,
+      customerPhone: order.customerPhone,
+      deliveryState: order.deliveryState,
+      totalKobo: order.total,
+    }
 
-  const orderId = order.id
+    const items = cart_items.map((item) => ({
+      orderId,
+      productId: item.productId,
+      productName: item.productName,
+      variantId: item.variantId,
+      variantName: item.variantName,
+      tierQty: item.tierQty,
+      threadColour: item.isTool ? null : item.threadColour,
+      unitPrice: item.unitPrice,
+      quantity: item.quantity,
+      lineTotal: item.unitPrice * item.quantity,
+    }))
 
-  const items = cart_items.map((item) => ({
-    orderId,
-    productId: item.productId,
-    productName: item.productName,
-    variantId: item.variantId,
-    variantName: item.variantName,
-    tierQty: item.tierQty,
-    threadColour: item.isTool ? null : item.threadColour,
-    unitPrice: item.unitPrice,
-    quantity: item.quantity,
-    lineTotal: item.unitPrice * item.quantity,
-  }))
+    // Throw on failure so the outer try/catch returns non-200 — Paystack will retry.
+    // The idempotency guard prevents a duplicate order header on retry.
+    await db.insert(orderItems).values(items)
 
-  // Throw on failure so the outer try/catch returns non-200 — Paystack will retry.
-  // The idempotency guard prevents a duplicate order header on retry.
-  await db.insert(orderItems).values(items)
-
-  // Mark any matching abandoned checkouts as recovered.
-  // Time-bounded to 48 h to avoid marking unrelated past carts for returning customers.
-  try {
-    await db
-      .update(abandonedOrders)
-      .set({ recovered: true, recoveredAt: new Date() })
-      .where(
-        and(
-          eq(abandonedOrders.customerEmail, data.customer.email.toLowerCase()),
-          eq(abandonedOrders.recovered, false),
-          gte(abandonedOrders.createdAt, new Date(Date.now() - 48 * 60 * 60 * 1000))
+    // Mark any matching abandoned checkouts as recovered.
+    // Time-bounded to 48 h to avoid marking unrelated past carts for returning customers.
+    try {
+      await db
+        .update(abandonedOrders)
+        .set({ recovered: true, recoveredAt: new Date() })
+        .where(
+          and(
+            eq(abandonedOrders.customerEmail, data.customer.email.toLowerCase()),
+            eq(abandonedOrders.recovered, false),
+            gte(abandonedOrders.createdAt, new Date(Date.now() - 48 * 60 * 60 * 1000))
+          )
         )
-      )
-  } catch (recoverErr) {
-    console.error('[webhook] Failed to mark abandoned orders recovered:', recoverErr)
+    } catch (recoverErr) {
+      console.error('[webhook] Failed to mark abandoned orders recovered:', recoverErr)
+    }
+  }
+
+  // ── Admin notification (idempotent + bounded retries) ───────────────────────
+
+  const to = await getAdminNotificationEmail()
+  const notif = await ensureOrderNotification({ orderId, channel: 'email' })
+
+  if (notif.status === 'sent') return
+  if (notif.attempts >= 3) return
+
+  const itemCount = Array.isArray(data.metadata?.cart_items) ? data.metadata.cart_items.length : 0
+
+  try {
+    await sendAdminOrderEmail({
+      to,
+      order: {
+        reference: data.reference,
+        customerName: orderForEmail.customerName,
+        customerEmail: orderForEmail.customerEmail,
+        customerPhone: orderForEmail.customerPhone,
+        deliveryState: orderForEmail.deliveryState,
+        totalKobo: orderForEmail.totalKobo,
+        itemCount,
+      },
+    })
+    await markOrderNotificationSent({ id: notif.id })
+  } catch (err) {
+    const { attempts } = await markOrderNotificationFailed({ id: notif.id, error: String(err) })
+    console.error('[webhook] Admin notification failed', {
+      reference: data.reference,
+      notificationId: notif.id,
+      attempts,
+      error: String(err).slice(0, 500),
+    })
+
+    if (attempts < 3) {
+      throw err
+    }
   }
 }
