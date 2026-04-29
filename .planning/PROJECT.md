@@ -12,7 +12,7 @@ A Nigerian customer on mobile can discover, customise, and buy loc beads in unde
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Admin order email notifications (idempotent + bounded retries) — validated in Phase 12
 
 ### Active
 
@@ -75,4 +75,4 @@ A Nigerian customer on mobile can discover, customise, and buy loc beads in unde
 | Admin panel built into Next.js app | Avoids separate CMS subscription, gives custom UX tailored to the brand's needs | — Pending |
 
 ---
-*Last updated: 2026-03-19 after initialization*
+*Last updated: 2026-04-29 after Phase 12 completion*

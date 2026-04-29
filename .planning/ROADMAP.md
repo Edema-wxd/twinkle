@@ -22,6 +22,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 8: Conversion** - Footer newsletter signup (email capture)
 - [x] **Phase 9: SEO** - Metadata, OpenGraph, structured data, sitemap, URL slug enforcement
 - [x] **Phase 10: Staging Deployment** - Vercel staging URL, smoke test, pre-DNS-cutover checklist (completed 2026-04-24)
+- [ ] **Phase 11: Migrate from Supabase to Neon + Uploadthing** - Swap database/storage stack and migrate data (planned)
+- [x] **Phase 12: Notifications (Admin Order Email)** - Idempotent admin email notification on Paystack order webhook (completed 2026-04-29)
 
 ## Phase Details
 
@@ -243,7 +245,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -258,6 +260,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 8. Conversion | 2/2 | Complete | 2026-03-28 |
 | 9. SEO | 3/3 | Complete | 2026-03-31 |
 | 10. Staging Deployment | 3/3 | Complete    | 2026-04-24 |
+| 11. Migrate from Supabase to Neon + Uploadthing | 0/0 | Planned | — |
+| 12. Notifications (Admin Order Email) | 2/2 | Complete | 2026-04-29 |
 
 ### Phase 11: Migrate from Supabase to Neon + Uploadthing
 
@@ -268,6 +272,18 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 Plans:
 - [x] TBD (run /gsd-plan-phase 11 to break down) (completed 2026-04-27)
+
+---
+
+### Phase 12: Notifications (Admin Order Email)
+
+**Goal:** When a Paystack `charge.success` webhook creates (or redelivers) an order, notify the admin email exactly once with durable state and safe retries.
+**Depends on:** Phase 10
+**Plans:** 2 plans
+
+Plans:
+- [x] 12-01-PLAN.md — Durable `order_notifications` DB table + notification state helpers
+- [x] 12-02-PLAN.md — Paystack webhook → idempotent admin email via Resend with bounded retries
 
 ---
 *Roadmap created: 2026-03-19*
