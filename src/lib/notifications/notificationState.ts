@@ -1,11 +1,11 @@
 import { db } from '@/db'
 import { orderNotifications, settings } from '@/db'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import { BUSINESS } from '@/lib/config/business'
 
 export type NotificationChannel = 'email' | 'whatsapp'
 
-type NotificationStatus = 'pending' | 'sent' | 'failed'
+type NotificationStatus = 'pending' | 'sending' | 'sent' | 'failed'
 
 export async function getAdminNotificationEmail(): Promise<string> {
   const [row] = await db
@@ -79,6 +79,25 @@ export async function markOrderNotificationSent(params: { id: string }): Promise
       lastError: null,
     })
     .where(eq(orderNotifications.id, params.id))
+}
+
+/**
+ * Atomically claims responsibility to send a notification.
+ *
+ * This prevents duplicate sends when the same webhook is delivered multiple times
+ * concurrently (e.g., Paystack retries or parallel deliveries).
+ */
+export async function claimOrderNotificationSend(params: { id: string }): Promise<boolean> {
+  const [row] = await db
+    .update(orderNotifications)
+    .set({
+      status: 'sending',
+      updatedAt: new Date(),
+    })
+    .where(and(eq(orderNotifications.id, params.id), inArray(orderNotifications.status, ['pending', 'failed'])))
+    .returning({ id: orderNotifications.id })
+
+  return Boolean(row?.id)
 }
 
 export async function markOrderNotificationFailed(params: {

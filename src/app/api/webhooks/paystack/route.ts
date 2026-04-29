@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { orders, orderItems, abandonedOrders } from '@/db'
 import { eq, and, gte } from 'drizzle-orm'
 import {
+  claimOrderNotificationSend,
   ensureOrderNotification,
   getAdminNotificationEmail,
   markOrderNotificationFailed,
@@ -224,6 +225,8 @@ async function handleChargeSuccess(data: PaystackChargeData) {
 
   if (notif.status === 'sent') return
   if (notif.attempts >= 3) return
+  const claimed = await claimOrderNotificationSend({ id: notif.id })
+  if (!claimed) return
 
   const itemCount = Array.isArray(data.metadata?.cart_items) ? data.metadata.cart_items.length : 0
 
