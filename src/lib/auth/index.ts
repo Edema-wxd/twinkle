@@ -14,6 +14,10 @@ export const auth = betterAuth({
   },
   secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: process.env.BETTER_AUTH_URL!,
+  trustedOrigins: [
+    'https://www.twinklelocs.com',
+    'https://twinklelocs.com',
+  ],
   advanced: {
     cookiePrefix: 'twinkle',
     defaultCookieAttributes: {

@@ -87,10 +87,10 @@ interface ImageUploaderProps {
   onImagesChange: (urls: string[]) => void
 }
 
-export function ImageUploader({ productId: _productId, initialImages, onImagesChange }: ImageUploaderProps) {
-  const [images, setImages] = useState<ImageItem[]>(() =>
-    initialImages.map((url) => ({ id: crypto.randomUUID(), url }))
-  )
+export function ImageUploader(props: ImageUploaderProps) {
+  const { initialImages, onImagesChange } = props
+
+  const [images, setImages] = useState<ImageItem[]>(() => initialImages.map((url) => ({ id: crypto.randomUUID(), url })))
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
