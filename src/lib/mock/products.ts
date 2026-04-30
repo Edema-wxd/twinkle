@@ -9,7 +9,7 @@ export const CATALOG_PRODUCTS: Product[] = [
     name: '24K Gold Beads',
     slug: '24k-gold-beads',
     description: 'Lustrous 24K gold-plated loc beads — the signature Twinkle Locs piece.',
-    image: '/images/products/placeholder-bead.svg',
+    image: 'https://ta1u3ge9om.ufs.sh/f/fBUPGtLq5gOYtGe0qzDQpIoMcuw9m0y8qYx6T2teZrVSzKWR',
     material: 'Gold',
     is_featured: true,
     variants: [
@@ -36,7 +36,7 @@ export const CATALOG_PRODUCTS: Product[] = [
     name: 'Gold Beads',
     slug: 'gold-beads',
     description: 'Classic gold-toned loc beads for everyday glamour.',
-    image: '/images/products/placeholder-bead.svg',
+    image: 'https://ta1u3ge9om.ufs.sh/f/fBUPGtLq5gOYtGe0qzDQpIoMcuw9m0y8qYx6T2teZrVSzKWR',
     material: 'Gold',
     is_featured: true,
     variants: [
@@ -87,7 +87,7 @@ export const CATALOG_PRODUCTS: Product[] = [
     name: 'Silver Beads',
     slug: 'silver-beads',
     description: 'Cool silver-toned loc beads — perfect for contemporary styles.',
-    image: '/images/products/placeholder-bead.svg',
+    image: 'https://ta1u3ge9om.ufs.sh/f/fBUPGtLq5gOY7RGrEmX8s8M0kerijnDLQWtIOxubE16U4VhP',
     material: 'Silver',
     is_featured: true,
     variants: [
@@ -138,7 +138,7 @@ export const CATALOG_PRODUCTS: Product[] = [
     name: 'Onyx Beads',
     slug: 'onyx-beads',
     description: 'Deep onyx loc beads for a bold, statement look.',
-    image: '/images/products/placeholder-bead.svg',
+    image: 'https://ta1u3ge9om.ufs.sh/f/fBUPGtLq5gOYGXM9MdY0P4LVf30XED1kzJFb2aNTWuySoxqi',
     material: 'Crystal',
     is_featured: true,
     variants: [
@@ -189,7 +189,7 @@ export const CATALOG_PRODUCTS: Product[] = [
     name: 'Crystal Clear Beads',
     slug: 'crystal-clear-beads',
     description: 'Transparent crystal loc beads — catches the light beautifully.',
-    image: '/images/products/placeholder-bead.svg',
+    image: 'https://ta1u3ge9om.ufs.sh/f/fBUPGtLq5gOYf5UMgYLq5gOYP8sTNSLCDdrmEBwRZM03Wktc',
     material: 'Crystal',
     is_featured: false,
     variants: [
@@ -239,8 +239,8 @@ export const CATALOG_PRODUCTS: Product[] = [
     id: 'prod_006',
     name: 'Shears',
     slug: 'shears',
-    description: 'Professional loc shears — precision-crafted for clean, sharp cuts.',
-    image: '/images/products/placeholder-bead.svg',
+    description: 'Professional thread shears — precision-crafted for clean, sharp cuts.',
+    image: 'https://ta1u3ge9om.ufs.sh/f/fBUPGtLq5gOYhenBnZJkWf8kg5y6aslOirF0xHmDwbCB4PpE',
     material: 'Tools',
     is_featured: false,
     variants: [
