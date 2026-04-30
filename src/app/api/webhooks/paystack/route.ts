@@ -113,6 +113,7 @@ async function handleChargeSuccess(data: PaystackChargeData) {
       customerPhone: orders.customerPhone,
       deliveryState: orders.deliveryState,
       total: orders.total,
+      status: orders.status,
     })
     .from(orders)
     .where(eq(orders.paystackReference, data.reference))
@@ -135,6 +136,19 @@ async function handleChargeSuccess(data: PaystackChargeData) {
       customerPhone: existing.customerPhone,
       deliveryState: existing.deliveryState,
       totalKobo: existing.total,
+    }
+
+    // If an order header already exists (e.g. created by a verify call),
+    // ensure it is marked paid and store the latest payload.
+    if (existing.status !== 'paid') {
+      try {
+        await db
+          .update(orders)
+          .set({ status: 'paid', paystackPayload: data as unknown })
+          .where(eq(orders.id, orderId))
+      } catch (e) {
+        console.error('[webhook] Failed to update existing order status:', e)
+      }
     }
   } else {
     const { customer_details, cart_items, subtotal, shipping_cost } = data.metadata ?? {}

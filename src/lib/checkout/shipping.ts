@@ -49,5 +49,5 @@ export const NIGERIAN_STATES: string[] = [
  * Lagos: 3000, all other states: 4500.
  */
 export function getShippingCost(state: string): number {
-  return state === 'Lagos' ? 3000 : 4500;
+  return state === 'Lagos' ? 6000 : 9500;
 }

@@ -53,7 +53,19 @@ export default function CheckoutPage() {
     }
   }
 
-  function handlePaymentSuccess(reference: string) {
+  async function handlePaymentSuccess(reference: string) {
+    // Best-effort server-side verification so orders are created/marked paid
+    // even when Paystack can't deliver webhooks to localhost (dev) or when
+    // the webhook is delayed.
+    try {
+      await fetch(`/api/paystack/verify/${encodeURIComponent(reference)}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+      });
+    } catch {
+      // Ignore — webhook + order poller can still complete the flow.
+    }
+
     dispatch({ type: 'CLEAR_CART' });
     router.push('/orders/' + reference);
   }
