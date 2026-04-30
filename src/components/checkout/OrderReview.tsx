@@ -39,6 +39,20 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
     },
     subtotal,
     shipping_cost: shippingCost,
+    // Paystack shows these on the transaction details screen.
+    // Keep our existing keys for the webhook, and add Paystack-friendly custom_fields.
+    custom_fields: [
+      {
+        display_name: 'Customer Name',
+        variable_name: 'customer_name',
+        value: `${customerDetails.firstName} ${customerDetails.lastName}`.trim(),
+      },
+      {
+        display_name: 'Phone Number',
+        variable_name: 'phone_number',
+        value: customerDetails.phone,
+      },
+    ],
   };
 
   return (
