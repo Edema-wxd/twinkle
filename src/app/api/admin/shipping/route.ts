@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { settings } from '@/db'
@@ -60,6 +61,7 @@ export async function PUT(req: NextRequest) {
       target: settings.key,
       set: { value: sql`excluded.value` },
     })
+    revalidatePath('/shipping')
     return NextResponse.json({ updated: rows.map((r) => r.key) })
   } catch (err) {
     console.error('Failed to upsert shipping settings:', err)

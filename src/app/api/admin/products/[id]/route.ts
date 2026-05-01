@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { products } from '@/db'
@@ -138,6 +139,9 @@ export async function PUT(
       }
     }
 
+    revalidatePath('/catalog')
+    revalidatePath('/')
+    revalidatePath(`/catalog/${data.slug}`)
     return NextResponse.json(data)
   } catch (err: unknown) {
     console.error('Failed to update product:', err)
@@ -179,6 +183,8 @@ export async function DELETE(
       }
     }
 
+    revalidatePath('/catalog')
+    revalidatePath('/')
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Failed to delete product:', err)

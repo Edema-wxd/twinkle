@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { products } from '@/db'
@@ -105,6 +106,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })
     }
 
+    revalidatePath('/catalog')
+    revalidatePath('/')
     return NextResponse.json(data, { status: 201 })
   } catch (err: unknown) {
     console.error('Failed to create product:', err)
