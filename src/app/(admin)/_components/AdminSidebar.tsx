@@ -18,6 +18,7 @@ const CONTENT_LINKS = [
   { href: '/admin/faqs', label: 'FAQs', exact: false },
   { href: '/admin/blog', label: 'Blog', exact: false },
   { href: '/admin/shipping', label: 'Shipping Info', exact: false },
+  { href: '/admin/testimonials', label: 'Testimonials', exact: false },
 ]
 
 function NavLink({

@@ -1,7 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Testimonial } from '@/lib/mock/testimonials'
+export interface Testimonial {
+  id: string
+  name: string
+  quote: string
+}
 
 interface TestimonialsSectionProps {
   testimonials: Testimonial[]

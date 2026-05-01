@@ -4,8 +4,10 @@ import { FeaturedProductsSection } from '@/components/home/FeaturedProductsSecti
 import { BrandStorySection } from '@/components/home/BrandStorySection'
 import { TestimonialsSection } from '@/components/home/TestimonialsSection'
 import { InstagramCTASection } from '@/components/home/InstagramCTASection'
-import { FEATURED_PRODUCTS } from '@/lib/mock/products'
-import { TESTIMONIALS } from '@/lib/mock/testimonials'
+import { db, products as productsTable, testimonials as testimonialsTable } from '@/db'
+import { eq, and, asc, desc } from 'drizzle-orm'
+import type { Product, ProductMaterial, ProductVariant } from '@/lib/types/product'
+import type { Testimonial } from '@/components/home/TestimonialsSection'
 
 export const metadata: Metadata = {
   title: {
@@ -20,13 +22,48 @@ export const metadata: Metadata = {
   },
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [productRows, testimonialRows] = await Promise.all([
+    db
+      .select()
+      .from(productsTable)
+      .where(and(eq(productsTable.isFeatured, true), eq(productsTable.isActive, true)))
+      .orderBy(desc(productsTable.createdAt))
+      .limit(4),
+    db
+      .select()
+      .from(testimonialsTable)
+      .where(eq(testimonialsTable.isActive, true))
+      .orderBy(asc(testimonialsTable.displayOrder)),
+  ])
+
+  const featuredProducts: Product[] = productRows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description,
+    image: row.image,
+    material: row.material as ProductMaterial,
+    is_featured: row.isFeatured,
+    variants: row.variants as unknown as ProductVariant[],
+    price_min: row.priceMin,
+    price_max: row.priceMax,
+    created_at: row.createdAt.toISOString(),
+    images: row.images?.length ? row.images : undefined,
+  }))
+
+  const testimonials: Testimonial[] = testimonialRows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    quote: row.quote,
+  }))
+
   return (
     <main>
       <HeroSection />
-      <FeaturedProductsSection products={FEATURED_PRODUCTS} />
+      <FeaturedProductsSection products={featuredProducts} />
       <BrandStorySection />
-      <TestimonialsSection testimonials={TESTIMONIALS} />
+      <TestimonialsSection testimonials={testimonials} />
       <InstagramCTASection />
     </main>
   )
