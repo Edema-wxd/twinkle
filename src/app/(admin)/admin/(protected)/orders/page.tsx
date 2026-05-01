@@ -5,6 +5,7 @@ import { desc } from 'drizzle-orm'
 import { Order, AbandonedOrder } from '@/types/db'
 import { OrdersTable } from '../../../_components/OrdersTable'
 import { AbandonedOrdersTable } from '../../../_components/AbandonedOrdersTable'
+import { RecoverOrderForm } from '../../../_components/RecoverOrderForm'
 
 // Belt-and-braces auth check — layout.tsx also checks, but individual pages
 // should never trust the layout alone (CVE-2025-29927).
@@ -87,6 +88,7 @@ export default async function AdminOrdersPage() {
         </p>
       </div>
 
+      <RecoverOrderForm />
       <OrdersTable orders={ordersList} />
 
       <div>
