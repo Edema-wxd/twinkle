@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
-import { orders, orderItems } from '@/db'
-import { eq } from 'drizzle-orm'
+import { orders, orderItems, abandonedOrders } from '@/db'
+import { eq, and, gte } from 'drizzle-orm'
 
 type PaystackVerifyResponse = {
   status: boolean
@@ -174,6 +174,22 @@ export async function GET(
     }))
 
     await db.insert(orderItems).values(items)
+  }
+
+  // Mark matching abandoned checkouts as recovered (same logic as webhook handler)
+  try {
+    await db
+      .update(abandonedOrders)
+      .set({ recovered: true, recoveredAt: new Date() })
+      .where(
+        and(
+          eq(abandonedOrders.customerEmail, payload.data.customer.email.toLowerCase()),
+          eq(abandonedOrders.recovered, false),
+          gte(abandonedOrders.createdAt, new Date(Date.now() - 48 * 60 * 60 * 1000))
+        )
+      )
+  } catch (e) {
+    console.error('[verify] Failed to mark abandoned orders recovered:', e)
   }
 
   return NextResponse.json({ ok: true, reference, orderId })
