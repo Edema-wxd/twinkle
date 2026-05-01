@@ -58,10 +58,14 @@ export default function CheckoutPage() {
     // even when Paystack can't deliver webhooks to localhost (dev) or when
     // the webhook is delayed.
     try {
-      await fetch(`/api/paystack/verify/${encodeURIComponent(reference)}`, {
+      const res = await fetch(`/api/paystack/verify/${encodeURIComponent(reference)}`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null)
+        console.error('[checkout] Paystack verify failed', { reference, status: res.status, body })
+      }
     } catch {
       // Ignore — webhook + order poller can still complete the flow.
     }

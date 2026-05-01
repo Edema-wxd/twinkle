@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminSession } from '@/lib/auth/server'
 import { db, testimonials } from '@/db'
-import { eq, asc } from 'drizzle-orm'
+import { asc } from 'drizzle-orm'
 
 export async function GET() {
   const session = await getAdminSession()

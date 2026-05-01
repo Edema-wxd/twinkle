@@ -15,6 +15,7 @@ export function OrderPoller({ reference }: OrderPollerProps) {
   const [order, setOrder] = useState<FullOrder | null>(null);
   const [timedOut, setTimedOut] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const verifyAttemptedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,9 +42,26 @@ export function OrderPoller({ reference }: OrderPollerProps) {
       return false;
     }
 
+    // One-time fallback: if the order doesn't exist yet, ask the server to verify
+    // the Paystack reference (creates/marks the order paid). This covers cases where
+    // webhooks are delayed/missed and the checkout success handler didn't complete.
+    async function verifyPaystackOnce() {
+      if (verifyAttemptedRef.current) return;
+      verifyAttemptedRef.current = true;
+      try {
+        await fetch(`/api/paystack/verify/${encodeURIComponent(reference)}`, {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+        });
+      } catch {
+        // Ignore — we'll keep polling; user can still contact support on timeout.
+      }
+    }
+
     // Immediate fetch to cover the race where webhook already arrived
     fetchFullOrder().then((found) => {
       if (found || cancelled) return;
+      verifyPaystackOnce();
       // Poll every 2 seconds until order appears or timeout fires
       const intervalId = setInterval(async () => {
         const found = await fetchFullOrder();
@@ -114,7 +132,12 @@ export function OrderPoller({ reference }: OrderPollerProps) {
         className="w-10 h-10 rounded-full border-4 border-gold border-t-transparent animate-spin"
         aria-hidden="true"
       />
-      <p className="font-body text-charcoal/60">Processing your order...</p>
+      <div className="text-center">
+        <p className="font-body text-charcoal/70">Payment successful.</p>
+        <p className="font-body text-charcoal/60 mt-1">
+          We&apos;re confirming your order. This usually takes a few seconds.
+        </p>
+      </div>
     </div>
   );
 }

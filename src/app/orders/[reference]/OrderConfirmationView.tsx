@@ -13,6 +13,11 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
     THREAD_COLOURS.map((c) => [c.id, c])
   );
 
+  const statusLabel =
+    typeof order.status === 'string' && order.status.trim()
+      ? order.status
+      : 'processing';
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
       {/* Success header */}
@@ -30,11 +35,16 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
           </svg>
         </div>
         <h1 className="font-display text-3xl text-cocoa text-center">
-          Order Confirmed!
+          Payment Successful
         </h1>
         <p className="font-body text-charcoal/60 text-center mt-2">
-          Thank you for your order.
+          Your order was accepted and is being processed.
         </p>
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+          <span className="inline-flex items-center rounded-full bg-stone-100 px-3 py-1 text-xs font-heading font-semibold text-cocoa">
+            Status: {statusLabel}
+          </span>
+        </div>
         <p className="font-mono text-sm text-charcoal/50 text-center mt-1">
           Ref: {order.paystack_reference}
         </p>
