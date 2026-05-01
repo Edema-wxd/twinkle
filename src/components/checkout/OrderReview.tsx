@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CartItem } from '@/lib/cart/types';
 import type { CustomerDetails } from './CheckoutForm';
-import { getShippingCost } from '@/lib/checkout/shipping';
 import { PaystackButton } from './PaystackButton';
 
 interface OrderReviewProps {
@@ -15,13 +14,40 @@ interface OrderReviewProps {
 
 export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }: OrderReviewProps) {
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  const shippingCost = getShippingCost(customerDetails.state);
-  const total = subtotal + shippingCost;
+  const [shippingCost, setShippingCost] = useState<number | null>(null);
+  const [shippingError, setShippingError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setShippingCost(null);
+    setShippingError(null);
+
+    fetch(`/api/checkout/shipping-cost?state=${encodeURIComponent(customerDetails.state)}`)
+      .then(async (res) => {
+        const data = (await res.json().catch(() => null)) as { cost?: unknown; error?: string } | null;
+        if (!res.ok) throw new Error(data?.error ?? `Failed to fetch shipping (${res.status})`);
+        if (typeof data?.cost !== 'number') throw new Error('Invalid shipping response');
+        if (!cancelled) setShippingCost(data.cost);
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setShippingError('Could not load shipping rate. Please refresh and try again.');
+          setShippingCost(0); // safe fallback so checkout can proceed
+          console.error('[checkout] Failed to fetch shipping cost', e);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [customerDetails.state]);
+
+  const total = subtotal + (shippingCost ?? 0);
   const totalKobo = total * 100;
 
   // Generate a stable reference once on mount
   const [reference] = useState(
-    () => 'TW-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7).toUpperCase()
+    () => 'tw-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7)
   );
 
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -38,7 +64,7 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
       state: customerDetails.state,
     },
     subtotal,
-    shipping_cost: shippingCost,
+    shipping_cost: shippingCost ?? 0,
     // Paystack shows these on the transaction details screen.
     // Keep our existing keys for the webhook, and add Paystack-friendly custom_fields.
     custom_fields: [
@@ -99,7 +125,9 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
           <span className="font-body text-sm text-charcoal">
             Shipping ({customerDetails.state})
           </span>
-          <span className="font-body text-sm text-charcoal">₦{shippingCost.toLocaleString()}</span>
+          <span className="font-body text-sm text-charcoal">
+            {shippingCost === null ? 'Loading…' : `₦${shippingCost.toLocaleString()}`}
+          </span>
         </div>
         <hr className="border-charcoal/10 my-3" />
         <div className="flex justify-between items-center">
@@ -123,9 +151,9 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
       </div>
 
       {/* Payment error banner */}
-      {paymentError && (
+      {(paymentError || shippingError) && (
         <div className="mb-4 p-4 bg-terracotta/10 border border-terracotta/30 rounded-lg">
-          <p className="font-body text-sm text-terracotta">{paymentError}</p>
+          <p className="font-body text-sm text-terracotta">{paymentError ?? shippingError}</p>
         </div>
       )}
 
@@ -147,6 +175,7 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
             }}
             onSuccess={onPaymentSuccess}
             onClose={() => setPaymentError('Payment was not completed — please try again.')}
+            disabled={shippingCost === null}
           />
         </div>
       </div>

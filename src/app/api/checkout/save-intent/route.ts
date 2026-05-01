@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { abandonedOrders } from '@/db'
-import { getShippingCost } from '@/lib/checkout/shipping'
+import { getShippingCostFromDb } from '@/lib/checkout/shippingRates'
 
 interface SaveIntentBody {
   customerName: string
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
-  const shippingCost = getShippingCost(deliveryState)
+  const shippingCost = await getShippingCostFromDb(deliveryState)
   const total = subtotal + shippingCost
 
   try {
