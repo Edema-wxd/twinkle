@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Order, OrderItem } from '@/types/db';
 import { THREAD_COLOURS } from '@/lib/cart/threadColours';
+import { BUSINESS } from '@/lib/config/business';
 
 interface OrderConfirmationViewProps {
   order: Order & { order_items: OrderItem[] };
@@ -155,8 +156,32 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
         (other states).
       </p>
 
+      {/* Contact support */}
+      <div className="mt-6 p-5 bg-stone/20 rounded-xl text-center">
+        <p className="font-heading text-sm font-semibold text-cocoa mb-1">Questions about your order?</p>
+        <p className="font-body text-xs text-charcoal/60 mb-4">
+          We&apos;re happy to help with tracking, changes, or anything else.
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <a
+            href={BUSINESS.whatsapp.url(`Hi, I have a question about my order with reference ${order.paystack_reference}.`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block bg-gold text-cocoa font-heading font-semibold py-2.5 px-5 rounded-lg hover:bg-terracotta hover:text-cream transition-colors text-sm"
+          >
+            WhatsApp Us
+          </a>
+          <a
+            href={`mailto:${BUSINESS.support.email}?subject=Order%20${encodeURIComponent(order.paystack_reference)}&body=Hi%2C%20I%20have%20a%20question%20about%20my%20order%20with%20reference%20${encodeURIComponent(order.paystack_reference)}.`}
+            className="inline-block border border-charcoal/30 text-charcoal font-heading font-semibold py-2.5 px-5 rounded-lg hover:border-cocoa hover:text-cocoa transition-colors text-sm"
+          >
+            Email Us
+          </a>
+        </div>
+      </div>
+
       {/* Continue shopping */}
-      <div className="text-center mt-8">
+      <div className="text-center mt-6">
         <Link
           href="/catalog"
           className="font-heading font-semibold text-sm text-gold underline underline-offset-2 hover:text-terracotta transition-colors"

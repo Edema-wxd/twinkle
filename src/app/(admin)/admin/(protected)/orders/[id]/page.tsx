@@ -149,7 +149,7 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
               WhatsApp / Phone
             </p>
             <a
-              href={`https://wa.me/${order.customer_phone.replace(/\D/g, '')}`}
+              href={`https://wa.me/234${order.customer_phone.replace(/\D/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-green-400 hover:text-green-300 transition-colors"

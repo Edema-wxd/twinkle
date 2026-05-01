@@ -132,7 +132,7 @@ export default async function AbandonedOrderDetailPage({ params }: PageProps) {
           <div>
             <p className="text-stone-400 text-xs uppercase tracking-wide mb-1">WhatsApp / Phone</p>
             <a
-              href={`https://wa.me/${order.customer_phone.replace(/\D/g, '')}?text=${whatsappMessage}`}
+              href={`https://wa.me/234${order.customer_phone.replace(/\D/g, '')}?text=${whatsappMessage}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-green-400 hover:text-green-300 transition-colors"
@@ -174,7 +174,7 @@ export default async function AbandonedOrderDetailPage({ params }: PageProps) {
           </h2>
           <div className="flex flex-wrap gap-3">
             <a
-              href={`https://wa.me/${order.customer_phone.replace(/\D/g, '')}?text=${whatsappMessage}`}
+              href={`https://wa.me/234${order.customer_phone.replace(/\D/g, '')}?text=${whatsappMessage}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-[#25D366] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#1da851] transition-colors"

@@ -111,7 +111,7 @@ export function OrderPoller({ reference }: OrderPollerProps) {
         <p className="font-mono text-sm text-charcoal/50 mt-3">
           Ref: {reference}
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           <a
             href={BUSINESS.whatsapp.url(`Hi, I just placed an order with reference ${reference} and need help confirming it.`)}
             target="_blank"
@@ -119,6 +119,12 @@ export function OrderPoller({ reference }: OrderPollerProps) {
             className="inline-block bg-gold text-cocoa font-heading font-semibold py-3 px-6 rounded-lg hover:bg-terracotta hover:text-cream transition-colors text-sm"
           >
             Contact Us on WhatsApp
+          </a>
+          <a
+            href={`mailto:${BUSINESS.support.email}?subject=Order%20${encodeURIComponent(reference)}%20-%20Still%20Processing&body=Hi%2C%20I%20placed%20an%20order%20with%20reference%20${encodeURIComponent(reference)}%20and%20it%20is%20still%20showing%20as%20processing.%20Please%20help%20confirm%20my%20order%20status.`}
+            className="inline-block border border-charcoal/30 text-charcoal font-heading font-semibold py-3 px-6 rounded-lg hover:border-cocoa hover:text-cocoa transition-colors text-sm"
+          >
+            Email Us
           </a>
         </div>
       </div>
@@ -137,6 +143,22 @@ export function OrderPoller({ reference }: OrderPollerProps) {
         <p className="font-body text-charcoal/60 mt-1">
           We&apos;re confirming your order. This usually takes a few seconds.
         </p>
+      </div>
+      <div className="flex flex-wrap justify-center gap-3 mt-2">
+        <a
+          href={BUSINESS.whatsapp.url(`Hi, I just paid for an order (ref: ${reference}) and I'm waiting for confirmation.`)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block bg-gold text-cocoa font-heading font-semibold py-2.5 px-5 rounded-lg hover:bg-terracotta hover:text-cream transition-colors text-sm"
+        >
+          WhatsApp Us
+        </a>
+        <a
+          href={`mailto:${BUSINESS.support.email}?subject=Order%20${encodeURIComponent(reference)}&body=Hi%2C%20I%20just%20paid%20for%20an%20order%20with%20reference%20${encodeURIComponent(reference)}%20and%20I%20am%20waiting%20for%20confirmation.`}
+          className="inline-block border border-charcoal/30 text-charcoal font-heading font-semibold py-2.5 px-5 rounded-lg hover:border-cocoa hover:text-cocoa transition-colors text-sm"
+        >
+          Email Us
+        </a>
       </div>
     </div>
   );
