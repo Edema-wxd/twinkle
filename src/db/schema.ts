@@ -106,6 +106,7 @@ export const orders = pgTable('orders', {
   shippingCost: integer('shipping_cost').notNull(), // KOBO — integer, not numeric
   subtotal: integer('subtotal').notNull(),
   total: integer('total').notNull(),
+  trackingNumber: text('tracking_number'),
 })
 
 export const orderItems = pgTable('order_items', {
@@ -209,6 +210,19 @@ export const orderNotifications = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [unique('order_notifications_order_id_channel_unique').on(t.orderId, t.channel)]
+)
+
+export const orderStatusEmails = pgTable(
+  'order_status_emails',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orderId: uuid('order_id')
+      .notNull()
+      .references(() => orders.id, { onDelete: 'cascade' }),
+    eventType: text('event_type').notNull(), // 'confirmed' | 'processing' | 'shipped' | 'delivered'
+    sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique('order_status_emails_order_id_event_type_unique').on(t.orderId, t.eventType)]
 )
 
 // Drizzle relations for nested queries (orders → orderItems used by /orders/[reference])

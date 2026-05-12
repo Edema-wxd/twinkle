@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { BUSINESS } from '@/lib/config/business'
 import { NewsletterForm } from './NewsletterForm'
+import Image from 'next/image'
+
 
 const footerLinks = [
   { href: '/catalog', label: 'Shop' },
@@ -17,7 +19,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <p className="font-display text-2xl text-gold mb-3">Twinkle Locs</p>
+            <Image src="/images/logo.png" alt="Twinkle Locs" width={150} height={50} />
             <p className="font-body text-sm text-cream/70 leading-relaxed">
               Premium loc bead accessories for your loc journey. Made with love for the African diaspora.
             </p>

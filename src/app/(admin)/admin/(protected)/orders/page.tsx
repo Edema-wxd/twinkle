@@ -21,6 +21,7 @@ export default async function AdminOrdersPage() {
         customerName: orders.customerName,
         total: orders.total,
         status: orders.status,
+        trackingNumber: orders.trackingNumber,
       })
       .from(orders)
       .orderBy(desc(orders.createdAt))
@@ -57,6 +58,7 @@ export default async function AdminOrdersPage() {
     shipping_cost: 0,
     subtotal: 0,
     total: r.total,
+    tracking_number: r.trackingNumber ?? null,
   }))
 
   const abandonedList: AbandonedOrder[] = abandonedRows.map((r) => ({

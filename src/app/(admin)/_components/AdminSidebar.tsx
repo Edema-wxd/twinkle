@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { authClient } from '@/lib/auth/client'
+import Image from 'next/image'
 
 const NAV_LINKS = [
   { href: '/admin', label: 'Dashboard', exact: true },
@@ -63,12 +64,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
     <div className="flex flex-col h-full">
       {/* Brand */}
       <div className="px-4 py-6 border-b border-stone-700">
-        <span className="font-display text-2xl text-gold leading-none">
-          Twinkle Locs
-        </span>
-        <p className="font-heading text-xs text-stone-400 mt-0.5 tracking-widest uppercase">
-          Admin
-        </p>
+        <Image src="/images/logo.png" alt="Twinkle Locs" width={150} height={50} />
       </div>
 
       {/* Navigation */}

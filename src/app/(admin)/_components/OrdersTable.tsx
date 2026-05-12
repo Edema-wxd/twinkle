@@ -108,7 +108,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                   </td>
 
                   {/* Customer */}
-                  <td className="px-4 py-3 text-white">
+                  <td className="px-4 py-3 text-white whitespace-nowrap max-w-[160px] truncate">
                     {order.customer_name}
                   </td>
 
@@ -127,6 +127,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                     <OrderStatusSelect
                       orderId={order.id}
                       currentStatus={order.status}
+                      currentTrackingNumber={order.tracking_number}
                     />
                   </td>
                 </tr>

@@ -51,6 +51,7 @@ export type Order = {
   shipping_cost: number
   subtotal: number
   total: number
+  tracking_number: string | null
 }
 
 export type OrderItem = {

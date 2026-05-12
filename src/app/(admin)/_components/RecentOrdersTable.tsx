@@ -55,7 +55,7 @@ export default function RecentOrdersTable({ orders }: RecentOrdersTableProps) {
   return (
     <div className="bg-stone-900 rounded-lg overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="min-w-max w-full text-sm">
           <thead>
             <tr className="bg-stone-800 text-stone-400 text-left">
               <th className="px-4 py-3 font-medium">Order #</th>
@@ -75,10 +75,10 @@ export default function RecentOrdersTable({ orders }: RecentOrdersTableProps) {
                 key={order.id}
                 className="bg-stone-900 hover:bg-stone-800 transition-colors border-t border-stone-800"
               >
-                <td className="px-4 py-3 font-mono text-stone-300">
+                <td className="px-4 py-3 font-mono text-stone-300 whitespace-nowrap">
                   #{shortRef(order.paystack_reference)}
                 </td>
-                <td className="px-4 py-3 text-white">{order.customer_name}</td>
+                <td className="px-4 py-3 text-white whitespace-nowrap max-w-[160px] truncate">{order.customer_name}</td>
                 <td className="px-4 py-3 text-stone-400 hidden md:table-cell">
                   {formatDate(order.created_at)}
                 </td>

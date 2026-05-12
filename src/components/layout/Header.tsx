@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { MobileDrawer } from './MobileDrawer'
 import { useCart } from '@/lib/cart/CartContext'
+import Image from 'next/image'
 
 const navLinks = [
   { href: '/catalog', label: 'Shop' },
@@ -26,11 +27,8 @@ export function Header() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <Link
-              href="/"
-              className="font-display text-2xl text-cocoa tracking-wide hover:text-gold transition-colors"
-            >
-              Twinkle Locs
+            <Link href="/">
+              <Image src="/images/logo.png" alt="Twinkle Locs" width={150} height={50} />
             </Link>
 
             {/* Desktop navigation */}

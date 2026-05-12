@@ -11,6 +11,7 @@ import {
   markOrderNotificationSent,
 } from '@/lib/notifications/notificationState'
 import { sendAdminOrderEmail } from '@/lib/notifications/adminOrderEmail'
+import { sendCustomerEmail, tryClaimStatusEmail, releaseStatusEmailClaim, type OrderEmailItem } from '@/lib/notifications/customerEmail'
 
 // ── Paystack webhook payload types ──────────────────────────────────────────
 
@@ -125,8 +126,9 @@ async function handleChargeSuccess(data: PaystackChargeData) {
     customerEmail: string
     customerPhone: string
     deliveryState: string
-    totalKobo: number
+    totalNaira: number
   }
+  let emailItems: OrderEmailItem[] = []
 
   if (existing) {
     orderId = existing.id
@@ -135,7 +137,7 @@ async function handleChargeSuccess(data: PaystackChargeData) {
       customerEmail: existing.customerEmail,
       customerPhone: existing.customerPhone,
       deliveryState: existing.deliveryState,
-      totalKobo: existing.total,
+      totalNaira: existing.total,
     }
 
     // If an order header already exists (e.g. created by a verify call),
@@ -194,8 +196,18 @@ async function handleChargeSuccess(data: PaystackChargeData) {
       customerEmail: order.customerEmail,
       customerPhone: order.customerPhone,
       deliveryState: order.deliveryState,
-      totalKobo: order.total,
+      totalNaira: order.total,
     }
+
+    emailItems = cart_items.map((item) => ({
+      productName: item.productName,
+      variantName: item.variantName,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      lineTotal: item.unitPrice * item.quantity,
+      tierQty: item.tierQty,
+      threadColour: item.isTool ? null : item.threadColour,
+    }))
 
     const items = cart_items.map((item) => ({
       orderId,
@@ -253,7 +265,7 @@ async function handleChargeSuccess(data: PaystackChargeData) {
         customerEmail: orderForEmail.customerEmail,
         customerPhone: orderForEmail.customerPhone,
         deliveryState: orderForEmail.deliveryState,
-        totalKobo: orderForEmail.totalKobo,
+        totalNaira: orderForEmail.totalNaira,
         itemCount,
       },
     })
@@ -269,6 +281,28 @@ async function handleChargeSuccess(data: PaystackChargeData) {
 
     if (attempts < 3) {
       throw err
+    }
+  }
+
+  // ── Customer confirmation email (non-blocking) ───────────────────────────────
+
+  const claimId = await tryClaimStatusEmail(orderId, 'confirmed').catch(() => null)
+  if (claimId) {
+    try {
+      await sendCustomerEmail({
+        to: orderForEmail.customerEmail,
+        customerName: orderForEmail.customerName,
+        orderReference: data.reference,
+        totalNaira: orderForEmail.totalNaira,
+        event: 'confirmed',
+        items: emailItems,
+      })
+    } catch (err) {
+      console.error('[webhook] Customer confirmation email failed:', {
+        reference: data.reference,
+        error: String(err).slice(0, 500),
+      })
+      await releaseStatusEmailClaim(claimId).catch(() => null)
     }
   }
 }

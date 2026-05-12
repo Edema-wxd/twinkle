@@ -41,6 +41,7 @@ export default async function AdminDashboardPage() {
       shipping_cost: 0,
       subtotal: 0,
       total: r.total,
+      tracking_number: null,
     }))
   } catch (error) {
     console.error('Failed to fetch orders for dashboard:', error)

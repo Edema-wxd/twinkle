@@ -33,6 +33,7 @@ async function fetchOrderByReference(
     shipping_cost: result.shippingCost,
     subtotal: result.subtotal,
     total: result.total,
+    tracking_number: result.trackingNumber ?? null,
     order_items: result.orderItems.map((item) => ({
       id: item.id,
       order_id: item.orderId,

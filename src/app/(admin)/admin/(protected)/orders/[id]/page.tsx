@@ -72,6 +72,7 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
     shipping_cost: result.shippingCost,
     subtotal: result.subtotal,
     total: result.total,
+    tracking_number: result.trackingNumber ?? null,
     order_items: result.orderItems.map((item) => ({
       id: item.id,
       order_id: item.orderId,
@@ -119,7 +120,11 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
           >
             {order.status}
           </span>
-          <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
+          <OrderStatusSelect
+            orderId={order.id}
+            currentStatus={order.status}
+            currentTrackingNumber={order.tracking_number}
+          />
         </div>
       </div>
 
@@ -171,6 +176,15 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
             </p>
             <p className="text-white">{order.delivery_address}</p>
           </div>
+
+          {order.tracking_number && (
+            <div>
+              <p className="text-stone-400 text-xs uppercase tracking-wide mb-1">
+                Tracking Number
+              </p>
+              <p className="text-white font-mono">{order.tracking_number}</p>
+            </div>
+          )}
         </div>
 
         {/* Order summary */}

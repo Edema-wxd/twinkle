@@ -37,8 +37,8 @@ export function AbandonedOrdersTable({ abandonedOrders }: AbandonedOrdersTablePr
         <thead className="bg-stone-800 text-stone-400 uppercase text-xs tracking-wide">
           <tr>
             <th className="px-4 py-3 text-left font-medium">Customer</th>
-            <th className="px-4 py-3 text-left font-medium">Email</th>
-            <th className="px-4 py-3 text-left font-medium">Phone</th>
+            <th className="px-4 py-3 text-left font-medium hidden sm:table-cell">Email</th>
+            <th className="px-4 py-3 text-left font-medium hidden sm:table-cell">Phone</th>
             <th className="px-4 py-3 text-right font-medium">Total</th>
             <th className="px-4 py-3 text-left font-medium hidden md:table-cell">Date</th>
             <th className="px-4 py-3 text-left font-medium">Status</th>
@@ -50,7 +50,7 @@ export function AbandonedOrdersTable({ abandonedOrders }: AbandonedOrdersTablePr
               key={order.id}
               className={`transition-colors ${order.recovered ? 'bg-stone-900/50 opacity-60' : 'bg-stone-900 hover:bg-stone-800'}`}
             >
-              <td className="px-4 py-3 text-white">
+              <td className="px-4 py-3 text-white whitespace-nowrap max-w-[160px] truncate">
                 <Link
                   href={`/admin/abandoned-orders/${order.id}`}
                   className="hover:text-gold transition-colors underline underline-offset-2"
@@ -58,8 +58,8 @@ export function AbandonedOrdersTable({ abandonedOrders }: AbandonedOrdersTablePr
                   {order.customer_name}
                 </Link>
               </td>
-              <td className="px-4 py-3 text-stone-300">{order.customer_email}</td>
-              <td className="px-4 py-3 text-stone-300">{order.customer_phone}</td>
+              <td className="px-4 py-3 text-stone-300 hidden sm:table-cell max-w-[180px] truncate">{order.customer_email}</td>
+              <td className="px-4 py-3 text-stone-300 hidden sm:table-cell whitespace-nowrap">{order.customer_phone}</td>
               <td className="px-4 py-3 text-stone-200 text-right whitespace-nowrap">
                 {formatNaira(order.total)}
               </td>

@@ -8,7 +8,7 @@ export async function sendAdminOrderEmail(input: {
     customerEmail: string
     customerPhone: string
     deliveryState: string
-    totalKobo: number
+    totalNaira: number
     itemCount: number
   }
 }): Promise<void> {
@@ -24,8 +24,7 @@ export async function sendAdminOrderEmail(input: {
 
   const resend = new Resend(apiKey)
 
-  const totalNaira = input.order.totalKobo / 100
-  const formattedTotal = `₦${totalNaira.toLocaleString('en-NG')}`
+  const formattedTotal = `₦${input.order.totalNaira.toLocaleString('en-NG')}`
 
   const subject = `New order: ${input.order.reference}`
 
