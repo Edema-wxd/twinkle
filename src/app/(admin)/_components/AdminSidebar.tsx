@@ -64,7 +64,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
     <div className="flex flex-col h-full">
       {/* Brand */}
       <div className="px-4 py-6 border-b border-stone-700">
-        <Image src="/images/logo.png" alt="Twinkle Locs" width={150} height={50} />
+        <Image src="https://ta1u3ge9om.ufs.sh/f/fBUPGtLq5gOYxli6v2v9bkGFeW9BCV3IvLqNKgMpAozSZDXJ" alt="Twinkle Locs" width={150} height={50} />
       </div>
 
       {/* Navigation */}

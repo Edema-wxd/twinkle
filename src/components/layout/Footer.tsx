@@ -19,7 +19,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <Image src="/images/logo.png" alt="Twinkle Locs" width={150} height={50} />
+            <Image src="https://ta1u3ge9om.ufs.sh/f/fBUPGtLq5gOYxli6v2v9bkGFeW9BCV3IvLqNKgMpAozSZDXJ" alt="Twinkle Locs" width={150} height={50} />
             <p className="font-body text-sm text-cream/70 leading-relaxed">
               Premium loc bead accessories for your loc journey. Made with love for the African diaspora.
             </p>

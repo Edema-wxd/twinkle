@@ -28,7 +28,7 @@ export function Header() {
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
             <Link href="/">
-              <Image src="/images/logo.png" alt="Twinkle Locs" width={150} height={50} />
+              <Image src="https://ta1u3ge9om.ufs.sh/f/fBUPGtLq5gOYxli6v2v9bkGFeW9BCV3IvLqNKgMpAozSZDXJ" alt="Twinkle Locs" width={150} height={50} />
             </Link>
 
             {/* Desktop navigation */}
