@@ -93,7 +93,7 @@ export default function AdminSetupPage() {
               required
               disabled={isPending}
               className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent disabled:opacity-50"
-              placeholder="admin@twinklelocs.com"
+              placeholder="admin@example.com"
             />
           </div>
 
