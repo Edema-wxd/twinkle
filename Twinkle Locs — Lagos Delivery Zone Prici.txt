@@ -1,0 +1,14 @@
+Twinkle Locs — Lagos Delivery Zone Pricing						
+Shipping from: Lekki Phase 1  |  Zone 5 (Ikeja) confirmed at ₦7,900 via Uber Bike — all other zones calibrated from this anchor.						
+						
+Zone	Zone name	Key areas covered	"Delivery fee
+(₦)"	Est. delivery time	Recommended courier	Notes
+1 — Local	Lekki corridor	Lekki Phase 1 & 2, Chevron, Osapa, Jakande, Ikate, Ilasan, Igbo Efon, Agungi, Oral Estate	3000	1–2 hrs	Uber Bike / Gokada	Nearest zone, fastest delivery
+2 — Island core	Lagos Island	Victoria Island, Ikoyi, Lagos Island, Marina, Oniru, Eko Atlantic	4500	1–2 hrs	Uber Bike / Gokada	Short Island crossing
+3 — Island extended	Ajah axis	Ajah, Sangotedo, Awoyaya, Ogombo, Abraham Adesanya, Monastery Road, Gbetu	3500	1–2 hrs	Uber Bike / Gokada	Same Epe corridor, easy run
+4 — Mainland near	Central mainland	Surulere, Yaba, Ebute Metta, Apapa, Mushin, Oshodi, Maryland, Gbagada	6500	2–3 hrs	Uber Bike / Kwik	Bridge crossing adds time
+5 — Mainland mid	Ikeja axis	Ikeja, Allen, GRA, Oregun, Ojodu, Berger, Agege, Ifako, Ogba, Magodo, Ketu	7900	3–4 hrs	Uber Bike	CONFIRMED rate (actual trip)
+6 — Far mainland	Outlying areas	Ikorodu, Alimosho, Iyana Ipaja, Abule Egba, Dopemu, Ojo, Mile 12	10000	3–5 hrs	GIG Logistics	High traffic risk; use GIG for reliability
+7 — Remote	Periphery	Badagry, Epe, far Ibeju-Lekki, Mowe, Sagamu Road outskirts	13500	Next day	GIG Logistics	Long distance; van recommended
+						
+IMPORTANT: Uber Bike / Gokada rates fluctuate with surge pricing and traffic. Log actual courier cost per zone as orders come in and adjust fees if needed. For Zones 6–7, GIG Logistics offers more predictable pricing — get a business account quote. Consider free delivery in Zone 1 on orders above ₦30,000 to reward local customers.						

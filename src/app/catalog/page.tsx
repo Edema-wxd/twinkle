@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: 'Browse our full collection of Nigerian loc beads — gold, silver, crystal, and onyx styles in multiple sizes. Filter by material and sort by price.',
   openGraph: {
     title: 'Shop Loc Beads | Twinkle Locs',
-    description: 'Browse Nigerian loc beads in gold, silver, crystal, and onyx. Multiple sizes available.',
+    description: 'Browse Nigerian Twinkles locs beads in gold, silver, crystal, and onyx. Multiple sizes available.',
     images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     type: 'website',
   },

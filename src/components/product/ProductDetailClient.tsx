@@ -11,8 +11,8 @@ interface ProductDetailClientProps {
 }
 
 const MATERIAL_BADGE: Record<ProductMaterial, string> = {
-  Gold: 'bg-gold/20 text-cocoa',
-  Silver: 'bg-stone text-charcoal',
+  Gold: 'bg-gold/20 text-forest',
+  Silver: 'bg-white border border-charcoal/20 text-charcoal',
   Crystal: 'bg-cream border border-charcoal/20 text-charcoal',
   Tools: 'bg-forest/20 text-forest',
 }
@@ -81,7 +81,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         </span>
 
         {/* Product name */}
-        <h1 className="font-display text-3xl md:text-4xl text-cocoa mb-2">
+        <h1 className="font-display text-3xl md:text-4xl text-forest mb-2">
           {product.name}
         </h1>
 
@@ -105,7 +105,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
         {/* Size picker */}
         <div className="mb-6">
-          <p className="font-heading text-sm font-semibold text-cocoa mb-3 uppercase tracking-wide">
+          <p className="font-heading text-sm font-semibold text-forest mb-3 uppercase tracking-wide">
             Size
           </p>
           <div className="flex flex-wrap gap-2">
@@ -120,7 +120,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   !variant.in_stock
                     ? 'opacity-40 cursor-not-allowed border-charcoal/10 text-charcoal/40'
                     : selectedVariantId === variant.id
-                    ? 'border-gold bg-gold/10 text-cocoa font-semibold'
+                    ? 'border-gold bg-gold/10 text-forest font-semibold'
                     : 'border-charcoal/20 text-charcoal hover:border-gold'
                 }`}
               >
@@ -136,7 +136,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         {/* Pack-size picker — only shown when variant has more than 1 tier */}
         {hasMultipleTiers && selectedVariant && (
           <div className="mb-6">
-            <p className="font-heading text-sm font-semibold text-cocoa mb-3 uppercase tracking-wide">
+            <p className="font-heading text-sm font-semibold text-forest mb-3 uppercase tracking-wide">
               Pack Size
             </p>
             <div className="flex flex-wrap gap-2">
@@ -146,7 +146,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   onClick={() => setSelectedTierQty(tier.qty)}
                   className={`rounded-lg px-4 py-2 font-body text-sm border-2 transition-all ${
                     selectedTierQty === tier.qty
-                      ? 'border-gold bg-gold/10 text-cocoa font-semibold'
+                      ? 'border-gold bg-gold/10 text-forest font-semibold'
                       : 'border-charcoal/20 text-charcoal hover:border-gold'
                   }`}
                 >
@@ -160,10 +160,10 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         {/* Thread colour picker — interactive, not shown for Tools (e.g. Shears) */}
         {product.material !== 'Tools' && (
           <div className="mb-8">
-            <p className="font-heading text-sm font-semibold text-cocoa mb-3 uppercase tracking-wide flex items-center gap-2">
+            <p className="font-heading text-sm font-semibold text-forest mb-3 uppercase tracking-wide flex items-center gap-2">
               Thread Colour
               {selectedThreadColour === null && (
-                <span className="text-xs font-body font-normal text-terracotta bg-terracotta/10 px-2 py-0.5 rounded-full normal-case tracking-normal">
+                <span className="text-xs font-body font-normal text-red-600 bg-red-50 px-2 py-0.5 rounded-full normal-case tracking-normal">
                   Required
                 </span>
               )}
@@ -179,7 +179,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                   aria-pressed={selectedThreadColour === colour.id}
                   className={`w-8 h-8 rounded-full border-2 transition-all ${
                     selectedThreadColour === colour.id
-                      ? 'border-cocoa scale-110'
+                      ? 'border-forest scale-110'
                       : 'border-transparent hover:border-charcoal/40'
                   }`}
                   style={{ backgroundColor: colour.hex }}
@@ -200,7 +200,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           disabled={!canAddToCart}
           className={`w-full font-heading font-semibold py-4 rounded-lg transition-colors mt-8 ${
             canAddToCart
-              ? 'bg-gold text-cocoa hover:bg-terracotta hover:text-cream'
+              ? 'bg-gold text-forest hover:bg-forest hover:text-cream'
               : 'bg-charcoal/20 text-charcoal/40 cursor-not-allowed'
           }`}
         >

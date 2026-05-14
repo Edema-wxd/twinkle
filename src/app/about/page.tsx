@@ -34,9 +34,9 @@ const FALLBACK_SECTIONS: AboutSectionType[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'why-loc-beads',
-    title: 'Why Loc Beads',
-    body: '<p>Loc beads are a beautiful way to express identity and culture through hair.</p>',
+    id: 'why-twinkles',
+    title: 'Why Twinkles',
+    body: '<p>Twinkles are a beautiful way to express identity and culture through hair.</p>',
     image_url: null,
     display_order: 2,
     updated_at: new Date().toISOString(),
@@ -78,7 +78,7 @@ export default async function AboutPage() {
   return (
     <main>
       <div className="max-w-3xl mx-auto px-4 py-12">
-        <h1 className="font-heading text-4xl lg:text-5xl font-bold text-charcoal">
+        <h1 className="font-heading text-4xl lg:text-5xl font-bold text-forest">
           About Twinkle Locs
         </h1>
 

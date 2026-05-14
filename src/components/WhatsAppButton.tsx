@@ -3,7 +3,7 @@ import { BUSINESS } from '@/lib/config/business'
 export function WhatsAppButton() {
   return (
     <a
-      href={BUSINESS.whatsapp.url("Hi, I'm interested in your loc beads")}
+      href={BUSINESS.whatsapp.url("Hi, I'm interested in your Twinkles locs beads")}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp"

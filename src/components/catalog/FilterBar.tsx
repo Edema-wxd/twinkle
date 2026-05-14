@@ -26,8 +26,8 @@ export function FilterBar({
           onClick={() => onCategoryChange(cat)}
           className={`px-4 py-1.5 rounded-full font-body text-sm font-medium transition-colors cursor-pointer ${
             activeCategory === cat
-              ? 'bg-cocoa text-cream'
-              : 'bg-stone text-charcoal border border-charcoal/20 hover:bg-cocoa/10'
+              ? 'bg-forest text-cream'
+              : 'bg-white text-charcoal border border-charcoal/20 hover:bg-forest/10'
           }`}
         >
           {cat}
@@ -37,7 +37,7 @@ export function FilterBar({
       <select
         value={sortOrder}
         onChange={(e) => onSortChange(e.target.value as SortOrder)}
-        className="ml-auto font-body text-sm bg-stone border border-charcoal/20 rounded-lg px-3 py-1.5 text-charcoal cursor-pointer"
+        className="ml-auto font-body text-sm bg-white border border-charcoal/20 rounded-lg px-3 py-1.5 text-charcoal cursor-pointer"
       >
         <option value="latest">Latest</option>
         <option value="price_asc">Price: Low to High</option>

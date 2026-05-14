@@ -32,7 +32,7 @@ export function MobileDrawer({ isOpen, onClose, children }: MobileDrawerProps) {
       <div
         onClick={onClose}
         aria-hidden="true"
-        className={`fixed inset-0 z-40 bg-cocoa/60 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 bg-forest/60 transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       />

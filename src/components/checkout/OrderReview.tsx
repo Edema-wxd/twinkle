@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { CartItem } from '@/lib/cart/types';
 import type { CustomerDetails } from './CheckoutForm';
 import { PaystackButton } from './PaystackButton';
+import { getZoneIdForArea, getZoneById } from '@/lib/checkout/shippingZones';
 
 interface OrderReviewProps {
   items: CartItem[];
@@ -17,12 +18,20 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
   const [shippingCost, setShippingCost] = useState<number | null>(null);
   const [shippingError, setShippingError] = useState<string | null>(null);
 
+  const zone =
+    customerDetails.state === 'Lagos' && customerDetails.lga
+      ? getZoneById(getZoneIdForArea(customerDetails.lga) ?? 0)
+      : undefined;
+
   useEffect(() => {
     let cancelled = false;
     setShippingCost(null);
     setShippingError(null);
 
-    fetch(`/api/checkout/shipping-cost?state=${encodeURIComponent(customerDetails.state)}`)
+    const params = new URLSearchParams({ state: customerDetails.state });
+    if (customerDetails.lga) params.set('lga', customerDetails.lga);
+
+    fetch(`/api/checkout/shipping-cost?${params.toString()}`)
       .then(async (res) => {
         const data = (await res.json().catch(() => null)) as { cost?: unknown; error?: string } | null;
         if (!res.ok) throw new Error(data?.error ?? `Failed to fetch shipping (${res.status})`);
@@ -32,7 +41,7 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
       .catch((e) => {
         if (!cancelled) {
           setShippingError('Could not load shipping rate. Please refresh and try again.');
-          setShippingCost(0); // safe fallback so checkout can proceed
+          setShippingCost(0);
           console.error('[checkout] Failed to fetch shipping cost', e);
         }
       });
@@ -40,17 +49,21 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
     return () => {
       cancelled = true;
     };
-  }, [customerDetails.state]);
+  }, [customerDetails.state, customerDetails.lga]);
 
   const total = subtotal + (shippingCost ?? 0);
   const totalKobo = total * 100;
 
-  // Generate a stable reference once on mount
   const [reference] = useState(
     () => 'tw-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7)
   );
 
   const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  const shippingLabel =
+    zone
+      ? `${customerDetails.lga} (Zone ${zone.id} — ${zone.name})`
+      : customerDetails.state;
 
   const metadata = {
     cart_items: items.map(({ productId, productName, variantId, variantName, tierQty, threadColour, unitPrice, quantity, isTool }) => ({
@@ -62,11 +75,10 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
       phone: customerDetails.phone,
       delivery_address: customerDetails.deliveryAddress,
       state: customerDetails.state,
+      lga: customerDetails.lga,
     },
     subtotal,
     shipping_cost: shippingCost ?? 0,
-    // Paystack shows these on the transaction details screen.
-    // Keep our existing keys for the webhook, and add Paystack-friendly custom_fields.
     custom_fields: [
       {
         display_name: 'Customer Name',
@@ -83,7 +95,7 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
 
   return (
     <div className="max-w-lg mx-auto">
-      <h2 className="font-display text-2xl text-cocoa mb-6">Review Your Order</h2>
+      <h2 className="font-display text-2xl text-forest mb-6">Review Your Order</h2>
 
       {/* Line items */}
       <div className="mb-4">
@@ -123,16 +135,26 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
         </div>
         <div className="flex justify-between items-center mb-2">
           <span className="font-body text-sm text-charcoal">
-            Shipping ({customerDetails.state})
+            Shipping ({shippingLabel})
           </span>
           <span className="font-body text-sm text-charcoal">
             {shippingCost === null ? 'Loading…' : `₦${shippingCost.toLocaleString()}`}
           </span>
         </div>
+        {zone && (
+          <p className="font-body text-xs text-charcoal/50 mb-2">
+            Est. delivery: {zone.deliveryTime}
+          </p>
+        )}
+        {!zone && customerDetails.state !== 'Lagos' && (
+          <p className="font-body text-xs text-charcoal/50 mb-2">
+            Delivery outside Lagos — our team will confirm details with you after your order.
+          </p>
+        )}
         <hr className="border-charcoal/10 my-3" />
         <div className="flex justify-between items-center">
-          <span className="font-heading font-semibold text-cocoa">Total</span>
-          <span className="font-heading font-semibold text-xl text-cocoa">
+          <span className="font-heading font-semibold text-forest">Total</span>
+          <span className="font-heading font-semibold text-xl text-forest">
             ₦{total.toLocaleString()}
           </span>
         </div>
@@ -140,20 +162,20 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
 
       {/* Customer details summary */}
       <div className="mb-4 p-4 border border-charcoal/10 rounded-xl">
-        <h3 className="font-heading text-sm text-cocoa mb-2">Delivery Details</h3>
+        <h3 className="font-heading text-sm text-forest mb-2">Delivery Details</h3>
         <div className="font-body text-sm text-charcoal/70 space-y-1">
           <p>{customerDetails.firstName} {customerDetails.lastName}</p>
           <p>{customerDetails.email}</p>
           <p>{customerDetails.phone}</p>
           <p>{customerDetails.deliveryAddress}</p>
-          <p>{customerDetails.state}</p>
+          <p>{customerDetails.lga ? `${customerDetails.lga}, ${customerDetails.state}` : customerDetails.state}</p>
         </div>
       </div>
 
       {/* Payment error banner */}
       {(paymentError || shippingError) && (
-        <div className="mb-4 p-4 bg-terracotta/10 border border-terracotta/30 rounded-lg">
-          <p className="font-body text-sm text-terracotta">{paymentError ?? shippingError}</p>
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="font-body text-sm text-red-600">{paymentError ?? shippingError}</p>
         </div>
       )}
 
@@ -161,7 +183,7 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
       <div className="flex gap-3 mt-6">
         <button
           onClick={onBack}
-          className="flex-1 border border-charcoal/30 text-charcoal font-heading font-semibold py-4 rounded-lg hover:border-cocoa hover:text-cocoa transition-colors"
+          className="flex-1 border border-charcoal/30 text-charcoal font-heading font-semibold py-4 rounded-lg hover:border-forest hover:text-forest transition-colors"
         >
           Back
         </button>

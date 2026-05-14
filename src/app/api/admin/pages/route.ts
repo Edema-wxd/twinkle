@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { aboutSections } from '@/db'
@@ -101,6 +102,7 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    revalidatePath('/about')
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('Failed to upsert about_sections:', err)

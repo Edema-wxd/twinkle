@@ -86,9 +86,9 @@ export function OrderPoller({ reference }: OrderPollerProps) {
   if (timedOut) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-12 text-center">
-        <div className="w-16 h-16 rounded-full bg-terracotta/20 flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-4">
           <svg
-            className="w-8 h-8 text-terracotta"
+            className="w-8 h-8 text-gold"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -102,7 +102,7 @@ export function OrderPoller({ reference }: OrderPollerProps) {
             />
           </svg>
         </div>
-        <h1 className="font-display text-2xl text-cocoa">Still Processing</h1>
+        <h1 className="font-display text-2xl text-forest">Still Processing</h1>
         <p className="font-body text-charcoal/70 mt-4 max-w-md mx-auto">
           Your payment was received but we&apos;re still processing your order.
           Please contact us with your reference number and we&apos;ll confirm
@@ -116,13 +116,13 @@ export function OrderPoller({ reference }: OrderPollerProps) {
             href={BUSINESS.whatsapp.url(`Hi, I just placed an order with reference ${reference} and need help confirming it.`)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block bg-gold text-cocoa font-heading font-semibold py-3 px-6 rounded-lg hover:bg-terracotta hover:text-cream transition-colors text-sm"
+            className="inline-block bg-gold text-forest font-heading font-semibold py-3 px-6 rounded-lg hover:bg-forest hover:text-cream transition-colors text-sm"
           >
             Contact Us on WhatsApp
           </a>
           <a
             href={`mailto:${BUSINESS.support.email}?subject=Order%20${encodeURIComponent(reference)}%20-%20Still%20Processing&body=Hi%2C%20I%20placed%20an%20order%20with%20reference%20${encodeURIComponent(reference)}%20and%20it%20is%20still%20showing%20as%20processing.%20Please%20help%20confirm%20my%20order%20status.`}
-            className="inline-block border border-charcoal/30 text-charcoal font-heading font-semibold py-3 px-6 rounded-lg hover:border-cocoa hover:text-cocoa transition-colors text-sm"
+            className="inline-block border border-charcoal/30 text-charcoal font-heading font-semibold py-3 px-6 rounded-lg hover:border-forest hover:text-forest transition-colors text-sm"
           >
             Email Us
           </a>
@@ -149,13 +149,13 @@ export function OrderPoller({ reference }: OrderPollerProps) {
           href={BUSINESS.whatsapp.url(`Hi, I just paid for an order (ref: ${reference}) and I'm waiting for confirmation.`)}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block bg-gold text-cocoa font-heading font-semibold py-2.5 px-5 rounded-lg hover:bg-terracotta hover:text-cream transition-colors text-sm"
+          className="inline-block bg-gold text-forest font-heading font-semibold py-2.5 px-5 rounded-lg hover:bg-forest hover:text-cream transition-colors text-sm"
         >
           WhatsApp Us
         </a>
         <a
           href={`mailto:${BUSINESS.support.email}?subject=Order%20${encodeURIComponent(reference)}&body=Hi%2C%20I%20just%20paid%20for%20an%20order%20with%20reference%20${encodeURIComponent(reference)}%20and%20I%20am%20waiting%20for%20confirmation.`}
-          className="inline-block border border-charcoal/30 text-charcoal font-heading font-semibold py-2.5 px-5 rounded-lg hover:border-cocoa hover:text-cocoa transition-colors text-sm"
+          className="inline-block border border-charcoal/30 text-charcoal font-heading font-semibold py-2.5 px-5 rounded-lg hover:border-forest hover:text-forest transition-colors text-sm"
         >
           Email Us
         </a>

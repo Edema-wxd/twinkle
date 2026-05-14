@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { NIGERIAN_STATES } from '@/lib/checkout/shipping';
+import { LAGOS_ZONES } from '@/lib/checkout/shippingZones';
 import { BUSINESS } from '@/lib/config/business';
 
 export interface CustomerDetails {
@@ -11,6 +12,7 @@ export interface CustomerDetails {
   phone: string;
   deliveryAddress: string;
   state: string;
+  lga?: string;
   deliveryType: 'nigeria' | 'international';
 }
 
@@ -26,6 +28,7 @@ interface FormErrors {
   phone?: string;
   deliveryAddress?: string;
   state?: string;
+  lga?: string;
 }
 
 export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
@@ -36,7 +39,13 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
   const [phone, setPhone] = useState(defaultValues?.phone ?? '');
   const [deliveryAddress, setDeliveryAddress] = useState(defaultValues?.deliveryAddress ?? '');
   const [state, setState] = useState(defaultValues?.state ?? '');
+  const [lga, setLga] = useState(defaultValues?.lga ?? '');
   const [errors, setErrors] = useState<FormErrors>({});
+
+  function handleStateChange(newState: string) {
+    setState(newState);
+    setLga('');
+  }
 
   function validate(): FormErrors {
     const errs: FormErrors = {};
@@ -54,6 +63,7 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
     }
     if (!deliveryAddress.trim()) errs.deliveryAddress = 'Delivery address is required';
     if (!state) errs.state = 'Please select a state';
+    if (state === 'Lagos' && !lga) errs.lga = 'Please select your delivery area';
     return errs;
   }
 
@@ -69,12 +79,23 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
       return;
     }
     setErrors({});
-    onSubmit({ firstName, lastName, email, phone, deliveryAddress, state, deliveryType: 'nigeria' });
+    onSubmit({
+      firstName,
+      lastName,
+      email,
+      phone,
+      deliveryAddress,
+      state,
+      lga: state === 'Lagos' ? lga : undefined,
+      deliveryType: 'nigeria',
+    });
   }
+
+  const isOutsideLagos = state !== '' && state !== 'Lagos';
 
   return (
     <div className="max-w-lg mx-auto">
-      <h2 className="font-display text-2xl text-cocoa mb-6">Delivery Details</h2>
+      <h2 className="font-display text-2xl text-forest mb-6">Delivery details</h2>
 
       {/* Nigeria / International toggle */}
       <div className="flex gap-4 mb-6">
@@ -133,7 +154,7 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
                 className="w-full border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal focus:outline-none focus:border-gold"
               />
               {errors.firstName && (
-                <p className="font-body text-xs text-terracotta mt-1">{errors.firstName}</p>
+                <p className="font-body text-xs text-red-600 mt-1">{errors.firstName}</p>
               )}
             </div>
             <div>
@@ -148,7 +169,7 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
                 className="w-full border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal focus:outline-none focus:border-gold"
               />
               {errors.lastName && (
-                <p className="font-body text-xs text-terracotta mt-1">{errors.lastName}</p>
+                <p className="font-body text-xs text-red-600 mt-1">{errors.lastName}</p>
               )}
             </div>
           </div>
@@ -165,7 +186,7 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
               className="w-full border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal focus:outline-none focus:border-gold"
             />
             {errors.email && (
-              <p className="font-body text-xs text-terracotta mt-1">{errors.email}</p>
+              <p className="font-body text-xs text-red-600 mt-1">{errors.email}</p>
             )}
           </div>
 
@@ -181,7 +202,7 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
               className="w-full border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal focus:outline-none focus:border-gold"
             />
             {errors.phone && (
-              <p className="font-body text-xs text-terracotta mt-1">{errors.phone}</p>
+              <p className="font-body text-xs text-red-600 mt-1">{errors.phone}</p>
             )}
           </div>
 
@@ -198,7 +219,7 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
               className="w-full border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal focus:outline-none focus:border-gold resize-none"
             />
             {errors.deliveryAddress && (
-              <p className="font-body text-xs text-terracotta mt-1">{errors.deliveryAddress}</p>
+              <p className="font-body text-xs text-red-600 mt-1">{errors.deliveryAddress}</p>
             )}
           </div>
 
@@ -209,7 +230,7 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
             <select
               id="state"
               value={state}
-              onChange={(e) => setState(e.target.value)}
+              onChange={(e) => handleStateChange(e.target.value)}
               className="w-full border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal focus:outline-none focus:border-gold bg-white"
             >
               <option value="">Select state</option>
@@ -220,13 +241,51 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
               ))}
             </select>
             {errors.state && (
-              <p className="font-body text-xs text-terracotta mt-1">{errors.state}</p>
+              <p className="font-body text-xs text-red-600 mt-1">{errors.state}</p>
             )}
           </div>
 
+          {/* Lagos area dropdown */}
+          {state === 'Lagos' && (
+            <div className="mb-4">
+              <label className="block font-body text-sm text-charcoal mb-1" htmlFor="lga">
+                Delivery Area
+              </label>
+              <select
+                id="lga"
+                value={lga}
+                onChange={(e) => setLga(e.target.value)}
+                className="w-full border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal focus:outline-none focus:border-gold bg-white"
+              >
+                <option value="">Select your area</option>
+                {LAGOS_ZONES.map((zone) => (
+                  <optgroup key={zone.id} label={`Zone ${zone.id} — ${zone.name} (${zone.deliveryTime})`}>
+                    {zone.areas.map((area) => (
+                      <option key={area} value={area}>
+                        {area}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              {errors.lga && (
+                <p className="font-body text-xs text-red-600 mt-1">{errors.lga}</p>
+              )}
+            </div>
+          )}
+
+          {/* Outside Lagos notice */}
+          {isOutsideLagos && (
+            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+              <p className="font-body text-sm text-charcoal/80">
+                We primarily deliver within Lagos. For deliveries outside Lagos, our team will confirm delivery details and timing with you after your order.
+              </p>
+            </div>
+          )}
+
           <button
             type="submit"
-            className="bg-gold text-cocoa font-heading font-semibold py-3 px-8 rounded-lg hover:bg-terracotta hover:text-cream transition-colors w-full mt-6"
+            className="bg-gold text-forest font-heading font-semibold py-3 px-8 rounded-lg hover:bg-forest hover:text-cream transition-colors w-full mt-6"
           >
             Review Order
           </button>

@@ -30,7 +30,7 @@ export function CartLineItem({ item, lineKey: key, onUpdateQty, onRemove }: Cart
 
       {/* Middle: info */}
       <div className="flex-1 ml-3 min-w-0">
-        <p className="font-heading text-sm font-semibold text-cocoa leading-tight">
+        <p className="font-heading text-sm font-semibold text-forest leading-tight">
           {item.productName}
         </p>
         <p className="font-body text-xs text-charcoal/60 mt-0.5">
@@ -81,7 +81,7 @@ export function CartLineItem({ item, lineKey: key, onUpdateQty, onRemove }: Cart
           type="button"
           onClick={() => onRemove(key)}
           aria-label={`Remove ${item.productName} from cart`}
-          className="text-xs text-charcoal/40 hover:text-terracotta transition-colors font-body"
+          className="text-xs text-charcoal/40 hover:text-forest transition-colors font-body"
         >
           Remove
         </button>

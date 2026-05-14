@@ -62,7 +62,7 @@ export function CartDrawer() {
       >
         {/* Drawer header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-charcoal/10">
-          <h2 className="font-display text-xl text-cocoa">
+          <h2 className="font-display text-xl text-forest">
             Your Cart
             {totalItems > 0 && (
               <span className="ml-2 font-body text-sm text-charcoal/50 font-normal">
@@ -74,7 +74,7 @@ export function CartDrawer() {
             type="button"
             onClick={() => dispatch({ type: 'CLOSE_DRAWER' })}
             aria-label="Close cart"
-            className="text-charcoal/60 hover:text-cocoa text-2xl leading-none p-1 transition-colors"
+            className="text-charcoal/60 hover:text-forest text-2xl leading-none p-1 transition-colors"
           >
             ×
           </button>
@@ -105,7 +105,7 @@ export function CartDrawer() {
               <Link
                 href="/catalog"
                 onClick={() => dispatch({ type: 'CLOSE_DRAWER' })}
-                className="font-heading text-sm font-semibold text-gold underline hover:text-terracotta transition-colors"
+                className="font-heading text-sm font-semibold text-gold underline hover:text-forest transition-colors"
               >
                 Shop Now
               </Link>
@@ -133,8 +133,8 @@ export function CartDrawer() {
         <div className="border-t border-charcoal/10 p-4 bg-cream">
           {/* Subtotal */}
           <div className="flex items-baseline justify-between mb-1">
-            <span className="font-heading text-sm font-semibold text-cocoa">Subtotal</span>
-            <span className="font-heading text-sm font-semibold text-cocoa">
+            <span className="font-heading text-sm font-semibold text-forest">Subtotal</span>
+            <span className="font-heading text-sm font-semibold text-forest">
               ₦{subtotal.toLocaleString()}
             </span>
           </div>
@@ -147,7 +147,7 @@ export function CartDrawer() {
             <Link
               href="/checkout"
               onClick={() => dispatch({ type: 'CLOSE_DRAWER' })}
-              className="bg-gold text-cocoa font-heading font-semibold py-3 rounded-lg hover:bg-terracotta hover:text-cream transition-colors w-full text-center block"
+              className="bg-gold text-forest font-heading font-semibold py-3 rounded-lg hover:bg-forest hover:text-cream transition-colors w-full text-center block"
             >
               Checkout
             </Link>

@@ -38,7 +38,7 @@ export function NewsletterForm() {
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
           disabled={status === 'loading' || status === 'success'}
-          className="w-full rounded-md bg-cocoa border border-cream/20 text-cream placeholder:text-cream/40 px-3 py-2 text-sm focus:outline-none focus:border-gold font-body"
+          className="w-full rounded-md bg-forest/80 border border-cream/20 text-cream placeholder:text-cream/40 px-3 py-2 text-sm focus:outline-none focus:border-gold font-body"
         />
         <input
           type="email"
@@ -47,12 +47,12 @@ export function NewsletterForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={status === 'loading' || status === 'success'}
-          className="w-full rounded-md bg-cocoa border border-cream/20 text-cream placeholder:text-cream/40 px-3 py-2 text-sm focus:outline-none focus:border-gold font-body"
+          className="w-full rounded-md bg-forest/80 border border-cream/20 text-cream placeholder:text-cream/40 px-3 py-2 text-sm focus:outline-none focus:border-gold font-body"
         />
         <button
           type="submit"
           disabled={status === 'loading' || status === 'success'}
-          className="w-full mt-2 rounded-md bg-gold text-cocoa font-heading font-semibold text-sm py-2 px-4 hover:bg-gold/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full mt-2 rounded-md bg-gold text-forest font-heading font-semibold text-sm py-2 px-4 hover:bg-gold/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {status === 'loading' ? 'Joining...' : 'Join'}
         </button>
@@ -69,7 +69,7 @@ export function NewsletterForm() {
         </p>
       )}
       {status === 'error' && (
-        <p className="text-sm font-body text-terracotta mt-3">
+        <p className="text-sm font-body text-red-400 mt-3">
           Something went wrong. Please try again.
         </p>
       )}

@@ -42,6 +42,7 @@ export default function CheckoutPage() {
           customerPhone: details.phone,
           deliveryAddress: details.deliveryAddress,
           deliveryState: details.state,
+          deliveryLGA: details.lga,
           cartItems: state.items.map(({ productId, productName, variantId, variantName, tierQty, threadColour, unitPrice, quantity, isTool }) => ({
             productId, productName, variantId, variantName, tierQty, threadColour, unitPrice, quantity, isTool,
           })),
@@ -88,14 +89,14 @@ export default function CheckoutPage() {
       {/* Step indicator */}
       <div className="flex items-center gap-4 mb-8">
         <div className={`flex items-center gap-2 font-heading text-sm font-semibold ${step === 1 ? 'text-gold' : 'text-charcoal/50'}`}>
-          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 1 ? 'bg-gold text-cocoa' : 'bg-charcoal/20 text-charcoal/50'}`}>
+          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 1 ? 'bg-gold text-forest' : 'bg-charcoal/20 text-charcoal/50'}`}>
             1
           </span>
           Details
         </div>
         <div className="flex-1 h-px bg-charcoal/10" />
         <div className={`flex items-center gap-2 font-heading text-sm font-semibold ${step === 2 ? 'text-gold' : 'text-charcoal/50'}`}>
-          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 2 ? 'bg-gold text-cocoa' : 'bg-charcoal/20 text-charcoal/50'}`}>
+          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 2 ? 'bg-gold text-forest' : 'bg-charcoal/20 text-charcoal/50'}`}>
             2
           </span>
           Review &amp; Pay
@@ -110,7 +111,7 @@ export default function CheckoutPage() {
       {/* International path: WhatsApp CTA */}
       {step === 1 && isInternational && (
         <div className="max-w-lg mx-auto">
-          <h2 className="font-display text-2xl text-cocoa mb-6">International Shipping</h2>
+          <h2 className="font-display text-2xl text-forest mb-6">International Shipping</h2>
           <div className="bg-stone-50 rounded-xl p-6 font-body text-sm text-charcoal mb-6">
             <p className="mb-4">
               For international orders, please contact us on WhatsApp to get a shipping quote.
@@ -127,13 +128,13 @@ export default function CheckoutPage() {
           <div className="flex gap-4">
             <button
               onClick={() => { setIsInternational(false); setStep(1); }}
-              className="font-heading text-sm text-charcoal/60 hover:text-cocoa underline"
+              className="font-heading text-sm text-charcoal/60 hover:text-forest underline"
             >
               Back to details
             </button>
             <Link
               href="/cart"
-              className="font-heading text-sm text-charcoal/60 hover:text-cocoa underline"
+              className="font-heading text-sm text-charcoal/60 hover:text-forest underline"
             >
               Back to cart
             </Link>

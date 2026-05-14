@@ -49,7 +49,7 @@ export function CatalogClient({ products }: CatalogClientProps) {
   return (
     <div className="bg-cream min-h-screen">
       <div className="max-w-6xl mx-auto px-4 py-12">
-        <h1 className="font-display text-4xl md:text-5xl text-cocoa mb-2">
+        <h1 className="font-display text-4xl md:text-5xl text-forest mb-2">
           The Collection
         </h1>
         <p className="font-body text-charcoal/60 mb-8">
@@ -74,7 +74,7 @@ export function CatalogClient({ products }: CatalogClientProps) {
 
           {/* Filters button — mobile only */}
           <button
-            className="md:hidden bg-stone border border-charcoal/20 rounded-lg px-4 py-2 text-sm font-body text-charcoal cursor-pointer"
+            className="md:hidden bg-white border border-charcoal/20 rounded-lg px-4 py-2 text-sm font-body text-charcoal cursor-pointer"
             onClick={() => setIsFilterOpen(true)}
           >
             Filters

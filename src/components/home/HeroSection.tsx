@@ -3,7 +3,7 @@ import { BUSINESS } from '@/lib/config/business';
 
 export function HeroSection() {
   return (
-    <section className="bg-linear-to-br from-cocoa via-cocoa/80 to-gold/20 min-h-[85vh] flex flex-col items-center justify-center text-center px-4 py-20">
+    <section className="bg-linear-to-br from-forest via-forest/90 to-gold/20 min-h-[85vh] flex flex-col items-center justify-center text-center px-4 py-20">
       <p className="font-body text-sm text-gold/80 uppercase tracking-widest mb-4">
         Premium Loc Accessories
       </p>
@@ -18,7 +18,7 @@ export function HeroSection() {
 
       <Link
         href="/catalog"
-        className="bg-gold text-cocoa font-heading font-semibold px-10 py-4 rounded-lg hover:bg-terracotta hover:text-cream transition-colors text-lg inline-block"
+        className="bg-gold text-forest font-heading font-semibold px-10 py-4 rounded-lg hover:bg-cream hover:text-forest transition-colors text-lg inline-block"
       >
         Explore Beads
       </Link>

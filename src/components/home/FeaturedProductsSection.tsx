@@ -14,14 +14,15 @@ export function FeaturedProductsSection({ products }: FeaturedProductsSectionPro
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
 
   return (
-    <section className="bg-cream py-20 px-4">
-      <div className="max-w-6xl mx-auto">
+    <section className="relative overflow-hidden bg-cream py-20 px-4">
+      <div aria-hidden="true" className="absolute inset-0 bg-pattern-01 opacity-[0.05] pointer-events-none z-0" />
+      <div className="relative z-10 max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <p className="font-body text-sm text-terracotta uppercase tracking-widest mb-3">
+          <p className="font-body text-sm text-gold uppercase tracking-widest mb-3">
             Featured Products
           </p>
-          <h2 className="font-display text-4xl md:text-5xl text-cocoa leading-tight">
-            Our Best-Loved Beads
+          <h2 className="font-display text-4xl md:text-5xl text-forest leading-tight">
+            Our best-loved beads
           </h2>
         </div>
 
@@ -38,7 +39,7 @@ export function FeaturedProductsSection({ products }: FeaturedProductsSectionPro
         <div className="text-center">
           <Link
             href="/catalog"
-            className="inline-block bg-cocoa text-cream font-heading font-semibold px-10 py-4 rounded-lg hover:bg-charcoal transition-colors text-base"
+            className="inline-block bg-forest text-cream font-heading font-semibold px-10 py-4 rounded-lg hover:bg-forest/80 transition-colors text-base"
           >
             Shop the Collection
           </Link>

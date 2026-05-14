@@ -174,7 +174,7 @@ export function BlogPostForm({ post }: BlogPostFormProps) {
           onChange={(e) => setTitle(e.target.value)}
           onBlur={handleTitleBlur}
           required
-          placeholder="e.g. How to care for your loc beads"
+          placeholder="e.g. How to care for your Twinkles"
           className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
         />
       </div>

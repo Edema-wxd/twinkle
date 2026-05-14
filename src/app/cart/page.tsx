@@ -23,7 +23,7 @@ export default function CartPage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl text-cocoa mb-8">Your Cart</h1>
+      <h1 className="font-display text-3xl text-forest mb-8">Your Cart</h1>
 
       {items.length === 0 ? (
         /* Empty state */
@@ -33,7 +33,7 @@ export default function CartPage() {
           </p>
           <Link
             href="/catalog"
-            className="font-heading font-semibold text-gold underline underline-offset-2 hover:text-terracotta transition-colors"
+            className="font-heading font-semibold text-gold underline underline-offset-2 hover:text-forest transition-colors"
           >
             Continue Shopping
           </Link>
@@ -60,7 +60,7 @@ export default function CartPage() {
           {/* Right column — order summary */}
           <div className="md:col-span-1">
             <div className="bg-stone-50 rounded-xl p-6">
-              <h2 className="font-heading text-lg text-cocoa mb-4">
+              <h2 className="font-heading text-lg text-forest mb-4">
                 Order Summary
               </h2>
 
@@ -68,7 +68,7 @@ export default function CartPage() {
                 <span className="font-body text-sm text-charcoal">
                   Subtotal
                 </span>
-                <span className="font-heading font-semibold text-cocoa">
+                <span className="font-heading font-semibold text-forest">
                   ₦{subtotal.toLocaleString()}
                 </span>
               </div>
@@ -79,10 +79,10 @@ export default function CartPage() {
               <hr className="border-charcoal/10 mb-4" />
 
               <div className="flex justify-between items-center mb-1">
-                <span className="font-heading font-semibold text-cocoa text-base">
+                <span className="font-heading font-semibold text-forest text-base">
                   Total
                 </span>
-                <span className="font-heading font-semibold text-cocoa text-xl">
+                <span className="font-heading font-semibold text-forest text-xl">
                   ₦{subtotal.toLocaleString()}
                 </span>
               </div>
@@ -92,14 +92,14 @@ export default function CartPage() {
 
               <Link
                 href="/checkout"
-                className="bg-gold text-cocoa font-heading font-semibold py-3 px-6 rounded-lg hover:bg-terracotta hover:text-cream transition-colors w-full text-center block mt-4"
+                className="bg-gold text-forest font-heading font-semibold py-3 px-6 rounded-lg hover:bg-forest hover:text-cream transition-colors w-full text-center block mt-4"
               >
                 Checkout
               </Link>
 
               <Link
                 href="/catalog"
-                className="text-sm text-charcoal/60 hover:text-cocoa underline text-center block mt-3"
+                className="text-sm text-charcoal/60 hover:text-forest underline text-center block mt-3"
               >
                 Continue Shopping
               </Link>

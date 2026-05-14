@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 const SECTIONS = [
   { id: 'founder-story', label: 'Founder Story' },
   { id: 'brand-mission', label: 'Brand Mission' },
-  { id: 'why-loc-beads', label: 'Why Loc Beads' },
+  { id: 'why-twinkles', label: 'Why Twinkles' },
   { id: 'contact', label: 'Contact' },
 ]
 

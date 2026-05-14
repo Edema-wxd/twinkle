@@ -10,7 +10,7 @@ export function RelatedProducts({ products }: RelatedProductsProps) {
 
   return (
     <section className="max-w-6xl mx-auto px-4 pb-16">
-      <h2 className="font-display text-2xl text-cocoa mb-2">You might also like</h2>
+      <h2 className="font-display text-2xl text-forest mb-2">You might also like</h2>
       <p className="font-body text-charcoal/70 mb-6">
         More bead styles to complete your look.
       </p>

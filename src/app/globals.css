@@ -1,24 +1,37 @@
 @import "tailwindcss";
 
+@layer utilities {
+  .bg-pattern-01 {
+    background-image: url('/images/TL%20Pattern-01.svg');
+    background-repeat: repeat;
+    background-size: 320px 320px;
+  }
+
+  .bg-pattern-02 {
+    background-image: url('/images/TL%20Pattern-02.svg');
+    background-repeat: repeat;
+    background-size: 320px 320px;
+  }
+}
+
 @theme {
   /* =============================================
-     Afro-luxury colour palette
+     Brand colour palette (Twinkle Locs guide)
      ============================================= */
-  --color-gold:       #C9A84C;   /* Deep gold — primary brand accent */
-  --color-cocoa:      #3B1F0E;   /* Rich cocoa brown — dark text, backgrounds */
-  --color-cream:      #FAF3E0;   /* Warm cream — light backgrounds */
-  --color-forest:     #2D5016;   /* Forest green — secondary accent */
-  --color-terracotta: #C1440E;   /* Terracotta — CTA / call-to-action */
+  --color-forest:   #1A3C34;   /* Primary — dominant background, headers */
+  --color-gold:     #B8922A;   /* Accent — CTAs, highlights, ruled lines */
+  --color-cream:    #E8E0D0;   /* Text on dark backgrounds, light layouts */
 
-  /* Neutral shades */
-  --color-charcoal:   #1A1A1A;
-  --color-stone:      #F5F0E8;
+  /* Utility shades */
+  --color-charcoal: #1A1A1A;   /* Body text on light backgrounds */
+  --color-stone:    #F5F0E8;   /* Near-white card backgrounds */
+  --color-cocoa:    #3B1F0E;   /* Legacy — kept for admin UI only */
 
   /* =============================================
      Typography — next/font injects the actual
      font-family string via a CSS variable on <html>
      ============================================= */
   --font-display: var(--font-halimun), serif;
-  --font-heading: var(--font-raleway), sans-serif;
-  --font-body:    var(--font-inter), sans-serif;
+  --font-heading: var(--font-montserrat), sans-serif;
+  --font-body:    var(--font-montserrat), sans-serif;
 }

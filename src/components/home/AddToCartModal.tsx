@@ -80,7 +80,7 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
     >
       <div className="bg-cream rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
         <div className="flex justify-between items-start mb-4">
-          <h2 className="font-heading font-semibold text-cocoa text-lg">
+          <h2 className="font-heading font-semibold text-forest text-lg">
             Select size — {product.name}
           </h2>
           <button
@@ -96,7 +96,7 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
 
         {/* Size selection */}
         <div>
-          <p className="font-heading font-semibold text-cocoa text-sm mb-3">Size:</p>
+          <p className="font-heading font-semibold text-forest text-sm mb-3">Size:</p>
           <div className="flex flex-wrap gap-2 mb-4">
             {product.variants.map((variant) => (
               <button
@@ -105,8 +105,8 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
                 disabled={!variant.in_stock}
                 className={`rounded-lg px-4 py-2 font-body text-sm transition-all ${
                   selectedVariantId === variant.id
-                    ? 'border-2 border-gold bg-gold/10 text-cocoa'
-                    : 'border-2 border-stone bg-stone text-charcoal hover:border-gold/50'
+                    ? 'border-2 border-gold bg-gold/10 text-forest'
+                    : 'border-2 border-cream bg-cream text-charcoal hover:border-gold/50'
                 } ${!variant.in_stock ? 'opacity-40 cursor-not-allowed' : ''}`}
               >
                 {variant.name}
@@ -121,7 +121,7 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
         {/* Pack size / tier selection */}
         {(selectedVariant?.price_tiers.length ?? 0) > 1 && (
           <div className="mb-4">
-            <p className="font-heading font-semibold text-cocoa text-sm mb-3">Pack size:</p>
+            <p className="font-heading font-semibold text-forest text-sm mb-3">Pack size:</p>
             <div className="flex flex-wrap gap-2">
               {selectedVariant!.price_tiers.map((tier) => (
                 <button
@@ -129,8 +129,8 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
                   onClick={() => setSelectedTierQty(tier.qty)}
                   className={`rounded-lg px-4 py-2 font-body text-sm transition-all ${
                     selectedTierQty === tier.qty
-                      ? 'border-2 border-gold bg-gold/10 text-cocoa'
-                      : 'border-2 border-stone bg-stone text-charcoal hover:border-gold/50'
+                      ? 'border-2 border-gold bg-gold/10 text-forest'
+                      : 'border-2 border-cream bg-cream text-charcoal hover:border-gold/50'
                   }`}
                 >
                   {tier.qty} beads — ₦{tier.price.toLocaleString()}
@@ -143,7 +143,7 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
         {/* Thread colour selection (non-Tools only) */}
         {!isTool && (
           <div className="mb-6">
-            <p className="font-heading font-semibold text-cocoa text-sm mb-3">Thread colour:</p>
+            <p className="font-heading font-semibold text-forest text-sm mb-3">Thread colour:</p>
             <div className="flex flex-wrap gap-2">
               {THREAD_COLOURS.map((colour) => (
                 <button
@@ -161,7 +161,7 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
               ))}
             </div>
             {selectedThreadColour === null && (
-              <p className="text-xs text-terracotta mt-2 font-body">Please select a thread colour</p>
+              <p className="text-xs text-red-600 mt-2 font-body">Please select a thread colour</p>
             )}
           </div>
         )}
@@ -171,8 +171,8 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
           disabled={!canAddToCart}
           className={`w-full font-heading font-semibold py-3 rounded-lg transition-colors ${
             canAddToCart
-              ? 'bg-gold text-cocoa hover:bg-terracotta hover:text-cream'
-              : 'bg-stone text-charcoal/40 cursor-not-allowed'
+              ? 'bg-gold text-forest hover:bg-forest hover:text-cream'
+              : 'bg-cream text-charcoal/40 cursor-not-allowed'
           }`}
         >
           Add to cart — ₦{displayPrice.toLocaleString()}

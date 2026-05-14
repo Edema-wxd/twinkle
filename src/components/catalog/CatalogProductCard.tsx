@@ -7,10 +7,10 @@ interface CatalogProductCardProps {
 }
 
 const MATERIAL_COLOURS: Record<ProductMaterial, string> = {
-  Gold: 'bg-gold/20 text-cocoa',
-  Silver: 'bg-stone border border-charcoal/20 text-charcoal',
+  Gold: 'bg-gold/20 text-forest',
+  Silver: 'bg-white border border-charcoal/20 text-charcoal',
   Crystal: 'bg-forest/10 text-forest',
-  Tools: 'bg-terracotta/10 text-terracotta',
+  Tools: 'bg-forest/10 text-forest',
 }
 
 export function CatalogProductCard({ product }: CatalogProductCardProps) {
@@ -19,7 +19,7 @@ export function CatalogProductCard({ product }: CatalogProductCardProps) {
 
   return (
     <Link href={`/catalog/${product.slug}`}>
-      <article className="bg-stone rounded-xl overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all duration-200 cursor-pointer">
+      <article className="bg-white rounded-xl overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all duration-200 cursor-pointer">
         <div className="relative aspect-square w-full">
           <Image
             src={product.image}
@@ -35,7 +35,7 @@ export function CatalogProductCard({ product }: CatalogProductCardProps) {
           >
             {product.material}
           </span>
-          <h3 className="font-heading font-semibold text-cocoa text-base mb-1">
+          <h3 className="font-heading font-semibold text-forest text-base mb-1">
             {product.name}
           </h3>
           <p className="font-body text-sm text-charcoal/60 mb-3">
@@ -48,7 +48,7 @@ export function CatalogProductCard({ product }: CatalogProductCardProps) {
                 <span className="text-forest">In Stock</span>
               </>
             ) : (
-              <span className="text-terracotta/80">Out of Stock</span>
+              <span className="text-charcoal/50">Out of stock</span>
             )}
           </div>
         </div>

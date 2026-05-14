@@ -102,7 +102,7 @@ export function AboutPagesForm({ sections }: AboutPagesFormProps) {
   const SECTION_LABELS: Record<string, string> = {
     'founder-story': 'Founder Story',
     'brand-mission': 'Brand Mission',
-    'why-loc-beads': 'Why Loc Beads',
+    'why-twinkles': 'Why Twinkles',
     'contact': 'Contact',
   }
 

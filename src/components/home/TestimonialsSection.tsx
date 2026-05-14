@@ -24,13 +24,14 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
   const t = testimonials[idx]
 
   return (
-    <section className="bg-stone py-20 px-4">
-      <div className="max-w-3xl mx-auto text-center">
-        <p className="font-body text-sm text-terracotta uppercase tracking-widest mb-3">
+    <section className="relative overflow-hidden bg-stone py-20 px-4">
+      <div aria-hidden="true" className="absolute inset-0 bg-pattern-01 opacity-[0.05] pointer-events-none z-0" />
+      <div className="relative z-10 max-w-3xl mx-auto text-center">
+        <p className="font-body text-sm text-gold uppercase tracking-widest mb-3">
           What our customers say
         </p>
-        <h2 className="font-display text-4xl md:text-5xl text-cocoa leading-tight mb-12">
-          Loved by Loc Wearers
+        <h2 className="font-display text-4xl md:text-5xl text-forest leading-tight mb-12">
+          Loved by loc wearers
         </h2>
 
         <div className="bg-cream rounded-2xl p-8 md:p-10 shadow-xs">
@@ -40,11 +41,11 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
           </blockquote>
           <div className="flex items-center justify-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gold flex items-center justify-center flex-shrink-0">
-              <span className="font-heading font-semibold text-cocoa text-sm">
+              <span className="font-heading font-semibold text-forest text-sm">
                 {t.name.split(' ').map(n => n[0]).join('')}
               </span>
             </div>
-            <span className="font-heading font-medium text-cocoa">{t.name}</span>
+            <span className="font-heading font-medium text-forest">{t.name}</span>
           </div>
         </div>
 

@@ -35,14 +35,14 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h1 className="font-display text-3xl text-cocoa text-center">
+        <h1 className="font-display text-3xl text-forest text-center">
           Payment Successful
         </h1>
         <p className="font-body text-charcoal/60 text-center mt-2">
           Your order was accepted and is being processed.
         </p>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-          <span className="inline-flex items-center rounded-full bg-stone-100 px-3 py-1 text-xs font-heading font-semibold text-cocoa">
+          <span className="inline-flex items-center rounded-full bg-stone-100 px-3 py-1 text-xs font-heading font-semibold text-forest">
             Status: {statusLabel}
           </span>
         </div>
@@ -53,7 +53,7 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
 
       {/* Order summary card */}
       <div className="bg-stone/30 rounded-xl p-6 mt-8">
-        <h2 className="font-heading text-sm font-semibold text-cocoa uppercase tracking-wide mb-4">
+        <h2 className="font-heading text-sm font-semibold text-forest uppercase tracking-wide mb-4">
           Your Items
         </h2>
 
@@ -70,7 +70,7 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
               >
                 {/* Left: item details */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-heading text-sm font-semibold text-cocoa leading-snug">
+                  <p className="font-heading text-sm font-semibold text-forest leading-snug">
                     {item.product_name}
                   </p>
                   <p className="font-body text-xs text-charcoal/60 mt-0.5">
@@ -97,7 +97,7 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
                   <p className="font-heading text-sm text-charcoal/60">
                     ×{item.quantity}
                   </p>
-                  <p className="font-heading text-sm font-semibold text-cocoa">
+                  <p className="font-heading text-sm font-semibold text-forest">
                     ₦{item.line_total.toLocaleString()}
                   </p>
                 </div>
@@ -112,13 +112,13 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <span className="font-body text-sm text-charcoal/70">Subtotal</span>
-            <span className="font-heading text-sm text-cocoa">
+            <span className="font-heading text-sm text-forest">
               ₦{order.subtotal.toLocaleString()}
             </span>
           </div>
           <div className="flex justify-between items-center">
             <span className="font-body text-sm text-charcoal/70">Shipping</span>
-            <span className="font-heading text-sm text-cocoa">
+            <span className="font-heading text-sm text-forest">
               {order.shipping_cost === 0
                 ? 'Free'
                 : `₦${order.shipping_cost.toLocaleString()}`}
@@ -126,10 +126,10 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
           </div>
           <hr className="border-charcoal/10" />
           <div className="flex justify-between items-center">
-            <span className="font-heading text-sm font-semibold text-cocoa">
+            <span className="font-heading text-sm font-semibold text-forest">
               Total
             </span>
-            <span className="font-heading text-base font-semibold text-cocoa">
+            <span className="font-heading text-base font-semibold text-forest">
               ₦{order.total.toLocaleString()}
             </span>
           </div>
@@ -138,7 +138,7 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
 
       {/* Delivery details */}
       <div className="mt-6 bg-stone/20 rounded-xl p-6">
-        <h2 className="font-heading text-sm font-semibold text-cocoa uppercase tracking-wide mb-3">
+        <h2 className="font-heading text-sm font-semibold text-forest uppercase tracking-wide mb-3">
           Delivering To
         </h2>
         <p className="font-body text-sm text-charcoal/70 leading-relaxed">
@@ -158,7 +158,7 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
 
       {/* Contact support */}
       <div className="mt-6 p-5 bg-stone/20 rounded-xl text-center">
-        <p className="font-heading text-sm font-semibold text-cocoa mb-1">Questions about your order?</p>
+        <p className="font-heading text-sm font-semibold text-forest mb-1">Questions about your order?</p>
         <p className="font-body text-xs text-charcoal/60 mb-4">
           We&apos;re happy to help with tracking, changes, or anything else.
         </p>
@@ -167,13 +167,13 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
             href={BUSINESS.whatsapp.url(`Hi, I have a question about my order with reference ${order.paystack_reference}.`)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block bg-gold text-cocoa font-heading font-semibold py-2.5 px-5 rounded-lg hover:bg-terracotta hover:text-cream transition-colors text-sm"
+            className="inline-block bg-gold text-forest font-heading font-semibold py-2.5 px-5 rounded-lg hover:bg-forest hover:text-cream transition-colors text-sm"
           >
             WhatsApp Us
           </a>
           <a
             href={`mailto:${BUSINESS.support.email}?subject=Order%20${encodeURIComponent(order.paystack_reference)}&body=Hi%2C%20I%20have%20a%20question%20about%20my%20order%20with%20reference%20${encodeURIComponent(order.paystack_reference)}.`}
-            className="inline-block border border-charcoal/30 text-charcoal font-heading font-semibold py-2.5 px-5 rounded-lg hover:border-cocoa hover:text-cocoa transition-colors text-sm"
+            className="inline-block border border-charcoal/30 text-charcoal font-heading font-semibold py-2.5 px-5 rounded-lg hover:border-forest hover:text-forest transition-colors text-sm"
           >
             Email Us
           </a>
@@ -184,7 +184,7 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
       <div className="text-center mt-6">
         <Link
           href="/catalog"
-          className="font-heading font-semibold text-sm text-gold underline underline-offset-2 hover:text-terracotta transition-colors"
+          className="font-heading font-semibold text-sm text-gold underline underline-offset-2 hover:text-forest transition-colors"
         >
           Continue Shopping →
         </Link>

@@ -30,7 +30,7 @@ export function FilterDrawer({
 }: FilterDrawerProps) {
   return (
     <MobileDrawer isOpen={isOpen} onClose={onClose}>
-      <h2 className="font-display text-lg text-cocoa mb-6">Filter &amp; Sort</h2>
+      <h2 className="font-display text-lg text-forest mb-6">Filter &amp; Sort</h2>
 
       <p className="font-heading text-xs uppercase tracking-widest text-charcoal/60 mb-3">
         Category
@@ -42,8 +42,8 @@ export function FilterDrawer({
             onClick={() => onCategoryChange(cat)}
             className={`px-4 py-1.5 rounded-full font-body text-sm font-medium transition-colors cursor-pointer text-left ${
               activeCategory === cat
-                ? 'bg-cocoa text-cream'
-                : 'bg-stone text-charcoal border border-charcoal/20 hover:bg-cocoa/10'
+                ? 'bg-forest text-cream'
+                : 'bg-white text-charcoal border border-charcoal/20 hover:bg-forest/10'
             }`}
           >
             {cat}
@@ -63,8 +63,8 @@ export function FilterDrawer({
             onClick={() => onSortChange(opt.value)}
             className={`px-4 py-1.5 rounded-full font-body text-sm font-medium transition-colors cursor-pointer text-left ${
               sortOrder === opt.value
-                ? 'bg-cocoa text-cream'
-                : 'bg-stone text-charcoal border border-charcoal/20 hover:bg-cocoa/10'
+                ? 'bg-forest text-cream'
+                : 'bg-white text-charcoal border border-charcoal/20 hover:bg-forest/10'
             }`}
           >
             {opt.label}

@@ -12,6 +12,13 @@ const ALLOWED_SHIPPING_KEYS = [
   'shipping_other_days',
   'shipping_intl_message',
   'shipping_page_intro',
+  'shipping_zone_1_rate',
+  'shipping_zone_2_rate',
+  'shipping_zone_3_rate',
+  'shipping_zone_4_rate',
+  'shipping_zone_5_rate',
+  'shipping_zone_6_rate',
+  'shipping_zone_7_rate',
 ] as const
 
 export async function PUT(req: NextRequest) {

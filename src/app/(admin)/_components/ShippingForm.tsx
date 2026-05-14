@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { LAGOS_ZONES, dbKeyForZone } from '@/lib/checkout/shippingZones'
 
 interface ShippingFormProps {
   settings: Record<string, string>
@@ -12,6 +13,16 @@ export function ShippingForm({ settings }: ShippingFormProps) {
   const [lagosDays, setLagosDays] = useState(settings.shipping_lagos_days ?? '1–2 business days')
   const [otherRate, setOtherRate] = useState(settings.shipping_other_rate ?? '4500')
   const [otherDays, setOtherDays] = useState(settings.shipping_other_days ?? '3–5 business days')
+
+  // Zone rates — initialise from settings or fall back to zone defaults
+  const [zoneRates, setZoneRates] = useState<Record<number, string>>(() => {
+    const init: Record<number, string> = {}
+    for (const zone of LAGOS_ZONES) {
+      const key = dbKeyForZone(zone.id)
+      init[zone.id] = settings[key] ?? String(zone.defaultFee)
+    }
+    return init
+  })
 
   // International
   const [intlMessage, setIntlMessage] = useState(
@@ -35,6 +46,11 @@ export function ShippingForm({ settings }: ShippingFormProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
+    const zonePayload: Record<string, string> = {}
+    for (const zone of LAGOS_ZONES) {
+      zonePayload[dbKeyForZone(zone.id)] = zoneRates[zone.id] ?? String(zone.defaultFee)
+    }
+
     startTransition(async () => {
       try {
         const res = await fetch('/api/admin/shipping', {
@@ -47,6 +63,7 @@ export function ShippingForm({ settings }: ShippingFormProps) {
             shipping_other_days: otherDays,
             shipping_intl_message: intlMessage,
             shipping_page_intro: pageIntro,
+            ...zonePayload,
           }),
         })
 
@@ -100,44 +117,64 @@ export function ShippingForm({ settings }: ShippingFormProps) {
         </div>
       </section>
 
-      {/* Domestic Delivery */}
+      {/* Lagos Delivery Zones */}
       <section className="space-y-4">
         <div>
           <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
-            Domestic Delivery
+            Lagos Delivery Zones
+          </p>
+          <div className="mt-2 border-t border-stone-700" />
+          <p className="text-xs text-stone-500 mt-2">
+            Fees are shown to customers at checkout based on their selected area.
+            Shipping from Lekki Phase 1.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {LAGOS_ZONES.map((zone) => (
+            <div
+              key={zone.id}
+              className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-start bg-stone-800/50 rounded-lg p-3 border border-stone-700"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-stone-200">
+                  Zone {zone.id} — {zone.name}
+                  <span className="ml-2 text-xs text-stone-500">{zone.deliveryTime}</span>
+                </p>
+                <p className="text-xs text-stone-500 mt-0.5 truncate">
+                  {zone.areas.join(', ')}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 sm:justify-end">
+                <span className="text-stone-400 text-sm">₦</span>
+                <input
+                  type="number"
+                  value={zoneRates[zone.id] ?? ''}
+                  onChange={(e) =>
+                    setZoneRates((prev) => ({ ...prev, [zone.id]: e.target.value }))
+                  }
+                  min="0"
+                  step="100"
+                  className="w-28 px-3 py-1.5 bg-stone-800 border border-stone-600 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Other States (Flat Rate) */}
+      <section className="space-y-4">
+        <div>
+          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
+            Other States (Flat Rate)
           </p>
           <div className="mt-2 border-t border-stone-700" />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-stone-300">Lagos rate (₦)</label>
-            <input
-              type="number"
-              value={lagosRate}
-              onChange={(e) => setLagosRate(e.target.value)}
-              placeholder="3000"
-              min="0"
-              step="100"
-              className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-stone-300">Lagos timeframe</label>
-            <input
-              type="text"
-              value={lagosDays}
-              onChange={(e) => setLagosDays(e.target.value)}
-              placeholder="1–2 business days"
-              className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-stone-300">
-              Other states rate (₦)
-            </label>
+            <label className="block text-sm font-medium text-stone-300">Rate (₦)</label>
             <input
               type="number"
               value={otherRate}
@@ -150,14 +187,51 @@ export function ShippingForm({ settings }: ShippingFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-stone-300">
-              Other states timeframe
-            </label>
+            <label className="block text-sm font-medium text-stone-300">Timeframe</label>
             <input
               type="text"
               value={otherDays}
               onChange={(e) => setOtherDays(e.target.value)}
               placeholder="3–5 business days"
+              className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Legacy Lagos flat rate (fallback) */}
+      <section className="space-y-4">
+        <div>
+          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
+            Lagos Fallback Rate
+          </p>
+          <div className="mt-2 border-t border-stone-700" />
+          <p className="text-xs text-stone-500 mt-2">
+            Used only when no delivery area is selected at checkout.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-stone-300">Rate (₦)</label>
+            <input
+              type="number"
+              value={lagosRate}
+              onChange={(e) => setLagosRate(e.target.value)}
+              placeholder="3000"
+              min="0"
+              step="100"
+              className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-stone-300">Timeframe</label>
+            <input
+              type="text"
+              value={lagosDays}
+              onChange={(e) => setLagosDays(e.target.value)}
+              placeholder="1–2 business days"
               className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
             />
           </div>

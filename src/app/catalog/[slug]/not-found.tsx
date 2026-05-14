@@ -4,7 +4,7 @@ export default function ProductNotFound() {
   return (
     <main className="bg-cream min-h-screen flex items-center justify-center">
       <div className="text-center px-4">
-        <h1 className="font-display text-4xl text-cocoa mb-4">
+        <h1 className="font-display text-4xl text-forest mb-4">
           Product not found
         </h1>
         <p className="font-body text-charcoal/60 mb-6">

@@ -61,7 +61,7 @@ export function ReviewForm({ orderRef, products }: ReviewFormProps) {
     return (
       <div className="text-center py-10">
         <div className="text-4xl mb-4">🙏</div>
-        <h2 className="font-heading text-2xl font-semibold text-cocoa mb-2">
+        <h2 className="font-heading text-2xl font-semibold text-forest mb-2">
           Thank you!
         </h2>
         <p className="font-body text-charcoal/70">
@@ -92,7 +92,7 @@ export function ReviewForm({ orderRef, products }: ReviewFormProps) {
                   onChange={() => setSelectedProduct(p.productId)}
                   className="accent-gold w-4 h-4"
                 />
-                <span className="font-body text-sm text-charcoal group-hover:text-cocoa transition-colors">
+                <span className="font-body text-sm text-charcoal group-hover:text-forest transition-colors">
                   {p.productName}
                 </span>
               </label>
@@ -142,7 +142,7 @@ export function ReviewForm({ orderRef, products }: ReviewFormProps) {
       </div>
 
       {error && (
-        <p className="font-body text-sm text-terracotta">{error}</p>
+        <p className="font-body text-sm text-red-600">{error}</p>
       )}
 
       <button

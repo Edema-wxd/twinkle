@@ -55,7 +55,7 @@ export default async function ReviewPage({ searchParams }: PageProps) {
           <p className="font-body text-sm text-charcoal/50 uppercase tracking-widest mb-3">
             Twinkle Locs
           </p>
-          <h1 className="font-heading text-3xl font-bold text-cocoa mb-3">
+          <h1 className="font-heading text-3xl font-bold text-forest mb-3">
             Share Your Experience
           </h1>
           <p className="font-body text-charcoal/60">

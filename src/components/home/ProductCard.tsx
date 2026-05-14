@@ -8,7 +8,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   return (
-    <article className="bg-stone rounded-xl overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all duration-200 cursor-pointer">
+    <article className="bg-white rounded-xl overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all duration-200 cursor-pointer">
       <div className="relative aspect-square w-full">
         <Image
           src={product.image}
@@ -19,7 +19,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         />
       </div>
       <div className="p-4">
-        <h3 className="font-heading font-semibold text-cocoa mb-1 text-base">
+        <h3 className="font-heading font-semibold text-forest mb-1 text-base">
           {product.name}
         </h3>
         <p className="font-body text-sm text-charcoal/60 mb-3">
@@ -27,7 +27,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         </p>
         <button
           onClick={onAddToCart}
-          className="w-full bg-gold text-cocoa font-heading font-semibold py-2.5 rounded-lg hover:bg-terracotta hover:text-cream transition-colors text-sm"
+          className="w-full bg-gold text-forest font-heading font-semibold py-2.5 rounded-lg hover:bg-forest hover:text-cream transition-colors text-sm"
         >
           Add to cart
         </button>

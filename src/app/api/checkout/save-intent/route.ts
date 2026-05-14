@@ -9,6 +9,7 @@ interface SaveIntentBody {
   customerPhone: string
   deliveryAddress: string
   deliveryState: string
+  deliveryLGA?: string
   cartItems: unknown[]
   subtotal: number
 }
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest) {
     customerPhone,
     deliveryAddress,
     deliveryState,
+    deliveryLGA,
     cartItems,
     subtotal,
   } = body
@@ -45,7 +47,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
-  const shippingCost = await getShippingCostFromDb(deliveryState)
+  const shippingCost = await getShippingCostFromDb(deliveryState, deliveryLGA)
   const total = subtotal + shippingCost
 
   try {

@@ -27,8 +27,8 @@ const DEFAULT_SECTIONS: AboutSection[] = [
     updated_at: new Date().toISOString(),
   },
   {
-    id: 'why-loc-beads',
-    title: 'Why Loc Beads',
+    id: 'why-twinkles',
+    title: 'Why Twinkles',
     body: '',
     image_url: null,
     display_order: 2,

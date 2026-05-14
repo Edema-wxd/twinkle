@@ -7,7 +7,7 @@ interface ProductReviewsProps {
 export function ProductReviews({ reviews }: ProductReviewsProps) {
   return (
     <div>
-      <h2 className="font-display text-2xl text-cocoa mb-6">Customer Reviews</h2>
+      <h2 className="font-display text-2xl text-forest mb-6">Customer Reviews</h2>
 
       {reviews.length === 0 ? (
         <p className="font-body text-charcoal/50 italic">
@@ -34,7 +34,7 @@ export function ProductReviews({ reviews }: ProductReviewsProps) {
 
               {/* Author + date row */}
               <div>
-                <span className="font-heading font-semibold text-cocoa">
+                <span className="font-heading font-semibold text-forest">
                   {review.author_name}
                 </span>
                 <span className="font-body text-sm text-charcoal/50 ml-2">

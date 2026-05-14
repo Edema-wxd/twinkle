@@ -42,7 +42,7 @@ export function PaystackButton({ config, onSuccess, onClose, disabled }: Paystac
     <button
       onClick={handlePay}
       disabled={disabled}
-      className="w-full bg-gold text-cocoa font-heading font-semibold py-4 rounded-lg hover:bg-terracotta hover:text-cream transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="w-full bg-gold text-forest font-heading font-semibold py-4 rounded-lg hover:bg-forest hover:text-cream transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
       Pay ₦{(config.amountKobo / 100).toLocaleString()}
     </button>
