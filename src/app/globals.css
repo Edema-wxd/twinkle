@@ -19,7 +19,7 @@
      Brand colour palette (Twinkle Locs guide)
      ============================================= */
   --color-forest:   #1A3C34;   /* Primary — dominant background, headers */
-  --color-gold:     #B8922A;   /* Accent — CTAs, highlights, ruled lines */
+  --color-gold:     #927750;   /* Accent — CTAs, highlights, ruled lines */
   --color-cream:    #E8E0D0;   /* Text on dark backgrounds, light layouts */
 
   /* Utility shades */
@@ -32,6 +32,7 @@
      font-family string via a CSS variable on <html>
      ============================================= */
   --font-display: var(--font-halimun), serif;
+  --font-accent-display: var(--font-mistrully), serif;
   --font-heading: var(--font-montserrat), sans-serif;
   --font-body:    var(--font-montserrat), sans-serif;
 }

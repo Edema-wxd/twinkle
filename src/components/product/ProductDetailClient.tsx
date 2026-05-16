@@ -82,7 +82,13 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
         {/* Product name */}
         <h1 className="font-display text-3xl md:text-4xl text-forest mb-2">
-          {product.name}
+          {product.name.split('').map((char, idx) =>
+            /[0-9]/.test(char) ? (
+              <span key={idx} className="font-accent-display">{char}</span>
+            ) : (
+              <span key={idx} className="font-display">{char}</span>
+            )
+          )}
         </h1>
 
         {/* Price — updates on variant + tier selection */}

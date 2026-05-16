@@ -36,8 +36,15 @@ export function CatalogProductCard({ product }: CatalogProductCardProps) {
             {product.material}
           </span>
           <h3 className="font-heading font-semibold text-forest text-base mb-1">
-            {product.name}
+            {product.name.split('').map((char, idx) =>
+              /[0-9]/.test(char) ? (
+                <span key={idx} className="font-mistrully">{char}</span>
+              ) : (
+                <span key={idx} className="font-halimun">{char}</span>
+              )
+            )}
           </h3>
+    
           <p className="font-body text-sm text-charcoal/60 mb-3">
             From &#8358;{product.price_min.toLocaleString()}
           </p>

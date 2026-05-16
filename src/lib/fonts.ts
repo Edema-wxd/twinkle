@@ -13,6 +13,18 @@ export const halimun = localFont({
   display: 'swap',
 })
 
+export const mistrully = localFont({
+  src: [
+    {
+      path: '../../public/fonts/Mistrully.ttf',
+      weight: '400',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-mistrully',
+  display: 'swap',
+})
+
 export const montserrat = Montserrat({
   subsets: ['latin'],
   variable: '--font-montserrat',

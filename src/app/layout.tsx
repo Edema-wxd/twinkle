@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { halimun, montserrat } from "@/lib/fonts";
+import { halimun, mistrully, montserrat } from "@/lib/fonts";
 import { StorefrontChrome } from "@/components/layout/StorefrontChrome";
 import { Providers } from "@/components/providers";
 import "./globals.css";
@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${halimun.variable} ${montserrat.variable}`}
+      className={`${halimun.variable} ${mistrully.variable} ${montserrat.variable}`}
     >
       <body className="font-body bg-cream text-charcoal antialiased min-h-screen flex flex-col">
         <Providers>
