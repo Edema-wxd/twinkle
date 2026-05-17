@@ -103,10 +103,24 @@ export const orders = pgTable('orders', {
   customerIp: text('customer_ip'),
   deliveryAddress: text('delivery_address').notNull(),
   deliveryState: text('delivery_state').notNull(),
-  shippingCost: integer('shipping_cost').notNull(), // KOBO — integer, not numeric
+  shippingCost: integer('shipping_cost').notNull(),
   subtotal: integer('subtotal').notNull(),
   total: integer('total').notNull(),
   trackingNumber: text('tracking_number'),
+  promoCode: text('promo_code'),
+  discountAmount: integer('discount_amount').notNull().default(0),
+})
+
+export const promoCodes = pgTable('promo_codes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  code: text('code').notNull().unique(),
+  discountType: text('discount_type').notNull(), // 'free_shipping' | 'percentage' | 'fixed'
+  discountValue: integer('discount_value').notNull().default(0), // % or ₦ amount; ignored for free_shipping
+  maxUses: integer('max_uses'), // null = unlimited
+  currentUses: integer('current_uses').notNull().default(0),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
 export const orderItems = pgTable('order_items', {
@@ -224,6 +238,31 @@ export const orderStatusEmails = pgTable(
   },
   (t) => [unique('order_status_emails_order_id_event_type_unique').on(t.orderId, t.eventType)]
 )
+
+export const emailTemplates = pgTable('email_templates', {
+  key: text('key').primaryKey(), // 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'review_reminder'
+  name: text('name').notNull(),
+  subject: text('subject').notNull(), // use {ref} as placeholder for order reference
+  bannerColor: text('banner_color').notNull(),
+  bannerLabel: text('banner_label').notNull(),
+  body: text('body').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const emailLogs = pgTable('email_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  to: text('to').array().notNull(),
+  subject: text('subject').notNull(),
+  templateKey: text('template_key'), // null for custom/compose emails
+  orderId: uuid('order_id').references(() => orders.id, { onDelete: 'set null' }),
+  resendMessageId: text('resend_message_id'),
+  status: text('status').notNull().default('sent'), // 'sent' | 'failed'
+  error: text('error'),
+  htmlBody: text('html_body'),
+  textBody: text('text_body'),
+  sentAt: timestamp('sent_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
 
 // Drizzle relations for nested queries (orders → orderItems used by /orders/[reference])
 export const ordersRelations = relations(orders, ({ many }) => ({

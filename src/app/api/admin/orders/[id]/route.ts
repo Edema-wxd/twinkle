@@ -115,6 +115,7 @@ export async function PATCH(
         event: status as CustomerEmailEvent,
         trackingNumber: cleanTracking ?? null,
         items: emailItems,
+        orderId: id,
       }).catch(async (err) => {
         console.error('[order-status] Customer email failed:', {
           orderId: id,

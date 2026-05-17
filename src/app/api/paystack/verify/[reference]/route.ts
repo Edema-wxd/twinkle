@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
-import { orders, orderItems, abandonedOrders } from '@/db'
-import { eq, and, gte } from 'drizzle-orm'
+import { orders, orderItems, abandonedOrders, promoCodes } from '@/db'
+import { eq, and, gte, sql } from 'drizzle-orm'
 
 type PaystackVerifyResponse = {
   status: boolean
@@ -38,6 +38,9 @@ type PaystackMetadata = {
   }
   subtotal: number
   shipping_cost: number
+  promo_code?: string | null
+  discount_amount?: number
+  discount_type?: string | null
 }
 
 export async function GET(
@@ -103,7 +106,7 @@ export async function GET(
   }
 
   const metadata = payload.data.metadata as PaystackMetadata | undefined
-  const { customer_details, cart_items, subtotal, shipping_cost } = metadata ?? ({} as Partial<PaystackMetadata>)
+  const { customer_details, cart_items, subtotal, shipping_cost, promo_code, discount_amount, discount_type } = metadata ?? ({} as Partial<PaystackMetadata>)
 
   if (!customer_details || !Array.isArray(cart_items) || cart_items.length === 0) {
     return NextResponse.json(
@@ -136,6 +139,8 @@ export async function GET(
       .set({ status: 'paid', paystackPayload: payload.data as unknown })
       .where(eq(orders.id, orderId))
   } else {
+    const appliedDiscount = discount_amount ?? 0
+
     const [order] = await db
       .insert(orders)
       .values({
@@ -150,7 +155,9 @@ export async function GET(
         deliveryState: customer_details.state,
         shippingCost: shipping_cost,
         subtotal,
-        total: subtotal + shipping_cost,
+        total: subtotal - appliedDiscount + shipping_cost,
+        promoCode: promo_code ?? null,
+        discountAmount: appliedDiscount,
       })
       .returning({ id: orders.id })
 
@@ -174,6 +181,17 @@ export async function GET(
     }))
 
     await db.insert(orderItems).values(items)
+
+    if (promo_code && discount_type) {
+      try {
+        await db
+          .update(promoCodes)
+          .set({ currentUses: sql`${promoCodes.currentUses} + 1` })
+          .where(eq(promoCodes.code, promo_code.toUpperCase().trim()))
+      } catch (e) {
+        console.error('[verify] Failed to increment promo code usage:', e)
+      }
+    }
   }
 
   // Mark matching abandoned checkouts as recovered (same logic as webhook handler)

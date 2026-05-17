@@ -1,10 +1,10 @@
 import { Resend } from 'resend'
 import { db } from '@/db'
-import { orderStatusEmails } from '@/db'
+import { orderStatusEmails, emailTemplates, emailLogs } from '@/db'
 import { eq } from 'drizzle-orm'
 import { BUSINESS } from '@/lib/config/business'
 
-export type CustomerEmailEvent = 'confirmed' | 'processing' | 'shipped' | 'delivered'
+export type CustomerEmailEvent = 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'review_reminder'
 
 export interface OrderEmailItem {
   productName: string
@@ -24,12 +24,17 @@ interface CustomerEmailInput {
   event: CustomerEmailEvent
   trackingNumber?: string | null
   items?: OrderEmailItem[]
+  orderId?: string | null
 }
 
-const EVENT_CONFIG: Record<
-  CustomerEmailEvent,
-  { subject: (ref: string) => string; bannerColor: string; bannerLabel: string; body: string }
-> = {
+type TemplateConfig = {
+  subject: (ref: string) => string
+  bannerColor: string
+  bannerLabel: string
+  body: string
+}
+
+const HARDCODED_TEMPLATES: Record<CustomerEmailEvent, TemplateConfig> = {
   confirmed: {
     subject: (ref) => `Order confirmed — #${ref} | Twinkle Locs`,
     bannerColor: '#b45309',
@@ -54,6 +59,34 @@ const EVENT_CONFIG: Record<
     bannerLabel: '✓ Order Delivered',
     body: "Your order has arrived! We hope you love your new loc beads. If you have a moment, a review would mean the world to our small business — thank you for choosing Twinkle Locs.",
   },
+  review_reminder: {
+    subject: (ref) => `How was your Twinkle Locs experience? — #${ref}`,
+    bannerColor: '#d4a843',
+    bannerLabel: "⭐ We'd love your feedback",
+    body: "We hope you're enjoying your loc beads! Reviews from customers like you help other loc lovers discover us and keep our small business growing. It only takes a minute — we'd really appreciate it.",
+  },
+}
+
+async function resolveTemplate(event: CustomerEmailEvent): Promise<TemplateConfig> {
+  try {
+    const [row] = await db
+      .select()
+      .from(emailTemplates)
+      .where(eq(emailTemplates.key, event))
+      .limit(1)
+
+    if (row) {
+      return {
+        subject: (ref) => row.subject.replace('{ref}', ref),
+        bannerColor: row.bannerColor,
+        bannerLabel: row.bannerLabel,
+        body: row.body,
+      }
+    }
+  } catch {
+    // DB unavailable — fall through to hardcoded defaults
+  }
+  return HARDCODED_TEMPLATES[event]
 }
 
 export async function sendCustomerEmail(input: CustomerEmailInput): Promise<void> {
@@ -68,7 +101,7 @@ export async function sendCustomerEmail(input: CustomerEmailInput): Promise<void
   const ref = input.orderReference.slice(-10).toUpperCase()
   const total = '₦' + input.totalNaira.toLocaleString('en-NG')
   const firstName = input.customerName.split(' ')[0] || input.customerName
-  const config = EVENT_CONFIG[input.event]
+  const config = await resolveTemplate(input.event)
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com'
   const reviewUrl = `${siteUrl}/review?ref=${encodeURIComponent(input.orderReference)}`
@@ -96,6 +129,8 @@ export async function sendCustomerEmail(input: CustomerEmailInput): Promise<void
     return `  ${label} × ${item.quantity} — ₦${item.lineTotal.toLocaleString('en-NG')}`
   }).join('\n')
 
+  const subject = config.subject(ref)
+
   const text = [
     `Hi ${firstName},`,
     '',
@@ -105,23 +140,50 @@ export async function sendCustomerEmail(input: CustomerEmailInput): Promise<void
     `Order: #${ref}`,
     `Total: ${total}`,
     ...(input.trackingNumber ? [`Tracking: ${input.trackingNumber}`] : []),
-    ...(input.event === 'delivered' ? ['', `Share your experience: ${reviewUrl}`] : []),
+    ...(input.event === 'delivered' || input.event === 'review_reminder' ? ['', `Share your experience: ${reviewUrl}`] : []),
     '',
     `Questions? Email us at ${BUSINESS.support.email} or reach us on WhatsApp: ${BUSINESS.whatsapp.url()}`,
     '',
     '— Twinkle Locs',
   ].join('\n')
 
-  const result = await resend.emails.send({
-    from,
-    to: input.to,
-    subject: config.subject(ref),
-    html,
-    text,
-  })
+  let resendMessageId: string | null = null
+  let logStatus: 'sent' | 'failed' = 'sent'
+  let logError: string | null = null
 
-  if (result.error) {
-    throw new Error(result.error.message ?? 'Resend error')
+  try {
+    const result = await resend.emails.send({
+      from,
+      to: input.to,
+      subject,
+      html,
+      text,
+    })
+
+    if (result.error) {
+      throw new Error(result.error.message ?? 'Resend error')
+    }
+    resendMessageId = result.data?.id ?? null
+  } catch (err) {
+    logStatus = 'failed'
+    logError = err instanceof Error ? err.message : 'Unknown error'
+  }
+
+  db.insert(emailLogs).values({
+    to: [input.to],
+    subject,
+    templateKey: input.event,
+    orderId: input.orderId ?? null,
+    resendMessageId,
+    status: logStatus,
+    error: logError,
+    htmlBody: html,
+    textBody: text,
+    sentAt: logStatus === 'sent' ? new Date() : null,
+  }).catch((e) => console.error('[emailLogs] insert failed:', e))
+
+  if (logStatus === 'failed') {
+    throw new Error(logError ?? 'Email send failed')
   }
 }
 
@@ -194,7 +256,7 @@ function buildHtml(params: {
       </tr>`
     : ''
 
-  const reviewSection = params.event === 'delivered'
+  const reviewSection = params.event === 'delivered' || params.event === 'review_reminder'
     ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#fafaf9;border:1px solid #e7e5e4;border-radius:6px;margin-top:24px;">
         <tr>
           <td style="padding:20px 24px;text-align:center;">
@@ -260,7 +322,7 @@ function buildHtml(params: {
 
               ${reviewSection}
 
-              <p style="margin:${params.event === 'delivered' ? '24px' : '0'} 0 0 0;font-size:13px;color:#78716c;line-height:1.7;">
+              <p style="margin:${params.event === 'delivered' || params.event === 'review_reminder' ? '24px' : '0'} 0 0 0;font-size:13px;color:#78716c;line-height:1.7;">
                 Have a question? Reply to this email or reach us on
                 <a href="${BUSINESS.whatsapp.url()}" style="color:#d4a843;text-decoration:none;font-weight:500;">WhatsApp</a>.
               </p>

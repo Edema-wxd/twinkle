@@ -2,10 +2,11 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
-import { orders } from '@/db'
-import { eq } from 'drizzle-orm'
+import { orders, orderStatusEmails } from '@/db'
+import { eq, and } from 'drizzle-orm'
 import { Order, OrderItem, Json } from '@/types/db'
 import { OrderStatusSelect } from '../../../../_components/OrderStatusSelect'
+import { ReviewReminderButton } from '../../../../_components/ReviewReminderButton'
 
 type FullOrder = Order & { order_items: OrderItem[] }
 
@@ -47,14 +48,23 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
 
   const { id } = await params
 
-  const result = await db.query.orders.findFirst({
-    where: eq(orders.id, id),
-    with: { orderItems: true },
-  })
+  const [result, reminderRow] = await Promise.all([
+    db.query.orders.findFirst({
+      where: eq(orders.id, id),
+      with: { orderItems: true },
+    }),
+    db
+      .select({ id: orderStatusEmails.id })
+      .from(orderStatusEmails)
+      .where(and(eq(orderStatusEmails.orderId, id), eq(orderStatusEmails.eventType, 'review_reminder')))
+      .limit(1),
+  ])
 
   if (!result) {
     notFound()
   }
+
+  const reviewReminderSent = reminderRow.length > 0
 
   // Map camelCase Drizzle row to snake_case FullOrder shape
   const order: FullOrder = {
@@ -114,7 +124,7 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
         </div>
 
         {/* Status badge + inline update */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <span
             className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${statusStyle(order.status)}`}
           >
@@ -125,6 +135,9 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
             currentStatus={order.status}
             currentTrackingNumber={order.tracking_number}
           />
+          {order.status === 'delivered' && (
+            <ReviewReminderButton orderId={order.id} alreadySent={reviewReminderSent} />
+          )}
         </div>
       </div>
 

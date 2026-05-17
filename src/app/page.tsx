@@ -35,7 +35,10 @@ export default async function HomePage() {
       .from(testimonialsTable)
       .where(eq(testimonialsTable.isActive, true))
       .orderBy(asc(testimonialsTable.displayOrder)),
-  ])
+  ]).catch((err) => {
+    console.error('[HomePage] DB query failed:', err)
+    return [[], []] as const
+  })
 
   const featuredProducts: Product[] = productRows.map((row) => ({
     id: row.id,

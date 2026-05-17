@@ -296,6 +296,7 @@ async function handleChargeSuccess(data: PaystackChargeData) {
         totalNaira: orderForEmail.totalNaira,
         event: 'confirmed',
         items: emailItems,
+        orderId,
       })
     } catch (err) {
       console.error('[webhook] Customer confirmation email failed:', {

@@ -18,10 +18,65 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
   const [shippingCost, setShippingCost] = useState<number | null>(null);
   const [shippingError, setShippingError] = useState<string | null>(null);
 
+  const [promoInput, setPromoInput] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [appliedPromo, setAppliedPromo] = useState<{
+    code: string;
+    discountType: 'free_shipping' | 'percentage' | 'fixed';
+    discountAmount: number;
+    shippingSaving: number;
+    message: string;
+  } | null>(null);
+
   const zone =
     customerDetails.state === 'Lagos' && customerDetails.lga
       ? getZoneById(getZoneIdForArea(customerDetails.lga) ?? 0)
       : undefined;
+
+  async function applyPromo() {
+    if (!promoInput.trim() || shippingCost === null) return;
+    setPromoLoading(true);
+    setPromoError(null);
+    try {
+      const res = await fetch('/api/checkout/validate-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoInput.trim(), subtotal, shippingCost }),
+      });
+      const data = await res.json() as {
+        valid: boolean;
+        error?: string;
+        discountType?: 'free_shipping' | 'percentage' | 'fixed';
+        discountAmount?: number;
+        shippingSaving?: number;
+        message?: string;
+      };
+      if (!data.valid) {
+        setPromoError(data.error ?? 'Invalid promo code');
+        setAppliedPromo(null);
+      } else {
+        setAppliedPromo({
+          code: promoInput.trim().toUpperCase(),
+          discountType: data.discountType!,
+          discountAmount: data.discountAmount!,
+          shippingSaving: data.shippingSaving!,
+          message: data.message!,
+        });
+        setPromoError(null);
+      }
+    } catch {
+      setPromoError('Could not validate promo code. Please try again.');
+    } finally {
+      setPromoLoading(false);
+    }
+  }
+
+  function removePromo() {
+    setAppliedPromo(null);
+    setPromoInput('');
+    setPromoError(null);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -51,7 +106,9 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
     };
   }, [customerDetails.state, customerDetails.lga]);
 
-  const total = subtotal + (shippingCost ?? 0);
+  const effectiveShipping = appliedPromo?.discountType === 'free_shipping' ? 0 : (shippingCost ?? 0);
+  const subtotalDiscount = appliedPromo?.discountType !== 'free_shipping' ? (appliedPromo?.discountAmount ?? 0) : 0;
+  const total = subtotal - subtotalDiscount + effectiveShipping;
   const totalKobo = total * 100;
 
   const [reference] = useState(
@@ -78,7 +135,10 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
       lga: customerDetails.lga,
     },
     subtotal,
-    shipping_cost: shippingCost ?? 0,
+    shipping_cost: effectiveShipping,
+    promo_code: appliedPromo?.code ?? null,
+    discount_amount: subtotalDiscount,
+    discount_type: appliedPromo?.discountType ?? null,
     custom_fields: [
       {
         display_name: 'Customer Name',
@@ -127,6 +187,42 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
         })}
       </div>
 
+      {/* Promo code */}
+      <div className="mb-4">
+        {appliedPromo ? (
+          <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+            <span className="font-body text-sm text-green-700">{appliedPromo.message}</span>
+            <button
+              onClick={removePromo}
+              className="font-body text-xs text-green-600 underline ml-3 shrink-0"
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={promoInput}
+              onChange={(e) => { setPromoInput(e.target.value); setPromoError(null); }}
+              onKeyDown={(e) => e.key === 'Enter' && applyPromo()}
+              placeholder="Promo code"
+              className="flex-1 border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-forest uppercase"
+            />
+            <button
+              onClick={applyPromo}
+              disabled={promoLoading || !promoInput.trim() || shippingCost === null}
+              className="px-4 py-2 bg-forest text-cream font-heading text-sm font-semibold rounded-lg disabled:opacity-40 hover:bg-forest/90 transition-colors"
+            >
+              {promoLoading ? '…' : 'Apply'}
+            </button>
+          </div>
+        )}
+        {promoError && (
+          <p className="font-body text-xs text-red-500 mt-1.5">{promoError}</p>
+        )}
+      </div>
+
       {/* Price breakdown */}
       <div className="bg-stone-50 rounded-xl p-4 mb-4">
         <div className="flex justify-between items-center mb-2">
@@ -138,9 +234,19 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
             Shipping ({shippingLabel})
           </span>
           <span className="font-body text-sm text-charcoal">
-            {shippingCost === null ? 'Loading…' : `₦${shippingCost.toLocaleString()}`}
+            {shippingCost === null
+              ? 'Loading…'
+              : appliedPromo?.discountType === 'free_shipping'
+                ? <><s className="text-charcoal/40">₦{shippingCost.toLocaleString()}</s> <span className="text-green-600 font-semibold">FREE</span></>
+                : `₦${shippingCost.toLocaleString()}`}
           </span>
         </div>
+        {subtotalDiscount > 0 && (
+          <div className="flex justify-between items-center mb-2">
+            <span className="font-body text-sm text-green-600">Discount ({appliedPromo?.code})</span>
+            <span className="font-body text-sm text-green-600">−₦{subtotalDiscount.toLocaleString()}</span>
+          </div>
+        )}
         {zone && (
           <p className="font-body text-xs text-charcoal/50 mb-2">
             Est. delivery: {zone.deliveryTime}
@@ -197,7 +303,7 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
             }}
             onSuccess={onPaymentSuccess}
             onClose={() => setPaymentError('Payment was not completed — please try again.')}
-            disabled={shippingCost === null}
+            disabled={shippingCost === null || promoLoading}
           />
         </div>
       </div>
