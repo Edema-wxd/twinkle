@@ -2,16 +2,16 @@
 
 import { useState, useEffect, useTransition } from 'react'
 
-type EmailLog = {
-  id: string
+type MergedEmail = {
+  resendId: string | null
+  logId: string | null
   to: string[]
+  from: string | null
   subject: string
+  lastEvent: string
   templateKey: string | null
   orderId: string | null
-  resendMessageId: string | null
-  status: string
-  error: string | null
-  sentAt: string | null
+  canResend: boolean
   createdAt: string
 }
 
@@ -42,11 +42,40 @@ function formatDate(iso: string) {
   })
 }
 
+// ── Status badge helpers ──────────────────────────────────────────────────────
+
+const EVENT_COLORS: Record<string, string> = {
+  delivered: 'bg-green-900/60 text-green-400',
+  opened:    'bg-green-900/40 text-green-300',
+  clicked:   'bg-green-900/40 text-green-300',
+  sent:      'bg-blue-900/50 text-blue-300',
+  queued:    'bg-stone-700 text-stone-300',
+  scheduled: 'bg-stone-700 text-stone-300',
+  bounced:   'bg-red-900/60 text-red-400',
+  failed:    'bg-red-900/60 text-red-400',
+  complained:'bg-orange-900/60 text-orange-400',
+  canceled:  'bg-stone-700 text-stone-500',
+  delivery_delayed: 'bg-yellow-900/50 text-yellow-400',
+}
+
+function EventBadge({ event }: { event: string }) {
+  const cls = EVENT_COLORS[event] ?? 'bg-stone-700 text-stone-400'
+  const label = event.replace('_', ' ')
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${cls}`}>
+      {label}
+    </span>
+  )
+}
+
+const RESEND_FAIL_EVENTS = new Set(['bounced', 'failed', 'complained', 'delivery_delayed'])
+
 // ── Log Tab ───────────────────────────────────────────────────────────────────
 
-function LogTab({ logs: initial }: { logs: EmailLog[] }) {
-  const [logs, setLogs] = useState<EmailLog[]>(initial)
-  const [filter, setFilter] = useState<'all' | 'sent' | 'failed'>('all')
+function LogTab({ emails: initial, hasMore: initialHasMore }: { emails: MergedEmail[]; hasMore: boolean }) {
+  const [emails, setEmails] = useState<MergedEmail[]>(initial)
+  const [hasMore, setHasMore] = useState(initialHasMore)
+  const [filter, setFilter] = useState<'all' | 'delivered' | 'failed'>('all')
   const [isPending, startTransition] = useTransition()
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
@@ -55,32 +84,37 @@ function LogTab({ logs: initial }: { logs: EmailLog[] }) {
     setTimeout(() => setToast(null), 3500)
   }
 
-  async function refreshLogs() {
+  async function refreshEmails() {
     try {
       const res = await fetch('/api/admin/emails')
-      const data = await res.json() as { logs: EmailLog[] }
-      setLogs(data.logs ?? [])
+      const data = await res.json() as { emails: MergedEmail[]; hasMore: boolean }
+      setEmails(data.emails ?? [])
+      setHasMore(data.hasMore ?? false)
     } catch {
-      showToast('error', 'Failed to refresh email log')
+      showToast('error', 'Failed to refresh email list')
     }
   }
 
-  function handleResend(id: string) {
+  function handleResend(logId: string) {
     startTransition(async () => {
       try {
-        const res = await fetch(`/api/admin/emails/${id}/resend`, { method: 'POST' })
+        const res = await fetch(`/api/admin/emails/${logId}/resend`, { method: 'POST' })
         const data = await res.json() as { sent?: boolean; error?: string }
         if (!res.ok) throw new Error(data.error ?? 'Resend failed')
         showToast('success', 'Email resent successfully')
-        await refreshLogs()
+        await refreshEmails()
       } catch (err) {
         showToast('error', err instanceof Error ? err.message : 'Resend failed')
       }
     })
   }
 
-  const filtered = filter === 'all' ? logs : logs.filter((l) => l.status === filter)
-  const failedCount = logs.filter((l) => l.status === 'failed').length
+  const failedCount = emails.filter((e) => RESEND_FAIL_EVENTS.has(e.lastEvent)).length
+
+  const filtered =
+    filter === 'all' ? emails :
+    filter === 'delivered' ? emails.filter((e) => e.lastEvent === 'delivered') :
+    emails.filter((e) => RESEND_FAIL_EVENTS.has(e.lastEvent))
 
   return (
     <div className="space-y-4">
@@ -93,7 +127,7 @@ function LogTab({ logs: initial }: { logs: EmailLog[] }) {
       )}
 
       <div className="flex items-center gap-3 flex-wrap">
-        {(['all', 'sent', 'failed'] as const).map((f) => (
+        {(['all', 'delivered', 'failed'] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -103,11 +137,15 @@ function LogTab({ logs: initial }: { logs: EmailLog[] }) {
                 : 'bg-stone-800 text-stone-400 hover:text-white'
             }`}
           >
-            {f === 'all' ? `All (${logs.length})` : f === 'sent' ? `Sent (${logs.length - failedCount})` : `Failed (${failedCount})`}
+            {f === 'all'
+              ? `All (${emails.length}${hasMore ? '+' : ''})`
+              : f === 'delivered'
+              ? `Delivered (${emails.filter((e) => e.lastEvent === 'delivered').length})`
+              : `Failed (${failedCount})`}
           </button>
         ))}
         <button
-          onClick={() => startTransition(refreshLogs)}
+          onClick={() => startTransition(refreshEmails)}
           disabled={isPending}
           className="ml-auto px-3 py-1.5 rounded-lg text-xs font-heading text-stone-400 hover:text-white bg-stone-800 transition-colors disabled:opacity-40"
         >
@@ -131,57 +169,53 @@ function LogTab({ logs: initial }: { logs: EmailLog[] }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((log) => (
-                <tr key={log.id} className="border-b border-stone-800 hover:bg-stone-900/50">
-                  <td className="px-4 py-3 text-stone-300 whitespace-nowrap text-xs">
-                    {formatDate(log.createdAt)}
-                  </td>
-                  <td className="px-4 py-3 text-stone-300 max-w-[180px]">
-                    <div className="truncate" title={log.to.join(', ')}>
-                      {log.to.length === 1 ? log.to[0] : `${log.to[0]} +${log.to.length - 1}`}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-white max-w-[220px]">
-                    <div className="truncate" title={log.subject}>{log.subject}</div>
-                    {log.error && (
-                      <div className="text-xs text-red-400 truncate mt-0.5" title={log.error}>{log.error}</div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-stone-300 whitespace-nowrap">
-                    {log.templateKey
-                      ? (TEMPLATE_NAMES[log.templateKey] ?? log.templateKey)
-                      : <span className="text-stone-500 italic">Custom</span>}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
-                      log.status === 'sent'
-                        ? 'bg-green-900/60 text-green-400'
-                        : 'bg-red-900/60 text-red-400'
-                    }`}>
-                      {log.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {log.status === 'failed' && (
-                      <button
-                        onClick={() => handleResend(log.id)}
-                        disabled={isPending}
-                        className="text-xs text-gold hover:text-gold/80 underline transition-colors disabled:opacity-40"
-                      >
-                        Resend
-                      </button>
-                    )}
-                    {log.resendMessageId && (
-                      <span className="text-xs text-stone-600 font-mono ml-2 hidden lg:inline" title={log.resendMessageId}>
-                        {log.resendMessageId.slice(0, 8)}…
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {filtered.map((email, i) => {
+                const rowKey = email.resendId ?? email.logId ?? String(i)
+                const isResendable = email.canResend && RESEND_FAIL_EVENTS.has(email.lastEvent) && email.logId
+                return (
+                  <tr key={rowKey} className="border-b border-stone-800 hover:bg-stone-900/50">
+                    <td className="px-4 py-3 text-stone-300 whitespace-nowrap text-xs">
+                      {formatDate(email.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 text-stone-300 max-w-[180px]">
+                      <div className="truncate" title={email.to.join(', ')}>
+                        {email.to.length === 1 ? email.to[0] : `${email.to[0]} +${email.to.length - 1}`}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-white max-w-[220px]">
+                      <div className="truncate" title={email.subject}>{email.subject}</div>
+                    </td>
+                    <td className="px-4 py-3 text-stone-300 whitespace-nowrap">
+                      {email.templateKey
+                        ? (TEMPLATE_NAMES[email.templateKey] ?? email.templateKey)
+                        : <span className="text-stone-500 italic">Custom</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <EventBadge event={email.lastEvent} />
+                    </td>
+                    <td className="px-4 py-3">
+                      {isResendable && (
+                        <button
+                          onClick={() => handleResend(email.logId!)}
+                          disabled={isPending}
+                          className="text-xs text-gold hover:text-gold/80 underline transition-colors disabled:opacity-40"
+                        >
+                          Resend
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
+      )}
+
+      {hasMore && (
+        <p className="text-center text-xs text-stone-500 font-body">
+          Showing latest 100 emails from Resend. Older emails are not listed.
+        </p>
       )}
     </div>
   )
@@ -656,15 +690,17 @@ function TemplatesTab({ templates: initial }: { templates: EmailTemplate[] }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function EmailsManager({
-  initialLogs,
+  initialEmails,
+  initialHasMore,
   initialTemplates,
 }: {
-  initialLogs: EmailLog[]
+  initialEmails: MergedEmail[]
+  initialHasMore: boolean
   initialTemplates: EmailTemplate[]
 }) {
   const [tab, setTab] = useState<Tab>('log')
 
-  const failedCount = initialLogs.filter((l) => l.status === 'failed').length
+  const failedCount = initialEmails.filter((e) => RESEND_FAIL_EVENTS.has(e.lastEvent)).length
 
   const tabs: { id: Tab; label: string; badge?: number }[] = [
     { id: 'log', label: 'Email Log', badge: failedCount > 0 ? failedCount : undefined },
@@ -698,7 +734,7 @@ export function EmailsManager({
 
       {/* Tab content */}
       <div>
-        {tab === 'log' && <LogTab logs={initialLogs} />}
+        {tab === 'log' && <LogTab emails={initialEmails} hasMore={initialHasMore} />}
         {tab === 'compose' && <ComposeTab />}
         {tab === 'templates' && <TemplatesTab templates={initialTemplates} />}
       </div>

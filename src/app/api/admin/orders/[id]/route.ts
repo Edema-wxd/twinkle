@@ -5,8 +5,6 @@ import { orders, orderItems } from '@/db'
 import { eq } from 'drizzle-orm'
 import {
   sendCustomerEmail,
-  tryClaimStatusEmail,
-  releaseStatusEmailClaim,
   type CustomerEmailEvent,
   type OrderEmailItem,
 } from '@/lib/notifications/customerEmail'
@@ -104,27 +102,25 @@ export async function PATCH(
     return NextResponse.json({ error: 'Failed to update order status' }, { status: 500 })
   }
 
+  // Always send the customer email on every explicit admin status change.
+  // Unlike webhook-triggered sends, admin UI changes are intentional — no deduplication.
   if (NOTIFIABLE_STATUSES.includes(status)) {
-    const claimId = await tryClaimStatusEmail(id, status as CustomerEmailEvent).catch(() => null)
-    if (claimId) {
-      sendCustomerEmail({
-        to: existing.customerEmail,
-        customerName: existing.customerName,
-        orderReference: existing.paystackReference,
-        totalNaira: existing.total,
-        event: status as CustomerEmailEvent,
-        trackingNumber: cleanTracking ?? null,
-        items: emailItems,
+    sendCustomerEmail({
+      to: existing.customerEmail,
+      customerName: existing.customerName,
+      orderReference: existing.paystackReference,
+      totalNaira: existing.total,
+      event: status as CustomerEmailEvent,
+      trackingNumber: cleanTracking ?? null,
+      items: emailItems,
+      orderId: id,
+    }).catch((err) => {
+      console.error('[order-status] Customer email failed:', {
         orderId: id,
-      }).catch(async (err) => {
-        console.error('[order-status] Customer email failed:', {
-          orderId: id,
-          status,
-          error: String(err).slice(0, 500),
-        })
-        await releaseStatusEmailClaim(claimId).catch(() => null)
+        status,
+        error: String(err).slice(0, 500),
       })
-    }
+    })
   }
 
   return NextResponse.json({ id, status })
