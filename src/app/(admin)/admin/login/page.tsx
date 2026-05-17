@@ -1,13 +1,21 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { authClient } from '@/lib/auth/client'
 
-export default function AdminLoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isPending, setIsPending] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  // Redirect destination — set by middleware when protecting a route
+  const from = searchParams.get('from')
+  const destination =
+    from && from.startsWith('/admin') && !from.startsWith('/admin/login')
+      ? from
+      : '/admin'
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -21,7 +29,6 @@ export default function AdminLoginPage() {
     const { error } = await authClient.signIn.email({
       email,
       password,
-      callbackURL: '/admin',
     })
 
     if (error) {
@@ -30,7 +37,7 @@ export default function AdminLoginPage() {
       return
     }
 
-    router.push('/admin')
+    router.push(destination)
     router.refresh()
   }
 
@@ -95,5 +102,13 @@ export default function AdminLoginPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }
