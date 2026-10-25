@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { db } from '@/db'
 import { orders, orderItems, abandonedOrders } from '@/db'
 import { eq, and, gte } from 'drizzle-orm'
@@ -12,6 +12,7 @@ import {
 } from '@/lib/notifications/notificationState'
 import { sendAdminOrderEmail } from '@/lib/notifications/adminOrderEmail'
 import { sendCustomerEmail, tryClaimStatusEmail, releaseStatusEmailClaim, type OrderEmailItem } from '@/lib/notifications/customerEmail'
+import { forwardSubscriptionEvent } from '@/lib/paystack/forwardSubscriptionEvent'
 
 // ── Paystack webhook payload types ──────────────────────────────────────────
 
@@ -85,7 +86,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  // 4. Handle charge.success — await to ensure DB write completes before
+  // 4. Hand subscription events to QRiate+, which bills through this same
+  //    Paystack account. Paystack allows one webhook URL per account and it is
+  //    this one, so those events arrive here and would otherwise be lost.
+  //
+  //    In `after()` deliberately: it runs once we have already answered
+  //    Paystack, so a QRiate+ outage can never delay or fail a Twinkle Locs
+  //    order. It forwards nothing for a store charge, and never throws.
+  after(() => forwardSubscriptionEvent(body, signature, event))
+
+  // 5. Handle charge.success — await to ensure DB write completes before
   //    returning 200 (Paystack allows up to 10 seconds; two inserts are fast)
   try {
     if (event.event === 'charge.success') {
