@@ -54,7 +54,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         <div aria-hidden="true" className="absolute inset-0 bg-pattern-01 opacity-[0.06]" />
         <div className="relative mx-auto max-w-6xl px-4 pt-14 pb-16 md:pt-20 md:pb-24">
           <p className="font-heading text-xs font-semibold uppercase tracking-[0.24em] text-gold-light">The Twinkle Journal</p>
-          <h1 className="mt-4 max-w-3xl font-display text-5xl leading-[1.05] text-cream md:text-7xl">
+          <h1 className="mt-8 max-w-3xl font-display text-5xl leading-[1.2] text-cream md:mt-10 md:text-7xl">
             {activeTag ?? 'Stories, styling & loc care'}
           </h1>
           <p className="mt-5 max-w-xl font-body text-base leading-relaxed text-cream/80 md:text-lg">

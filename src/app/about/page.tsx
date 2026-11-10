@@ -76,13 +76,14 @@ export default async function AboutPage() {
       : FALLBACK_SECTIONS
 
   return (
-    <main>
+    <div>
       <div className="max-w-3xl mx-auto px-4 py-12">
-        <h1 className="font-heading text-4xl lg:text-5xl font-bold text-forest">
+        <p className="font-heading text-xs font-semibold uppercase tracking-[0.2em] text-gold-deep">Our story</p>
+        <h1 className="mt-6 font-display text-5xl lg:text-6xl leading-[1.2] text-forest">
           About Twinkle Locs
         </h1>
 
-        <AboutStickyNav />
+        <AboutStickyNav sections={sections.map(({ id, title }) => ({ id, title }))} />
 
         <div className="mt-12 space-y-24">
           {sections.map((section) => (
@@ -90,6 +91,6 @@ export default async function AboutPage() {
           ))}
         </div>
       </div>
-    </main>
+    </div>
   )
 }

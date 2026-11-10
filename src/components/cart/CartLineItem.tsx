@@ -58,11 +58,11 @@ export function CartLineItem({ item, lineKey: key, onUpdateQty, onRemove }: Cart
             type="button"
             onClick={() => onUpdateQty(key, item.quantity - 1)}
             aria-label="Decrease quantity"
-            className="w-6 h-6 rounded border border-charcoal/20 text-charcoal text-sm font-body flex items-center justify-center hover:border-gold transition-colors"
+            className="w-10 h-10 rounded-lg border border-charcoal/20 text-charcoal text-base font-body flex items-center justify-center hover:border-gold transition-colors"
           >
             −
           </button>
-          <span className="w-6 text-center font-body text-sm text-charcoal">
+          <span aria-live="polite" className="w-7 text-center font-body text-sm text-charcoal tabular-nums">
             {item.quantity}
           </span>
           <button
@@ -70,7 +70,7 @@ export function CartLineItem({ item, lineKey: key, onUpdateQty, onRemove }: Cart
             onClick={() => onUpdateQty(key, item.quantity + 1)}
             aria-label="Increase quantity"
             disabled={item.quantity >= 10}
-            className={`w-6 h-6 rounded border border-charcoal/20 text-charcoal text-sm font-body flex items-center justify-center hover:border-gold transition-colors ${
+            className={`w-10 h-10 rounded-lg border border-charcoal/20 text-charcoal text-base font-body flex items-center justify-center hover:border-gold transition-colors ${
               item.quantity >= 10 ? 'opacity-40 cursor-not-allowed' : ''
             }`}
           >
@@ -81,7 +81,7 @@ export function CartLineItem({ item, lineKey: key, onUpdateQty, onRemove }: Cart
           type="button"
           onClick={() => onRemove(key)}
           aria-label={`Remove ${item.productName} from cart`}
-          className="text-xs text-charcoal/40 hover:text-forest transition-colors font-body"
+          className="min-h-9 px-1 text-xs text-charcoal/70 underline underline-offset-2 hover:text-forest transition-colors font-body"
         >
           Remove
         </button>

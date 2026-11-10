@@ -116,9 +116,10 @@ export function ReviewForm({ orderRef, products }: ReviewFormProps) {
               onClick={() => setRating(star)}
               onMouseEnter={() => setHoverRating(star)}
               aria-label={`${star} star${star !== 1 ? 's' : ''}`}
-              className="text-3xl leading-none transition-colors focus:outline-none"
+              aria-pressed={rating === star}
+              className="w-11 h-11 flex items-center justify-center rounded-md text-3xl leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
             >
-              <span className={star <= activeRating ? 'text-gold' : 'text-charcoal/20'}>
+              <span className={star <= activeRating ? 'text-gold' : 'text-charcoal/30'}>
                 {star <= activeRating ? '★' : '☆'}
               </span>
             </button>
@@ -148,7 +149,7 @@ export function ReviewForm({ orderRef, products }: ReviewFormProps) {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full bg-gold text-white font-heading font-semibold py-3 rounded-xl hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full min-h-12 bg-forest text-cream font-heading font-semibold py-3 rounded-xl hover:bg-forest/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isPending ? 'Submitting…' : 'Submit Review'}
       </button>

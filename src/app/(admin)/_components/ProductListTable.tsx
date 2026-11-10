@@ -114,7 +114,7 @@ export function ProductListTable({ products }: ProductListTableProps) {
         {/* New product button (also available at page level) */}
         <Link
           href="/admin/products/new"
-          className="hidden md:inline-flex ml-auto items-center px-4 py-2 bg-gold hover:bg-yellow-600 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+          className="hidden md:inline-flex ml-auto items-center px-4 py-2 bg-gold hover:bg-gold-deep text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
         >
           + New product
         </Link>

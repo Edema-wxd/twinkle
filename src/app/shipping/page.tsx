@@ -62,7 +62,7 @@ export default async function ShippingPage() {
   const waUrl = BUSINESS.whatsapp.url(raw.shipping_intl_message)
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-12">
+    <div className="max-w-3xl mx-auto px-4 py-12">
       {/* Heading */}
       <h1 className="font-heading text-4xl font-bold text-charcoal mb-3">
         Shipping Information
@@ -154,6 +154,6 @@ export default async function ShippingPage() {
           Request a Shipping Quote
         </a>
       </section>
-    </main>
+    </div>
   )
 }

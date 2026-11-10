@@ -14,6 +14,8 @@ export interface CartItem {
 export interface CartState {
   items: CartItem[];
   isDrawerOpen: boolean;
+  /** False until localStorage has been read. Gate redirects/empty states on it. */
+  hydrated: boolean;
 }
 
 export type CartAction =

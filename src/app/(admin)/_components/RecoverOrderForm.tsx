@@ -50,7 +50,7 @@ export function RecoverOrderForm() {
         <button
           type="submit"
           disabled={isPending || !reference.trim()}
-          className="px-4 py-2 bg-gold hover:bg-yellow-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+          className="px-4 py-2 bg-gold hover:bg-gold-deep disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
         >
           {isPending ? 'Recovering…' : 'Recover'}
         </button>

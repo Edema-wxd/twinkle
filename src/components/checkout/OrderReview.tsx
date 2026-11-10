@@ -78,6 +78,8 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
     setPromoError(null);
   }
 
+  const [shippingAttempt, setShippingAttempt] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
     setShippingCost(null);
@@ -95,8 +97,8 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
       })
       .catch((e) => {
         if (!cancelled) {
-          setShippingError('Could not load shipping rate. Please refresh and try again.');
-          setShippingCost(0);
+          // Leave cost null so Pay stays disabled; never charge ₦0 shipping by accident
+          setShippingError('We couldn\'t load the delivery fee for your area.');
           console.error('[checkout] Failed to fetch shipping cost', e);
         }
       });
@@ -104,16 +106,16 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
     return () => {
       cancelled = true;
     };
-  }, [customerDetails.state, customerDetails.lga]);
+  }, [customerDetails.state, customerDetails.lga, shippingAttempt]);
 
   const effectiveShipping = appliedPromo?.discountType === 'free_shipping' ? 0 : (shippingCost ?? 0);
   const subtotalDiscount = appliedPromo?.discountType !== 'free_shipping' ? (appliedPromo?.discountAmount ?? 0) : 0;
   const total = subtotal - subtotalDiscount + effectiveShipping;
   const totalKobo = total * 100;
 
-  const [reference] = useState(
-    () => 'tw-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7)
-  );
+  // Paystack rejects a reused reference, so mint a fresh one after each closed popup
+  const newReference = () => 'tw-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  const [reference, setReference] = useState(newReference);
 
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
@@ -235,7 +237,7 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
           </span>
           <span className="font-body text-sm text-charcoal">
             {shippingCost === null
-              ? 'Loading…'
+              ? (shippingError ? 'Unavailable' : 'Loading…')
               : appliedPromo?.discountType === 'free_shipping'
                 ? <><s className="text-charcoal/40">₦{shippingCost.toLocaleString()}</s> <span className="text-green-600 font-semibold">FREE</span></>
                 : `₦${shippingCost.toLocaleString()}`}
@@ -280,8 +282,17 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
 
       {/* Payment error banner */}
       {(paymentError || shippingError) && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="font-body text-sm text-red-600">{paymentError ?? shippingError}</p>
+        <div role="alert" className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex flex-wrap items-center justify-between gap-3">
+          <p className="font-body text-sm text-red-700">{paymentError ?? shippingError}</p>
+          {shippingError && !paymentError && (
+            <button
+              type="button"
+              onClick={() => setShippingAttempt((n) => n + 1)}
+              className="min-h-10 px-4 rounded-lg bg-white border border-red-300 font-heading text-sm font-semibold text-red-700 hover:bg-red-100"
+            >
+              Try again
+            </button>
+          )}
         </div>
       )}
 
@@ -302,7 +313,10 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
               metadata,
             }}
             onSuccess={onPaymentSuccess}
-            onClose={() => setPaymentError('Payment was not completed — please try again.')}
+            onClose={() => {
+              setReference(newReference());
+              setPaymentError('Payment was not completed. You have not been charged, tap Pay to try again.');
+            }}
             disabled={shippingCost === null || promoLoading}
           />
         </div>

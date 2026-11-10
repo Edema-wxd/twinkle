@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Product } from '@/lib/types/product'
 import { useCart } from '@/lib/cart/CartContext'
 import { THREAD_COLOURS } from '@/lib/cart/threadColours'
+import { useDialogFocus } from '@/lib/useDialogFocus'
 
 interface AddToCartModalProps {
   product: Product
@@ -24,18 +25,20 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
   )
 
   const overlayRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  useDialogFocus(panelRef, true)
 
   const selectedVariant = product.variants.find((v) => v.id === selectedVariantId)
   const selectedTier = selectedVariant?.price_tiers.find((t) => t.qty === selectedTierQty)
   const displayPrice = selectedTier?.price ?? selectedVariant?.price ?? product.price_min
 
-  const canAddToCart = isTool || selectedThreadColour !== null
+  const isSoldOut = !product.variants.some((v) => v.in_stock)
+  const canAddToCart = !!selectedVariant?.in_stock && (isTool || selectedThreadColour !== null)
 
   function handleVariantChange(variantId: string) {
     setSelectedVariantId(variantId)
     const newVariant = product.variants.find((v) => v.id === variantId)
     setSelectedTierQty(newVariant?.price_tiers[0]?.qty ?? 0)
-    setSelectedThreadColour(isTool ? '' : null)
   }
 
   function handleAddToCart() {
@@ -75,24 +78,23 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
       role="dialog"
       aria-modal="true"
       aria-label={`Select size for ${product.name}`}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-charcoal/60 backdrop-blur-sm"
       onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
     >
-      <div className="bg-cream rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
-        <div className="flex justify-between items-start mb-4">
+      <div ref={panelRef} className="bg-cream rounded-t-2xl sm:rounded-2xl p-6 max-w-sm w-full sm:mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-start gap-4 mb-4">
           <h2 className="font-heading font-semibold text-forest text-lg">
-            Select size — {product.name}
+            {product.name}
           </h2>
           <button
+            type="button"
             onClick={onClose}
             aria-label="Close"
-            className="text-charcoal/50 hover:text-charcoal transition-colors text-2xl leading-none"
+            className="w-11 h-11 -mr-3 -mt-2 flex items-center justify-center rounded-full text-charcoal/60 hover:text-charcoal transition-colors text-2xl leading-none"
           >
             ×
           </button>
         </div>
-
-        <p className="font-body text-sm text-charcoal/60 mb-4">{product.name}</p>
 
         {/* Size selection */}
         <div>
@@ -101,12 +103,14 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
             {product.variants.map((variant) => (
               <button
                 key={variant.id}
+                type="button"
+                aria-pressed={selectedVariantId === variant.id}
                 onClick={() => { if (variant.in_stock) handleVariantChange(variant.id) }}
                 disabled={!variant.in_stock}
                 className={`rounded-lg px-4 py-2 font-body text-sm transition-all ${
                   selectedVariantId === variant.id
                     ? 'border-2 border-gold bg-gold/10 text-forest'
-                    : 'border-2 border-cream bg-cream text-charcoal hover:border-gold/50'
+                    : 'border-2 border-charcoal/15 bg-white text-charcoal hover:border-gold'
                 } ${!variant.in_stock ? 'opacity-40 cursor-not-allowed' : ''}`}
               >
                 {variant.name}
@@ -126,11 +130,13 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
               {selectedVariant!.price_tiers.map((tier) => (
                 <button
                   key={tier.qty}
+                  type="button"
+                  aria-pressed={selectedTierQty === tier.qty}
                   onClick={() => setSelectedTierQty(tier.qty)}
                   className={`rounded-lg px-4 py-2 font-body text-sm transition-all ${
                     selectedTierQty === tier.qty
                       ? 'border-2 border-gold bg-gold/10 text-forest'
-                      : 'border-2 border-cream bg-cream text-charcoal hover:border-gold/50'
+                      : 'border-2 border-charcoal/15 bg-white text-charcoal hover:border-gold'
                   }`}
                 >
                   {tier.qty} beads — ₦{tier.price.toLocaleString()}
@@ -148,10 +154,12 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
               {THREAD_COLOURS.map((colour) => (
                 <button
                   key={colour.id}
+                  type="button"
                   onClick={() => setSelectedThreadColour(colour.id)}
                   title={colour.label}
                   aria-label={colour.label}
-                  className={`w-8 h-8 rounded-full border-2 transition-all ${
+                  aria-pressed={selectedThreadColour === colour.id}
+                  className={`w-10 h-10 rounded-full border-2 ring-1 ring-charcoal/10 transition-all ${
                     selectedThreadColour === colour.id
                       ? 'border-gold scale-110'
                       : 'border-transparent hover:border-gold/50'
@@ -160,9 +168,7 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
                 />
               ))}
             </div>
-            {selectedThreadColour === null && (
-              <p className="text-xs text-red-600 mt-2 font-body">Please select a thread colour</p>
-            )}
+
           </div>
         )}
 
@@ -171,11 +177,11 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
           disabled={!canAddToCart}
           className={`w-full font-heading font-semibold py-3 rounded-lg transition-colors ${
             canAddToCart
-              ? 'bg-gold text-forest hover:bg-forest hover:text-cream'
-              : 'bg-cream text-charcoal/40 cursor-not-allowed'
+              ? 'bg-forest text-cream hover:bg-forest/90'
+              : 'bg-charcoal/10 text-charcoal/60 cursor-not-allowed'
           }`}
         >
-          Add to cart — ₦{displayPrice.toLocaleString()}
+          {isSoldOut ? 'Sold out' : canAddToCart ? `Add to cart · ₦${displayPrice.toLocaleString()}` : 'Choose a thread colour'}
         </button>
       </div>
     </div>

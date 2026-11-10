@@ -9,12 +9,13 @@ export function lineKey(
 export const initialCartState: CartState = {
   items: [],
   isDrawerOpen: false,
+  hydrated: false,
 };
 
 export function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'HYDRATE':
-      return { ...state, items: action.payload };
+      return { ...state, items: action.payload, hydrated: true };
 
     case 'ADD_ITEM': {
       const key = lineKey(action.payload);

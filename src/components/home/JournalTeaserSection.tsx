@@ -11,7 +11,7 @@ export function JournalTeaserSection({ posts }: { posts: BlogCardPost[] }) {
         <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="font-heading text-xs font-semibold uppercase tracking-[0.2em] text-gold-deep">From the journal</p>
-            <h2 id="journal-teaser" className="mt-3 font-display text-4xl leading-tight text-forest md:text-5xl">Styling notes & loc care</h2>
+            <h2 id="journal-teaser" className="mt-6 font-display text-4xl leading-[1.2] text-forest md:text-5xl">Styling notes & loc care</h2>
           </div>
           <Link
             href="/blog"

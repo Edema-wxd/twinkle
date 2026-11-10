@@ -73,7 +73,7 @@ function TestimonialForm({
         <button
           onClick={() => onSave({ name: name.trim(), quote: quote.trim(), displayOrder, isActive })}
           disabled={!name.trim() || !quote.trim()}
-          className="px-4 py-2 bg-gold hover:bg-yellow-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+          className="px-4 py-2 bg-gold hover:bg-gold-deep disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
         >
           Save
         </button>
@@ -160,7 +160,7 @@ export default function AdminTestimonialsPage() {
         {!adding && (
           <button
             onClick={() => setAdding(true)}
-            className="px-4 py-2 bg-gold hover:bg-yellow-600 text-white text-sm font-medium rounded-lg transition-colors"
+            className="px-4 py-2 bg-gold hover:bg-gold-deep text-white text-sm font-medium rounded-lg transition-colors"
           >
             Add testimonial
           </button>

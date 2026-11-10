@@ -8,11 +8,11 @@ export function BrandStorySection() {
 
         {/* Left column — text */}
         <div>
-          <p className="font-body text-sm text-gold uppercase tracking-widest mb-3">
+          <p className="font-heading text-xs font-semibold text-gold-deep uppercase tracking-[0.2em] mb-6">
             Our Story
           </p>
 
-          <h2 className="font-display text-4xl md:text-5xl text-forest leading-tight mb-6">
+          <h2 className="font-display text-4xl md:text-5xl text-forest leading-[1.2] mb-6">
             Born from a love of locs
           </h2>
 
@@ -29,19 +29,23 @@ export function BrandStorySection() {
 
           <Link
             href="/about"
-            className="inline-flex items-center gap-2 font-heading font-semibold text-gold hover:text-forest transition-colors"
+            className="inline-flex min-h-11 items-center gap-2 font-heading font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4 hover:text-gold-deep transition-colors"
           >
             Read our story &rarr;
           </Link>
         </div>
 
-        {/* Right column — image placeholder */}
-        <div className="aspect-square w-full rounded-2xl bg-linear-to-br from-gold/20 via-forest/10 to-cream flex items-center justify-center">
-          {/* TODO: Replace with real brand story photo */}
-          <div className="font-display text-4xl text-gold/40 text-center">
-            Twinkle Locs
-          </div>
-        </div>
+        {/* Right column — brand panel. Swap for a founder photo (next/image) when one is available. */}
+        <figure className="relative aspect-square w-full overflow-hidden rounded-3xl bg-forest p-10 flex flex-col justify-end">
+          <div aria-hidden="true" className="absolute inset-0 bg-pattern-02 opacity-[0.12]" />
+          <span aria-hidden="true" className="relative font-display text-8xl leading-none text-gold-light/80">&ldquo;</span>
+          <blockquote className="relative font-heading text-2xl md:text-3xl font-medium leading-snug text-cream text-balance">
+            Jewellery you don&apos;t have to think about, for hair you love.
+          </blockquote>
+          <figcaption className="relative mt-6 font-heading text-xs font-semibold uppercase tracking-[0.2em] text-gold-light">
+            Unoma, founder
+          </figcaption>
+        </figure>
 
       </div>
     </section>

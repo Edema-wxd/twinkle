@@ -14,6 +14,15 @@
   }
 }
 
+@layer base {
+  html { scroll-behavior: smooth; }
+  /* Default keyboard focus ring for anything that doesn't define its own */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
+}
+
 @theme {
   /* =============================================
      Brand colour palette (Twinkle Locs guide)
