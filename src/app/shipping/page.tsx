@@ -1,159 +1,157 @@
 import type { Metadata } from 'next'
-import { db, settings as settingsTable } from '@/db'
-import { inArray } from 'drizzle-orm'
+import Link from 'next/link'
 import { BUSINESS } from '@/lib/config/business'
+import { formatNaira, getShippingInfo } from '@/lib/checkout/shippingInfo'
 
-export const metadata: Metadata = {
-  title: { absolute: 'Shipping Rates Nigeria - Lagos & Nationwide | Twinkle Locs' },
-  description: 'Twinkle Locs ships across Nigeria. Lagos: NGN 6,000, 1-2 business days. Other states: NGN 9,500, 3-5 days. International shipping available on request.',
-  openGraph: {
-    title: 'Shipping Rates Nigeria - Lagos & Nationwide | Twinkle Locs',
-    description: 'Twinkle Locs ships across Nigeria. Lagos: NGN 6,000, 1-2 business days. Other states: NGN 9,500, 3-5 days. International shipping available on request.',
-    images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
-    type: 'website',
-  },
-}
-
-const SHIPPING_KEYS = [
-  'shipping_lagos_rate',
-  'shipping_other_rate',
-  'shipping_lagos_days',
-  'shipping_other_days',
-  'shipping_intl_message',
-  'shipping_page_intro',
-] as const
-
-const defaults = {
-  shipping_lagos_rate: '3000',
-  shipping_other_rate: '4500',
-  shipping_lagos_days: '1–2 business days',
-  shipping_other_days: '3–5 business days',
-  shipping_intl_message: "Hi, I'd like a shipping quote for an international order.",
-  shipping_page_intro: 'We deliver across Nigeria.',
+// Prices come from Admin → Shipping; the admin API revalidates this page on save.
+export async function generateMetadata(): Promise<Metadata> {
+  const info = await getShippingInfo()
+  const title = 'Shipping Rates Nigeria - Lagos & Nationwide | Twinkle Locs'
+  const fastest = info.zones[0]
+  const description = `Lagos delivery from ${formatNaira(info.lagosFrom)} (${fastest.deliveryTime} in the ${fastest.name}). Other Nigerian states ${formatNaira(info.otherRate)}, ${info.otherDays}. International shipping on request.`
+  return {
+    title: { absolute: title },
+    description,
+    alternates: { canonical: '/shipping' },
+    openGraph: { title, description, images: [{ url: '/og-image.jpg', width: 1200, height: 630 }], type: 'website' },
+  }
 }
 
 export default async function ShippingPage() {
-  let rows: { key: string; value: string }[] = []
-  try {
-    rows = await db
-      .select()
-      .from(settingsTable)
-      .where(inArray(settingsTable.key, [...SHIPPING_KEYS]))
-  } catch (err) {
-    console.error('Failed to fetch shipping settings:', err)
-  }
-
-  // Merge fetched rows over defaults — any missing key falls back to default
-  const raw: Record<string, string> = { ...defaults }
-  for (const row of rows) {
-    raw[row.key] = row.value
-  }
-
-  // Parse numeric rates for formatting — fall back to raw string if non-numeric
-  const lagosRate = parseInt(raw.shipping_lagos_rate, 10)
-  const otherRate = parseInt(raw.shipping_other_rate, 10)
-
-  const formatRate = (n: number, fallback: string) =>
-    isNaN(n) ? fallback : '₦' + n.toLocaleString('en-NG')
-
-  const lagosRateDisplay = formatRate(lagosRate, raw.shipping_lagos_rate)
-  const otherRateDisplay = formatRate(otherRate, raw.shipping_other_rate)
-
-  const waUrl = BUSINESS.whatsapp.url(raw.shipping_intl_message)
+  const info = await getShippingInfo()
+  const waUrl = BUSINESS.whatsapp.url(info.intlMessage)
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
-      {/* Heading */}
-      <h1 className="font-heading text-4xl font-bold text-charcoal mb-3">
-        Shipping Information
-      </h1>
-      <p className="text-charcoal/60 mb-12">{raw.shipping_page_intro}</p>
+    <div className="bg-cream">
+      <header className="relative overflow-hidden bg-forest">
+        <div aria-hidden="true" className="absolute inset-0 bg-pattern-01 opacity-[0.06]" />
+        <div className="relative mx-auto max-w-4xl px-4 pt-14 pb-14 md:pt-20 md:pb-20">
+          <p className="font-heading text-xs font-semibold uppercase tracking-[0.24em] text-gold-light">Delivery</p>
+          <h1 className="mt-8 font-display text-5xl leading-[1.2] text-cream md:mt-10 md:text-7xl">Shipping &amp; delivery</h1>
+          <p className="mt-5 max-w-xl font-body text-base leading-relaxed text-cream/80 md:text-lg">{info.pageIntro}</p>
 
-      {/* Domestic Delivery */}
-      <section className="mb-12">
-        <h2 className="font-heading text-xl font-semibold text-charcoal mb-6">
-          Domestic Delivery
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Lagos card */}
-          <div className="rounded-2xl border border-gold/30 bg-gold/5 p-6 space-y-3">
-            <div className="flex items-center gap-2">
-              {/* Location pin icon */}
-              <svg
-                className="w-4 h-4 text-gold shrink-0"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="font-heading text-sm font-semibold text-charcoal/70 uppercase tracking-wider">
-                Lagos
-              </span>
-            </div>
-            <p className="font-heading text-3xl font-bold text-charcoal">{lagosRateDisplay}</p>
-            <p className="text-sm text-charcoal/60">{raw.shipping_lagos_days}</p>
-          </div>
-
-          {/* All other states card */}
-          <div className="rounded-2xl border border-stone-200 bg-stone-50 p-6 space-y-3">
-            <div className="flex items-center gap-2">
-              <svg
-                className="w-4 h-4 text-charcoal/50 shrink-0"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="font-heading text-sm font-semibold text-charcoal/70 uppercase tracking-wider">
-                All Other States
-              </span>
-            </div>
-            <p className="font-heading text-3xl font-bold text-charcoal">{otherRateDisplay}</p>
-            <p className="text-sm text-charcoal/60">{raw.shipping_other_days}</p>
-          </div>
+          <dl className="mt-10 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
+            {[
+              { k: 'Lagos', v: `${formatNaira(info.lagosFrom)} to ${formatNaira(info.lagosTo)}`, s: 'By delivery area, same day in most of Lagos' },
+              { k: 'Rest of Nigeria', v: formatNaira(info.otherRate), s: `Flat rate, ${info.otherDays}` },
+              { k: 'International', v: 'On request', s: 'Quoted on WhatsApp within 24 hours' },
+            ].map((c) => (
+              <div key={c.k} className="rounded-2xl bg-cream/[0.06] p-4 ring-1 ring-cream/15">
+                <dt className="font-heading text-xs font-semibold uppercase tracking-[0.14em] text-gold-light">{c.k}</dt>
+                <dd className="mt-1 font-heading text-xl font-bold text-cream">{c.v}</dd>
+                <dd className="mt-0.5 font-body text-xs text-cream/75">{c.s}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
+      </header>
 
-        <p className="mt-4 text-xs text-charcoal/40">
-          Rates apply per order. Delivery is calculated from Lagos.
-        </p>
-      </section>
+      <div className="mx-auto max-w-4xl space-y-14 px-4 py-14 md:py-20">
+        {/* Lagos zones */}
+        <section aria-labelledby="lagos-zones">
+          <div className="mb-6">
+            <h2 id="lagos-zones" className="font-display text-4xl leading-[1.2] text-forest">Lagos delivery zones</h2>
+            <p className="mt-2 max-w-2xl font-body text-charcoal/75">
+              We dispatch from Lekki Phase 1, so your fee depends on where you are. Pick your area at checkout and you&apos;ll
+              see the exact price before you pay. Times are from dispatch.
+            </p>
+          </div>
 
-      {/* International Orders */}
-      <section className="rounded-2xl border border-charcoal/10 bg-charcoal/[0.03] p-8">
-        <h2 className="font-heading text-xl font-semibold text-charcoal mb-3">
-          International Orders
-        </h2>
-        <p className="text-charcoal/60 mb-6">
-          We offer international shipping on request. Rates depend on destination and order
-          weight — send us a message on WhatsApp and we&apos;ll get back to you with a quote
-          within 24 hours.
+          {/* Table on larger screens */}
+          <div className="hidden overflow-hidden rounded-2xl bg-white ring-1 ring-forest/10 md:block">
+            <table className="w-full text-left">
+              <thead className="bg-forest text-cream">
+                <tr className="font-heading text-xs uppercase tracking-[0.12em]">
+                  <th scope="col" className="px-5 py-3 font-semibold">Zone</th>
+                  <th scope="col" className="px-5 py-3 font-semibold">Areas</th>
+                  <th scope="col" className="px-5 py-3 font-semibold whitespace-nowrap">Delivery time</th>
+                  <th scope="col" className="px-5 py-3 text-right font-semibold">Fee</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-forest/10 font-body text-sm">
+                {info.zones.map((z) => (
+                  <tr key={z.id} className="align-top even:bg-stone/60">
+                    <th scope="row" className="px-5 py-4 font-heading font-semibold text-forest whitespace-nowrap">
+                      {z.id}. {z.name}
+                    </th>
+                    <td className="px-5 py-4 text-charcoal/80">{z.areas.join(', ')}</td>
+                    <td className="px-5 py-4 text-charcoal/80 whitespace-nowrap">{z.deliveryTime}</td>
+                    <td className="px-5 py-4 text-right font-heading font-semibold text-forest whitespace-nowrap">{formatNaira(z.fee)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Cards on phones */}
+          <ul className="space-y-3 md:hidden">
+            {info.zones.map((z) => (
+              <li key={z.id} className="rounded-2xl bg-white p-4 ring-1 ring-forest/10">
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="font-heading font-semibold text-forest">
+                    {z.id}. {z.name}
+                  </p>
+                  <p className="font-heading font-bold text-forest">{formatNaira(z.fee)}</p>
+                </div>
+                <p className="mt-1 font-body text-xs font-semibold uppercase tracking-[0.1em] text-gold-deep">{z.deliveryTime}</p>
+                <p className="mt-2 font-body text-sm text-charcoal/75">{z.areas.join(', ')}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 font-body text-sm text-charcoal/70">
+            Not sure which zone you&apos;re in, or your area isn&apos;t listed?{' '}
+            <a
+              href={BUSINESS.whatsapp.url('Hi, which delivery zone is my area in?')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-forest underline decoration-gold decoration-2 underline-offset-4 hover:text-gold-deep"
+            >
+              Ask us on WhatsApp
+            </a>
+            .
+          </p>
+        </section>
+
+        {/* Other states */}
+        <section aria-labelledby="other-states" className="grid gap-6 rounded-3xl bg-white p-6 ring-1 ring-forest/10 md:grid-cols-[1fr_auto] md:items-center md:p-8">
+          <div>
+            <h2 id="other-states" className="font-display text-4xl leading-[1.2] text-forest">Everywhere else in Nigeria</h2>
+            <p className="mt-2 max-w-xl font-body text-charcoal/75">
+              One flat rate to every other state, sent by courier. We&apos;ll WhatsApp you the tracking details once your
+              order is on its way.
+            </p>
+          </div>
+          <div className="md:text-right">
+            <p className="font-heading text-4xl font-bold text-forest">{formatNaira(info.otherRate)}</p>
+            <p className="font-body text-sm text-charcoal/70">{info.otherDays}</p>
+          </div>
+        </section>
+
+        {/* International */}
+        <section aria-labelledby="international" className="relative overflow-hidden rounded-3xl bg-forest p-6 text-cream md:p-8">
+          <div aria-hidden="true" className="absolute inset-0 bg-pattern-02 opacity-[0.08]" />
+          <div className="relative">
+            <h2 id="international" className="font-display text-4xl leading-[1.2] text-gold-light">International orders</h2>
+            <p className="mt-2 max-w-xl font-body text-cream/80">
+              We ship worldwide on request. The price depends on the destination and order weight, so message us and
+              we&apos;ll send a quote within 24 hours.
+            </p>
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 inline-flex min-h-12 items-center rounded-lg bg-gold-light px-6 font-heading text-sm font-semibold text-forest transition-colors hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream focus-visible:ring-offset-2 focus-visible:ring-offset-forest"
+            >
+              Request a quote on WhatsApp
+            </a>
+          </div>
+        </section>
+
+        <p className="text-center font-body text-sm text-charcoal/70">
+          Delivery fees are per order, whatever the size. Questions about an order you&apos;ve placed?{' '}
+          <Link href="/faq" className="text-forest underline decoration-gold underline-offset-4">See the FAQ</Link>.
         </p>
-        <a
-          href={waUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-heading font-semibold text-sm rounded-xl transition-colors"
-        >
-          {/* WhatsApp icon */}
-          <svg
-            className="w-5 h-5 shrink-0"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-          </svg>
-          Request a Shipping Quote
-        </a>
-      </section>
+      </div>
     </div>
   )
 }

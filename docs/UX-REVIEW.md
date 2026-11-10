@@ -127,7 +127,7 @@ This was tested in a real browser against a throwaway in-memory Postgres. The te
 
 ## Still open (not changed, needs a decision or a follow-up)
 
-1. **[P1] Shipping prices disagree across the site.** The `/shipping` page shows one flat Lagos rate. Checkout uses seven Lagos zones (₦3,000 to ₦13,500). Meta descriptions say ₦6,000 and ₦9,500. The order page says "3 to 5 days Lagos". Unoma needs to confirm the real prices and times, and then they should come from one source (`shippingZones.ts` plus settings).
+1. ~~**[P1] Shipping prices disagree across the site.**~~ **Fixed:** `src/lib/checkout/shippingInfo.ts` is now the single source of truth. Checkout, `/shipping` (now a full zone table), the home and shipping meta descriptions, `/llms.txt` and the order confirmation all read it. The no-op "Lagos flat rate" admin fields were removed, and the dead `getShippingCost()` (₦6,000 / ₦9,500) was deleted.
 2. **[P1] `/catalog` and `/catalog/[slug]` have no error handling around their DB queries.** A DB outage shows Next's default error screen, and the production build fails if the DB can't be reached. Add `try/catch` plus branded `error.tsx` and `loading.tsx`.
 3. **[P2] Checkout form.**
    - Inputs are text-sm, so iOS zooms in on focus. They should be 16px.

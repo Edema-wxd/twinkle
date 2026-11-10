@@ -9,8 +9,6 @@ interface ShippingFormProps {
 
 export function ShippingForm({ settings }: ShippingFormProps) {
   // Domestic delivery
-  const [lagosRate, setLagosRate] = useState(settings.shipping_lagos_rate ?? '3000')
-  const [lagosDays, setLagosDays] = useState(settings.shipping_lagos_days ?? '1–2 business days')
   const [otherRate, setOtherRate] = useState(settings.shipping_other_rate ?? '4500')
   const [otherDays, setOtherDays] = useState(settings.shipping_other_days ?? '3–5 business days')
 
@@ -57,9 +55,7 @@ export function ShippingForm({ settings }: ShippingFormProps) {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            shipping_lagos_rate: lagosRate,
             shipping_other_rate: otherRate,
-            shipping_lagos_days: lagosDays,
             shipping_other_days: otherDays,
             shipping_intl_message: intlMessage,
             shipping_page_intro: pageIntro,
@@ -73,7 +69,7 @@ export function ShippingForm({ settings }: ShippingFormProps) {
           return
         }
 
-        showToast('success', 'Saved')
+        showToast('success', 'Saved. Checkout and the shipping page now use these prices.')
       } catch {
         showToast('error', 'Network error — please try again')
       }
@@ -125,7 +121,8 @@ export function ShippingForm({ settings }: ShippingFormProps) {
           </p>
           <div className="mt-2 border-t border-stone-700" />
           <p className="text-xs text-stone-500 mt-2">
-            Fees are shown to customers at checkout based on their selected area.
+            These are the prices Lagos customers pay: checkout charges the fee for the area they pick.
+            The same numbers appear on the /shipping page, the home page description and llms.txt.
             Shipping from Lekki Phase 1.
           </p>
         </div>
@@ -170,6 +167,9 @@ export function ShippingForm({ settings }: ShippingFormProps) {
             Other States (Flat Rate)
           </p>
           <div className="mt-2 border-t border-stone-700" />
+          <p className="text-xs text-stone-500 mt-2">
+            Charged at checkout for every state except Lagos, and shown with the timeframe on /shipping and the order confirmation.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -193,45 +193,6 @@ export function ShippingForm({ settings }: ShippingFormProps) {
               value={otherDays}
               onChange={(e) => setOtherDays(e.target.value)}
               placeholder="3–5 business days"
-              className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Legacy Lagos flat rate (fallback) */}
-      <section className="space-y-4">
-        <div>
-          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
-            Lagos Fallback Rate
-          </p>
-          <div className="mt-2 border-t border-stone-700" />
-          <p className="text-xs text-stone-500 mt-2">
-            Used only when no delivery area is selected at checkout.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-stone-300">Rate (₦)</label>
-            <input
-              type="number"
-              value={lagosRate}
-              onChange={(e) => setLagosRate(e.target.value)}
-              placeholder="3000"
-              min="0"
-              step="100"
-              className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-stone-300">Timeframe</label>
-            <input
-              type="text"
-              value={lagosDays}
-              onChange={(e) => setLagosDays(e.target.value)}
-              placeholder="1–2 business days"
               className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
             />
           </div>

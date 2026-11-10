@@ -78,7 +78,7 @@ Records a checkout attempt before the shopper initiates payment. Used for abando
 }
 ```
 
-All fields are required. `cartItems` must be a non-empty array. `subtotal` must be a number (Naira). The shipping cost is computed server-side from `deliveryState` using the shipping zone rules (Lagos: ₦3,000; all other states: ₦4,500).
+All fields are required. `cartItems` must be a non-empty array. `subtotal` must be a number (Naira). The shipping cost is computed server-side with `quoteShipping()` from `src/lib/checkout/shippingInfo.ts` (Lagos zone fee for `deliveryLGA`, otherwise the flat other-states rate from settings).
 
 **Success response — `201 Created`:**
 
@@ -531,9 +531,8 @@ Upserts shipping configuration into the `settings` table. Only the six allowlist
 
 | Key | Description |
 |-----|-------------|
-| `shipping_lagos_rate` | Lagos flat rate (Naira, stored as string) |
-| `shipping_other_rate` | All other states flat rate (Naira, stored as string) |
-| `shipping_lagos_days` | Lagos estimated delivery days (display string) |
+| `shipping_other_rate` | All other states flat rate (Naira, stored as string). Charged at checkout |
+| `shipping_zone_{1-7}_rate` | Lagos zone fee overrides (Naira). Charged at checkout for areas in that zone |
 | `shipping_other_days` | Other states estimated delivery days (display string) |
 | `shipping_intl_message` | International shipping message shown on the shipping page |
 | `shipping_page_intro` | Introductory text on the shipping information page |
@@ -542,9 +541,7 @@ Upserts shipping configuration into the `settings` table. Only the six allowlist
 
 ```json
 {
-  "shipping_lagos_rate": "3000",
   "shipping_other_rate": "4500",
-  "shipping_lagos_days": "1-2 business days",
   "shipping_other_days": "2-4 business days"
 }
 ```
@@ -552,12 +549,12 @@ Upserts shipping configuration into the `settings` table. Only the six allowlist
 **Success response — `200 OK`:**
 
 ```json
-{ "updated": ["shipping_lagos_rate", "shipping_other_rate", "shipping_lagos_days", "shipping_other_days"] }
+{ "updated": ["shipping_other_rate", "shipping_other_days"] }
 ```
 
 **Error responses:** Same as `PUT /api/admin/settings`.
 
-> **Note:** The actual shipping cost applied at checkout is computed by `getShippingCost()` in `src/lib/checkout/shipping.ts`, which is currently hardcoded (Lagos: ₦3,000; all other states: ₦4,500). The `shipping_lagos_rate` and `shipping_other_rate` settings keys exist for display purposes on the storefront shipping page; they do not affect the server-side cost calculation.
+> **Note:** These settings are what checkout charges. Saving revalidates `/shipping`, `/` and `/llms.txt`, which all read the same values via `getShippingInfo()`.
 
 ---
 

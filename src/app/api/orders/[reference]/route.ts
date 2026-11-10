@@ -1,6 +1,7 @@
 import { db } from '@/db'
 import { orders } from '@/db'
 import { eq } from 'drizzle-orm'
+import { deliveryEstimateForOrder, getShippingInfo } from '@/lib/checkout/shippingInfo'
 import { NextRequest } from 'next/server'
 
 export async function GET(
@@ -31,6 +32,7 @@ export async function GET(
     customer_ip: result.customerIp ?? null,
     delivery_address: result.deliveryAddress,
     delivery_state: result.deliveryState,
+    delivery_estimate: deliveryEstimateForOrder(await getShippingInfo(), result.deliveryState, result.paystackPayload),
     shipping_cost: result.shippingCost,
     subtotal: result.subtotal,
     total: result.total,

@@ -6,9 +6,7 @@ import { settings } from '@/db'
 import { sql } from 'drizzle-orm'
 
 const ALLOWED_SHIPPING_KEYS = [
-  'shipping_lagos_rate',
   'shipping_other_rate',
-  'shipping_lagos_days',
   'shipping_other_days',
   'shipping_intl_message',
   'shipping_page_intro',
@@ -68,7 +66,10 @@ export async function PUT(req: NextRequest) {
       target: settings.key,
       set: { value: sql`excluded.value` },
     })
+    // Everything that quotes shipping prices
     revalidatePath('/shipping')
+    revalidatePath('/')
+    revalidatePath('/llms.txt')
     return NextResponse.json({ updated: rows.map((r) => r.key) })
   } catch (err) {
     console.error('Failed to upsert shipping settings:', err)

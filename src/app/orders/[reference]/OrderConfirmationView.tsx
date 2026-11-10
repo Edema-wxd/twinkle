@@ -6,7 +6,7 @@ import { THREAD_COLOURS } from '@/lib/cart/threadColours';
 import { BUSINESS } from '@/lib/config/business';
 
 interface OrderConfirmationViewProps {
-  order: Order & { order_items: OrderItem[] };
+  order: Order & { order_items: OrderItem[]; delivery_estimate?: string };
 }
 
 export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
@@ -151,9 +151,10 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
       </div>
 
       {/* Estimated delivery */}
-      <p className="font-body text-sm text-charcoal/60 text-center mt-6">
-        Estimated delivery: 3–5 business days (Lagos) or 5–7 business days
-        (other states).
+      <p className="font-body text-sm text-charcoal/70 text-center mt-6">
+        {order.delivery_estimate
+          ? <>Estimated delivery: {order.delivery_estimate}. We&apos;ll WhatsApp you when it&apos;s on its way.</>
+          : <>We&apos;ll WhatsApp you with delivery timing once your order is on its way.</>}
       </p>
 
       {/* Contact support */}

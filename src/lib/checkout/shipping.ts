@@ -1,7 +1,6 @@
 /**
- * Shipping zone logic for Twinkle Locs checkout.
- * Lagos: ₦3,000 flat rate
- * All other Nigerian states: ₦4,500 flat rate
+ * Nigerian states for the checkout form.
+ * Shipping prices and delivery times live in ./shippingInfo.ts (single source of truth).
  */
 
 export const NIGERIAN_STATES: string[] = [
@@ -43,11 +42,3 @@ export const NIGERIAN_STATES: string[] = [
   'Yobe',
   'Zamfara',
 ];
-
-/**
- * Returns shipping cost in Naira based on delivery state.
- * Lagos: 3000, all other states: 4500.
- */
-export function getShippingCost(state: string): number {
-  return state === 'Lagos' ? 6000 : 9500;
-}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getShippingCostFromDb } from '@/lib/checkout/shippingRates'
+import { getShippingInfo, quoteShipping } from '@/lib/checkout/shippingInfo'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'state is required' }, { status: 400 })
   }
 
-  const cost = await getShippingCostFromDb(state, lga)
-  return NextResponse.json({ state, lga, cost })
+  const info = await getShippingInfo()
+  const { cost, deliveryTime, zone } = quoteShipping(info, state, lga)
+  return NextResponse.json({ state, lga, cost, deliveryTime, zone: zone ? { id: zone.id, name: zone.name } : null })
 }

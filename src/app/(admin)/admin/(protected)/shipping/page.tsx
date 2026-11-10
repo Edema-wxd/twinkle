@@ -10,9 +10,7 @@ export const metadata = {
 }
 
 const SHIPPING_KEYS = [
-  'shipping_lagos_rate',
   'shipping_other_rate',
-  'shipping_lagos_days',
   'shipping_other_days',
   'shipping_intl_message',
   'shipping_page_intro',
@@ -59,8 +57,8 @@ export default async function AdminShippingPage() {
       <div>
         <h1 className="font-heading text-2xl font-bold text-white">Shipping Info</h1>
         <p className="text-stone-400 text-sm mt-1">
-          Delivery rates, timeframes, and international shipping copy. Changes appear on the
-          /shipping page at next load — no redeploy needed.
+          The prices checkout charges. Saving updates checkout, the /shipping page, the home page
+          description and llms.txt straight away, no redeploy needed.
         </p>
       </div>
 

@@ -62,7 +62,7 @@ graph TD
 | `createClient` (server) | `src/lib/supabase/server.ts` | Returns a Supabase SSR client scoped to the current request's cookies; safe for Server Components and API routes |
 | `createClient` (browser) | `src/lib/supabase/client.ts` | Returns a Supabase browser client for client components such as `OrderPoller` |
 | `createAdminClient` | `src/lib/supabase/admin.ts` | Returns a service-role Supabase client for privileged writes; must never be imported in client components |
-| `getShippingCost` | `src/lib/checkout/shipping.ts` | Pure function: Lagos → ₦3,000; all other Nigerian states → ₦4,500 |
+| `getShippingInfo` / `quoteShipping` | `src/lib/checkout/shippingInfo.ts` | Single source of truth for shipping: Lagos priced by zone (`shippingZones.ts` defaults, overridable per zone in Admin → Shipping), every other state one flat rate + timeframe from Admin → Shipping. Used by checkout, `/shipping`, page meta, `/llms.txt` and order confirmation |
 | `Database` | `src/types/supabase.ts` | Manually maintained TypeScript type map of all Supabase tables (`products`, `reviews`, `orders`, `order_items`, `settings`, `about_sections`, `faqs`, `blog_posts`, `abandoned_orders`, `newsletter_subscribers`) |
 | `Product` / `ProductVariant` / `PriceTier` | `src/lib/types/product.ts` | Domain types for the tiered-price product model; `PriceTier` pairs a pack size (`qty`) with a Naira price |
 | `BUSINESS` | `src/lib/config/business.ts` | Single source of truth for WhatsApp number, Instagram handle, and support email |

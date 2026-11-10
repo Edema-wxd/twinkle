@@ -278,7 +278,7 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
           {isOutsideLagos && (
             <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
               <p className="font-body text-sm text-charcoal/80">
-                We primarily deliver within Lagos. For deliveries outside Lagos, our team will confirm delivery details and timing with you after your order.
+                We ship to every state by courier at one flat rate. You&apos;ll see the exact fee and delivery time on the next step, and we&apos;ll WhatsApp you the tracking details once it&apos;s on its way.
               </p>
             </div>
           )}

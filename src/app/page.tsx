@@ -8,22 +8,27 @@ import { JournalTeaserSection } from '@/components/home/JournalTeaserSection'
 import { FaqTeaserSection } from '@/components/home/FaqTeaserSection'
 import type { FaqItem } from '@/components/faq/FaqAccordion'
 import { db, products as productsTable, testimonials as testimonialsTable, blogPosts as blogPostsTable, faqs as faqsTable } from '@/db'
+import { formatNaira, getShippingInfo } from '@/lib/checkout/shippingInfo'
 import { faqAnswerHtml, htmlToText, toBlogCard, type BlogCardPost } from '@/lib/content'
 import { eq, and, asc, desc } from 'drizzle-orm'
 import type { Product, ProductMaterial, ProductVariant } from '@/lib/types/product'
 import type { Testimonial } from '@/components/home/TestimonialsSection'
 
-export const metadata: Metadata = {
-  title: {
-    absolute: 'Loc Beads Nigeria - Gold, Silver & Crystal | Twinkle Locs',
-  },
-  description: 'Buy handcrafted loc beads online in Nigeria. Gold, silver, crystal, and onyx styles from NGN 15,000. Ships Lagos in 1-2 days, nationwide in 3-5 days.',
-  openGraph: {
-    title: 'Loc Beads Nigeria - Gold, Silver & Crystal | Twinkle Locs',
-    description: 'Buy handcrafted loc beads online in Nigeria. Gold, silver, crystal, and onyx styles from NGN 15,000. Ships Lagos in 1-2 days, nationwide in 3-5 days.',
-    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Twinkle Locs – Nigerian Loc Beads' }],
-    type: 'website',
-  },
+// Shipping figures come from the same settings checkout charges from
+export async function generateMetadata(): Promise<Metadata> {
+  const info = await getShippingInfo()
+  const title = 'Loc Beads Nigeria - Gold, Silver & Crystal | Twinkle Locs'
+  const description = `Buy handcrafted loc beads online in Nigeria. Gold, silver, crystal, and onyx styles from NGN 15,000. Lagos delivery from ${formatNaira(info.lagosFrom)}, same day in most areas; nationwide in ${info.otherDays}.`
+  return {
+    title: { absolute: title },
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Twinkle Locs – Nigerian Loc Beads' }],
+      type: 'website',
+    },
+  }
 }
 
 const storeJsonLd = {

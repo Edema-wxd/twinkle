@@ -16,6 +16,7 @@ interface OrderReviewProps {
 export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }: OrderReviewProps) {
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
+  const [deliveryTime, setDeliveryTime] = useState<string | null>(null);
   const [shippingError, setShippingError] = useState<string | null>(null);
 
   const [promoInput, setPromoInput] = useState('');
@@ -90,10 +91,13 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
 
     fetch(`/api/checkout/shipping-cost?${params.toString()}`)
       .then(async (res) => {
-        const data = (await res.json().catch(() => null)) as { cost?: unknown; error?: string } | null;
+        const data = (await res.json().catch(() => null)) as { cost?: unknown; deliveryTime?: unknown; error?: string } | null;
         if (!res.ok) throw new Error(data?.error ?? `Failed to fetch shipping (${res.status})`);
         if (typeof data?.cost !== 'number') throw new Error('Invalid shipping response');
-        if (!cancelled) setShippingCost(data.cost);
+        if (!cancelled) {
+          setShippingCost(data.cost);
+          setDeliveryTime(typeof data.deliveryTime === 'string' ? data.deliveryTime : null);
+        }
       })
       .catch((e) => {
         if (!cancelled) {
@@ -249,14 +253,10 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
             <span className="font-body text-sm text-green-600">−₦{subtotalDiscount.toLocaleString()}</span>
           </div>
         )}
-        {zone && (
-          <p className="font-body text-xs text-charcoal/50 mb-2">
-            Est. delivery: {zone.deliveryTime}
-          </p>
-        )}
-        {!zone && customerDetails.state !== 'Lagos' && (
-          <p className="font-body text-xs text-charcoal/50 mb-2">
-            Delivery outside Lagos — our team will confirm details with you after your order.
+        {(deliveryTime ?? zone?.deliveryTime) && (
+          <p className="font-body text-xs text-charcoal/70 mb-2">
+            Est. delivery: {deliveryTime ?? zone?.deliveryTime} after dispatch
+            {customerDetails.state !== 'Lagos' && ' by courier. We\'ll WhatsApp you the tracking details.'}
           </p>
         )}
         <hr className="border-charcoal/10 my-3" />
