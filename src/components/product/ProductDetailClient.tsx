@@ -108,7 +108,7 @@ export function ProductDetailClient({ product, descriptionHtml }: ProductDetailC
 
         {/* Description */}
         <div
-          className="font-body text-charcoal/80 leading-relaxed mb-8 [&_p]:mb-4 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-4 [&_li]:mb-1 [&_strong]:font-semibold [&_strong]:text-charcoal [&_a]:text-gold [&_a]:underline"
+          className="font-body text-charcoal/80 leading-relaxed mb-8 [&_p]:mb-4 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-4 [&_li]:mb-1 [&_li_p]:mb-0 [&_h3]:font-heading [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:uppercase [&_h3]:tracking-wide [&_h3]:text-forest [&_h3]:mt-6 [&_h3]:mb-2 [&_strong]:font-semibold [&_strong]:text-charcoal [&_a]:text-gold [&_a]:underline"
           dangerouslySetInnerHTML={{ __html: descriptionHtml }}
         />
 

@@ -26,6 +26,19 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
       <div className="flex items-center gap-1 px-2 py-1.5 bg-stone-700 border-b border-stone-600">
         <button
           type="button"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          aria-label="Section heading"
+          title="Section heading"
+          className={`px-2 py-1 text-sm font-semibold rounded transition-colors ${
+            editor.isActive('heading', { level: 3 })
+              ? 'bg-gold text-white'
+              : 'text-stone-300 hover:bg-stone-600 hover:text-white'
+          }`}
+        >
+          H
+        </button>
+        <button
+          type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
           aria-label="Bold"
           className={`px-2 py-1 text-sm font-bold rounded transition-colors ${
@@ -65,7 +78,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
       {/* Editor content */}
       <EditorContent
         editor={editor}
-        className="bg-stone-800 text-white text-sm [&_.ProseMirror]:min-h-[120px] [&_.ProseMirror]:px-3 [&_.ProseMirror]:py-2 [&_.ProseMirror]:outline-none [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-5 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-5 [&_.ProseMirror_p]:my-1 focus-within:ring-2 focus-within:ring-gold"
+        className="bg-stone-800 text-white text-sm [&_.ProseMirror]:min-h-[120px] [&_.ProseMirror]:px-3 [&_.ProseMirror]:py-2 [&_.ProseMirror]:outline-none [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-5 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-5 [&_.ProseMirror_p]:my-1 [&_.ProseMirror_h3]:text-xs [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h3]:uppercase [&_.ProseMirror_h3]:tracking-wide [&_.ProseMirror_h3]:text-gold [&_.ProseMirror_h3]:mt-3 [&_.ProseMirror_h3]:mb-1focus-within:ring-2 focus-within:ring-gold"
       />
     </div>
   )
