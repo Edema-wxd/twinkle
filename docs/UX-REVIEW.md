@@ -139,6 +139,15 @@ This was tested in a real browser against a throwaway in-memory Postgres. The te
   - The webhook and verify route racing could fail with a duplicate insert. Recording is now idempotent, with `onConflictDoNothing`.
 - **Tested:** signed webhook charges covering honest payments, tampered prices, shipping, promo codes, pack size and quantity, an unknown product, overpayment, concurrent duplicates, a replay after shipping, a bad signature, and clearing a flagged order.
 
+## Stock check at payment (fixed)
+- **Before:** stock was only checked when adding to the bag. A bag saved in the browser could still pay for items that had since sold out or been archived, at stale prices.
+- **Now, before payment:** `/api/checkout/check-cart` runs the same pricing as the payment webhook (`priceOrder()`), plus availability per line. The checkout review step calls it when it opens and again the moment Pay is tapped. Then:
+  - Sold-out or archived items show a banner with **Remove** buttons, and Pay stays disabled.
+  - Stale prices are updated in the bag, with a notice.
+  - Paystack only opens if the bag is exactly what the server would charge.
+- **Now, at payment:** if an item sells out between that check and the charge, the webhook marks the order `payment_review` ("marked sold out") instead of `paid`.
+- **Limit:** the catalogue only stores in or out of stock per variant, with no counts. Two people buying the last item at the same moment are both caught for review rather than prevented. Adding stock counts (decremented on payment) would be the next step if that matters.
+
 ## Still open (not changed, needs a decision or a follow-up)
 
 1. ~~**[P1] Shipping prices disagree across the site.**~~ **Fixed:** `src/lib/checkout/shippingInfo.ts` is now the single source of truth. Checkout, `/shipping` (now a full zone table), the home and shipping meta descriptions, `/llms.txt` and the order confirmation all read it. The no-op "Lagos flat rate" admin fields were removed, and the dead `getShippingCost()` (₦6,000 / ₦9,500) was deleted.

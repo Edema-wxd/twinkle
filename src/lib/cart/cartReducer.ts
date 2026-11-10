@@ -59,6 +59,15 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       };
     }
 
+    case 'REPRICE':
+      return {
+        ...state,
+        items: state.items.map((item) => {
+          const price = action.payload[lineKey(item)]
+          return typeof price === 'number' ? { ...item, unitPrice: price } : item
+        }),
+      };
+
     case 'CLEAR_CART':
       return { ...state, items: [] };
 

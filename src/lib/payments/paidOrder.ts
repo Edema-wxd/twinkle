@@ -70,7 +70,10 @@ export function parseCheckoutMetadata(raw: unknown): CheckoutMetadata | null {
 
 // ── Pricing ──────────────────────────────────────────────────────────────────
 
-export type PricedLine = ClaimedItem & { serverUnitPrice: number | null; lineTotal: number }
+/** ok = can be sold now; sold_out = variant marked out of stock; unavailable = product/variant/pack gone or archived */
+export type LineStatus = 'ok' | 'sold_out' | 'unavailable'
+
+export type PricedLine = ClaimedItem & { serverUnitPrice: number | null; lineTotal: number; status: LineStatus }
 
 export type PricedOrder = {
   lines: PricedLine[]
@@ -87,7 +90,10 @@ export async function priceOrder(meta: CheckoutMetadata): Promise<PricedOrder> {
 
   const ids = [...new Set(meta.cart_items.map((i) => i.productId).filter((id) => UUID_RE.test(id)))]
   const rows = ids.length
-    ? await db.select({ id: products.id, name: products.name, variants: products.variants }).from(products).where(inArray(products.id, ids))
+    ? await db
+        .select({ id: products.id, name: products.name, variants: products.variants, isActive: products.isActive })
+        .from(products)
+        .where(inArray(products.id, ids))
     : []
   const byId = new Map(rows.map((r) => [r.id, r]))
 
@@ -96,20 +102,36 @@ export async function priceOrder(meta: CheckoutMetadata): Promise<PricedOrder> {
     const product = byId.get(item.productId)
     const variant = (product?.variants as ProductVariant[] | undefined)?.find((v) => v.id === item.variantId)
     let price: number | null = null
-    if (!product) problems.push(`"${item.productName}" no longer exists, so its price couldn't be checked.`)
-    else if (!variant) problems.push(`"${product.name}" has no "${item.variantName}" option any more.`)
-    else {
+    let status: LineStatus = 'ok'
+    if (!product) {
+      status = 'unavailable'
+      problems.push(`"${item.productName}" no longer exists, so its price couldn't be checked.`)
+    } else if (!variant) {
+      status = 'unavailable'
+      problems.push(`"${product.name}" has no "${item.variantName}" option any more.`)
+    } else {
       const tiers = Array.isArray(variant.price_tiers) ? variant.price_tiers : []
       // The pack size decides what gets shipped, so it must match a real tier exactly.
       // Only a variant with no tiers at all (sold singly) falls back to its flat price.
       const tier = tiers.find((t) => t.qty === item.tierQty)
       if (tier) price = tier.price
       else if (tiers.length === 0 && typeof variant.price === 'number') price = variant.price
-      else problems.push(`"${product.name} ${variant.name}" has no pack of ${item.tierQty}.`)
+      else {
+        status = 'unavailable'
+        problems.push(`"${product.name} ${variant.name}" has no pack of ${item.tierQty}.`)
+      }
+      // Stock: the catalogue only records in/out of stock per variant (no counts)
+      if (status === 'ok' && !product.isActive) {
+        status = 'unavailable'
+        problems.push(`"${product.name}" has been taken off the shop.`)
+      } else if (status === 'ok' && !variant.in_stock) {
+        status = 'sold_out'
+        problems.push(`"${product.name} ${variant.name}" is marked sold out.`)
+      }
     }
     if (!(qty >= 1 && qty <= MAX_QTY)) problems.push(`"${item.productName}" has an invalid quantity (${item.quantity}).`)
     const unit = price ?? 0
-    return { ...item, quantity: qty, serverUnitPrice: price, lineTotal: unit * Math.max(0, qty) }
+    return { ...item, quantity: qty, serverUnitPrice: price, lineTotal: unit * Math.max(0, qty), status }
   })
 
   const subtotal = lines.reduce((s, l) => s + l.lineTotal, 0)

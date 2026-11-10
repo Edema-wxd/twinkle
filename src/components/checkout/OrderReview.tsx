@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useCart } from '@/lib/cart/CartContext';
+import { lineKey } from '@/lib/cart/cartReducer';
 import type { CartItem } from '@/lib/cart/types';
 import type { CustomerDetails } from './CheckoutForm';
 import { PaystackButton } from './PaystackButton';
@@ -13,7 +15,64 @@ interface OrderReviewProps {
   onPaymentSuccess: (reference: string) => void;
 }
 
+type LineCheck = { key: string; name: string; status: 'ok' | 'sold_out' | 'unavailable' };
+
 export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }: OrderReviewProps) {
+  const { dispatch } = useCart();
+  // Server check of stock + current prices (same pricing the payment webhook uses)
+  const [blockedLines, setBlockedLines] = useState<LineCheck[]>([]);
+  const [priceNotice, setPriceNotice] = useState<string | null>(null);
+  const [checkFailed, setCheckFailed] = useState(false);
+
+  /** Returns true when the bag can be paid for exactly as shown. */
+  const checkCart = useCallback(async (): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/checkout/check-cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          state: customerDetails.state,
+          lga: customerDetails.lga,
+        }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = (await res.json()) as {
+        lines: { productId: string; variantId: string; tierQty: number; threadColour: string; status: LineCheck['status']; unitPrice: number | null }[];
+      };
+      setCheckFailed(false);
+
+      const blocked: LineCheck[] = [];
+      const reprice: Record<string, number> = {};
+      const changed: string[] = [];
+      data.lines.forEach((line, i) => {
+        const item = items[i];
+        if (!item) return;
+        const key = lineKey(item);
+        if (line.status !== 'ok') {
+          blocked.push({ key, name: `${item.productName} ${item.variantName}`.trim(), status: line.status });
+        } else if (typeof line.unitPrice === 'number' && line.unitPrice !== item.unitPrice) {
+          reprice[key] = line.unitPrice;
+          changed.push(item.productName);
+        }
+      });
+      setBlockedLines(blocked);
+      if (changed.length > 0) {
+        dispatch({ type: 'REPRICE', payload: reprice });
+        setPriceNotice(`We've updated the price of ${changed.join(', ')} to today's price. Please check your total.`);
+      }
+      return blocked.length === 0 && changed.length === 0;
+    } catch {
+      setCheckFailed(true);
+      return false;
+    }
+  }, [items, customerDetails.state, customerDetails.lga, dispatch]);
+
+  // Check when the review step opens and whenever the bag changes
+  useEffect(() => {
+    void checkCart();
+  }, [checkCart]);
+
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
   const [deliveryTime, setDeliveryTime] = useState<string | null>(null);
@@ -162,6 +221,47 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
   return (
     <div className="max-w-lg mx-auto">
       <h2 className="font-display text-2xl text-forest mb-6">Review Your Order</h2>
+
+      {blockedLines.length > 0 && (
+        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4">
+          <p className="font-heading text-sm font-semibold text-red-800">
+            {blockedLines.length === 1 ? 'One item' : `${blockedLines.length} items`} in your bag can&apos;t be bought right now
+          </p>
+          <ul className="mt-2 space-y-2">
+            {blockedLines.map((l) => (
+              <li key={l.key} className="flex items-center justify-between gap-3 font-body text-sm text-red-800">
+                <span>
+                  {l.name} <span className="text-red-700/80">({l.status === 'sold_out' ? 'sold out' : 'no longer available'})</span>
+                </span>
+                <button
+                  type="button"
+                  aria-label={`Remove ${l.name} from your order`}
+                  onClick={() => {
+                    dispatch({ type: 'REMOVE_ITEM', payload: { key: l.key } });
+                    setBlockedLines((prev) => prev.filter((b) => b.key !== l.key));
+                  }}
+                  className="min-h-9 shrink-0 rounded-lg border border-red-300 bg-white px-3 font-heading text-xs font-semibold text-red-800 hover:bg-red-100"
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {priceNotice && (
+        <div role="status" className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 font-body text-sm text-amber-900">
+          {priceNotice}
+        </div>
+      )}
+      {checkFailed && (
+        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 font-body text-sm text-red-800 flex flex-wrap items-center justify-between gap-3">
+          <span>We couldn&apos;t confirm stock for your bag.</span>
+          <button type="button" onClick={() => void checkCart()} className="min-h-9 rounded-lg border border-red-300 bg-white px-3 font-heading text-xs font-semibold">
+            Try again
+          </button>
+        </div>
+      )}
 
       {/* Line items */}
       <div className="mb-4">
@@ -313,11 +413,18 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
               metadata,
             }}
             onSuccess={onPaymentSuccess}
+            beforePay={async () => {
+              // Re-check stock and prices the moment they tap Pay
+              setPaymentError(null);
+              const ok = await checkCart();
+              if (!ok) setPaymentError('Your bag changed since you opened this page. Please review it above, then tap Pay again.');
+              return ok;
+            }}
             onClose={() => {
               setReference(newReference());
               setPaymentError('Payment was not completed. You have not been charged, tap Pay to try again.');
             }}
-            disabled={shippingCost === null || promoLoading}
+            disabled={shippingCost === null || promoLoading || blockedLines.length > 0 || checkFailed}
           />
         </div>
       </div>

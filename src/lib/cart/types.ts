@@ -23,6 +23,7 @@ export type CartAction =
   | { type: 'ADD_ITEM'; payload: CartItem }
   | { type: 'UPDATE_QTY'; payload: { key: string; qty: number } }
   | { type: 'REMOVE_ITEM'; payload: { key: string } }
+  | { type: 'REPRICE'; payload: Record<string, number> } // lineKey → current server price
   | { type: 'CLEAR_CART' }
   | { type: 'OPEN_DRAWER' }
   | { type: 'CLOSE_DRAWER' };
