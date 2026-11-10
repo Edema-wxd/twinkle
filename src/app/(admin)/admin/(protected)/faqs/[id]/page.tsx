@@ -1,8 +1,10 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { faqs } from '@/db'
 import { eq } from 'drizzle-orm'
+import { toFaqDto } from '@/lib/content'
 import { FaqForm } from '../../../../_components/FaqForm'
 
 export const metadata = {
@@ -19,31 +21,27 @@ export default async function EditFaqPage({
 
   const { id } = await params
 
-  const [row] = await db.select().from(faqs).where(eq(faqs.id, id)).limit(1)
+  const [[row], categoryRows] = await Promise.all([
+    db.select().from(faqs).where(eq(faqs.id, id)).limit(1),
+    db.selectDistinct({ category: faqs.category }).from(faqs),
+  ])
 
   if (!row) {
     notFound()
   }
 
-  // Map camelCase Drizzle row to snake_case shape expected by FaqForm
-  const faq = {
-    id: row.id,
-    category: row.category,
-    question: row.question,
-    answer: row.answer,
-    display_order: row.displayOrder,
-    created_at: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-  }
+  const faq = toFaqDto(row)
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 max-w-2xl">
+    <div className="p-6 lg:p-8 space-y-6 max-w-3xl">
       <div>
-        <h1 className="font-heading text-2xl font-bold text-white">Edit FAQ</h1>
+        <Link href="/admin/faqs" className="text-sm text-stone-400 hover:text-white transition-colors">&larr; All FAQs</Link>
+        <h1 className="mt-3 font-heading text-2xl font-bold text-white">Edit FAQ</h1>
         <p className="text-stone-400 text-sm mt-1 truncate">{faq.question}</p>
       </div>
 
       <div className="bg-stone-800/50 rounded-xl p-6 ring-1 ring-stone-700">
-        <FaqForm faq={faq} />
+        <FaqForm faq={faq} categories={categoryRows.map((c) => c.category).sort()} />
       </div>
     </div>
   )

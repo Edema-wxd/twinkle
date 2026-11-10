@@ -4,7 +4,11 @@ import { FeaturedProductsSection } from '@/components/home/FeaturedProductsSecti
 import { BrandStorySection } from '@/components/home/BrandStorySection'
 import { TestimonialsSection } from '@/components/home/TestimonialsSection'
 import { InstagramCTASection } from '@/components/home/InstagramCTASection'
-import { db, products as productsTable, testimonials as testimonialsTable } from '@/db'
+import { JournalTeaserSection } from '@/components/home/JournalTeaserSection'
+import { FaqTeaserSection } from '@/components/home/FaqTeaserSection'
+import type { FaqItem } from '@/components/faq/FaqAccordion'
+import { db, products as productsTable, testimonials as testimonialsTable, blogPosts as blogPostsTable, faqs as faqsTable } from '@/db'
+import { faqAnswerHtml, htmlToText, toBlogCard, type BlogCardPost } from '@/lib/content'
 import { eq, and, asc, desc } from 'drizzle-orm'
 import type { Product, ProductMaterial, ProductVariant } from '@/lib/types/product'
 import type { Testimonial } from '@/components/home/TestimonialsSection'
@@ -63,6 +67,36 @@ export default async function HomePage() {
     return [[], []] as const
   })
 
+  // Content teasers load independently so a content-table hiccup never blanks the shop
+  const [postRows, faqRows] = await Promise.all([
+    db
+      .select()
+      .from(blogPostsTable)
+      .where(eq(blogPostsTable.published, true))
+      .orderBy(desc(blogPostsTable.publishedAt))
+      .limit(3)
+      .catch((err) => {
+        console.error('[HomePage] blog query failed:', err)
+        return []
+      }),
+    db
+      .select()
+      .from(faqsTable)
+      .where(eq(faqsTable.isFeatured, true))
+      .orderBy(asc(faqsTable.displayOrder))
+      .limit(6)
+      .catch((err) => {
+        console.error('[HomePage] faq query failed:', err)
+        return []
+      }),
+  ])
+
+  const latestPosts: BlogCardPost[] = postRows.map(toBlogCard)
+  const featuredFaqs: FaqItem[] = faqRows.map((r) => {
+    const answerHtml = faqAnswerHtml(r.answer)
+    return { id: r.id, category: r.category, question: r.question, answerHtml, answerText: htmlToText(answerHtml) }
+  })
+
   const featuredProducts: Product[] = productRows.map((row) => ({
     id: row.id,
     name: row.name,
@@ -85,7 +119,7 @@ export default async function HomePage() {
   }))
 
   return (
-    <main>
+    <div>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -96,7 +130,9 @@ export default async function HomePage() {
       <FeaturedProductsSection products={featuredProducts} />
       <BrandStorySection />
       <TestimonialsSection testimonials={testimonials} />
+      <FaqTeaserSection faqs={featuredFaqs} />
+      <JournalTeaserSection posts={latestPosts} />
       <InstagramCTASection />
-    </main>
+    </div>
   )
 }

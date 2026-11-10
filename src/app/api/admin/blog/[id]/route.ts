@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { and, eq, ne } from 'drizzle-orm'
 import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { blogPosts } from '@/db'
-import { eq } from 'drizzle-orm'
 import { deleteUploadthingFilesByUrls } from '@/lib/uploadthing/server'
+import { slugify } from '@/lib/content'
+import { parseBlogInput, revalidateBlog } from '@/lib/content-api'
 
 export async function PUT(
   req: NextRequest,
@@ -17,28 +19,20 @@ export async function PUT(
 
   const { id } = await params
 
-  let body: unknown
+  let raw: unknown
   try {
-    body = await req.json()
+    raw = await req.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { title, slug, body: postBody, excerpt, featured_image, tag, published, published_at } = body as {
-    title?: unknown
-    slug?: unknown
-    body?: unknown
-    excerpt?: unknown
-    featured_image?: unknown
-    tag?: unknown
-    published?: unknown
-    published_at?: unknown
-  }
+  const input = parseBlogInput(raw)
 
   // Fetch current post to detect published transition + cleanup replaced featured image
   const [currentPost] = await db
     .select({
       id: blogPosts.id,
+      slug: blogPosts.slug,
       published: blogPosts.published,
       publishedAt: blogPosts.publishedAt,
       featuredImage: blogPosts.featuredImage,
@@ -51,36 +45,32 @@ export async function PUT(
     return NextResponse.json({ error: 'Post not found' }, { status: 404 })
   }
 
-  const updates: Record<string, unknown> = {}
+  const updates: Partial<typeof blogPosts.$inferInsert> = {}
 
-  if (typeof title === 'string' && title.trim() !== '') {
-    updates.title = title.trim()
+  if (input.title) updates.title = input.title
+  if (input.slug) {
+    const s = slugify(input.slug)
+    if (s) updates.slug = s
   }
-  if (typeof slug === 'string' && slug.trim() !== '') {
-    updates.slug = slug.trim()
-  }
-  if (typeof postBody === 'string') {
-    updates.body = postBody
-  }
-  if (typeof excerpt === 'string') {
-    updates.excerpt = excerpt
-  }
-  if (featured_image === null || (typeof featured_image === 'string')) {
-    updates.featuredImage = featured_image || null
-  }
-  if (tag === null || typeof tag === 'string') {
-    updates.tag = typeof tag === 'string' && tag.trim() ? tag.trim() : null
-  }
-  if (typeof published === 'boolean') {
-    updates.published = published
+  if (input.body !== undefined) updates.body = input.body
+  if (input.excerpt !== undefined) updates.excerpt = input.excerpt
+  if (input.featuredImage !== undefined) updates.featuredImage = input.featuredImage
+  if (input.tag !== undefined) updates.tag = input.tag
+  if (input.seoTitle !== undefined) updates.seoTitle = input.seoTitle
+  if (input.seoDescription !== undefined) updates.seoDescription = input.seoDescription
+  if (input.isFeatured !== undefined) updates.isFeatured = input.isFeatured
+  if (input.featuredProductIds !== undefined) updates.featuredProductIds = input.featuredProductIds
 
+  if (input.published !== undefined) {
+    updates.published = input.published
     // Auto-set publishedAt when transitioning from unpublished to published
-    if (published && !currentPost.published) {
-      updates.publishedAt =
-        typeof published_at === 'string' && published_at
-          ? new Date(published_at)
-          : new Date()
+    if (input.published && !currentPost.published) {
+      updates.publishedAt = input.publishedAt ?? new Date()
     }
+  }
+  // Explicit date change (backdating / correcting) on an already-published post
+  if (input.publishedAt && currentPost.published && input.published !== false) {
+    updates.publishedAt = input.publishedAt
   }
 
   updates.updatedAt = new Date()
@@ -96,15 +86,16 @@ export async function PUT(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
+    if (data.isFeatured) {
+      await db
+        .update(blogPosts)
+        .set({ isFeatured: false })
+        .where(and(ne(blogPosts.id, data.id), eq(blogPosts.isFeatured, true)))
+    }
+
     // Delete replaced/removed featured image (best-effort).
     const previous = currentPost.featuredImage
-    const next =
-      typeof featured_image === 'string'
-        ? (featured_image || null)
-        : featured_image === null
-          ? null
-          : previous
-
+    const next = input.featuredImage === undefined ? previous : input.featuredImage
     if (previous && previous !== next) {
       try {
         await deleteUploadthingFilesByUrls([previous])
@@ -113,6 +104,7 @@ export async function PUT(
       }
     }
 
+    revalidateBlog(currentPost.slug, data.slug)
     return NextResponse.json({ ok: true, post: data })
   } catch (err: unknown) {
     console.error('Failed to update blog post:', err)
@@ -138,7 +130,7 @@ export async function DELETE(
 
   try {
     const [before] = await db
-      .select({ featuredImage: blogPosts.featuredImage })
+      .select({ featuredImage: blogPosts.featuredImage, slug: blogPosts.slug })
       .from(blogPosts)
       .where(eq(blogPosts.id, id))
       .limit(1)
@@ -153,6 +145,7 @@ export async function DELETE(
       }
     }
 
+    revalidateBlog(before?.slug)
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('Failed to delete blog post:', err)

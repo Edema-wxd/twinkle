@@ -156,8 +156,9 @@ export const faqs = pgTable('faqs', {
   id: uuid('id').primaryKey().defaultRandom(),
   category: text('category').notNull(),
   question: text('question').notNull(),
-  answer: text('answer').notNull(),
+  answer: text('answer').notNull(), // plain text (legacy) or sanitised Tiptap HTML
   displayOrder: integer('display_order').notNull(),
+  isFeatured: boolean('is_featured').notNull().default(false), // surfaced on the home page
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -169,6 +170,10 @@ export const blogPosts = pgTable('blog_posts', {
   excerpt: text('excerpt').notNull(),
   featuredImage: text('featured_image'),
   tag: text('tag'),
+  seoTitle: text('seo_title'), // overrides <title> + og:title when set
+  seoDescription: text('seo_description'), // overrides meta description when set
+  isFeatured: boolean('is_featured').notNull().default(false), // hero slot on /blog
+  featuredProductIds: text('featured_product_ids').array().notNull().default([]), // "Shop the look" on the post
   published: boolean('published').notNull().default(false),
   publishedAt: timestamp('published_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

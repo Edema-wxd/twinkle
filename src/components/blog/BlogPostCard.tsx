@@ -1,69 +1,59 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Tables } from '@/types/db'
+import { formatPostDate, type BlogCardPost } from '@/lib/content'
 
 type BlogPostCardProps = {
-  post: Pick<
-    Tables<'blog_posts'>,
-    'id' | 'title' | 'slug' | 'excerpt' | 'featured_image' | 'tag' | 'published_at'
-  >
+  post: BlogCardPost
+  /** Use a heading level that fits the surrounding page outline */
+  headingLevel?: 'h2' | 'h3'
 }
 
-export function BlogPostCard({ post }: BlogPostCardProps) {
-  const formattedDate = post.published_at
-    ? new Date(post.published_at).toLocaleDateString('en-NG', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    : null
+export function BlogPostCard({ post, headingLevel = 'h2' }: BlogPostCardProps) {
+  const date = formatPostDate(post.published_at)
+  const Heading = headingLevel
 
   return (
-    <Link
-      href={`/blog/${post.slug}`}
-      className="group flex flex-col rounded-2xl overflow-hidden border border-stone-200 hover:border-stone-300 transition-colors bg-white"
-    >
-      {/* Featured image */}
-      <div className="relative w-full aspect-[4/3] bg-stone-100">
+    <article className="group relative flex flex-col">
+      <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-forest">
         {post.featured_image ? (
           <Image
             src={post.featured_image}
-            alt={post.title}
+            alt=""
             fill
-            className="object-cover"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-stone-100">
-            <div className="w-12 h-12 rounded-full bg-[var(--color-gold,#C9A84C)] opacity-20" />
-          </div>
+          <div aria-hidden="true" className="absolute inset-0 bg-pattern-02 opacity-25" />
         )}
-      </div>
-
-      {/* Card body */}
-      <div className="flex flex-col flex-1 p-5 gap-2">
-        {/* Tag */}
         {post.tag && (
-          <span className="inline-block self-start text-xs font-medium px-2.5 py-0.5 rounded-full bg-[var(--color-gold,#C9A84C)] text-white">
+          <span className="absolute left-3 top-3 rounded-full bg-cream/95 px-3 py-1 font-heading text-[11px] font-semibold uppercase tracking-[0.12em] text-forest">
             {post.tag}
           </span>
         )}
-
-        {/* Title */}
-        <h2 className="font-heading text-lg font-bold text-charcoal group-hover:underline underline-offset-2 leading-snug">
-          {post.title}
-        </h2>
-
-        {/* Excerpt */}
-        <p className="text-sm text-charcoal/70 line-clamp-3 leading-relaxed flex-1">
-          {post.excerpt}
-        </p>
-
-        {/* Date */}
-        {formattedDate && (
-          <p className="text-xs text-charcoal/50 mt-auto pt-2">{formattedDate}</p>
-        )}
       </div>
-    </Link>
+
+      <div className="flex flex-1 flex-col pt-5">
+        <p className="font-body text-xs text-charcoal/65">
+          {date && <time dateTime={post.published_at ?? undefined}>{date}</time>}
+          {date && ' · '}
+          {post.reading_minutes} min read
+        </p>
+        <Heading className="mt-2 font-heading text-xl font-bold leading-snug text-forest text-balance">
+          <Link
+            href={`/blog/${post.slug}`}
+            className="decoration-gold decoration-2 underline-offset-4 group-hover:underline after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-gold focus-visible:after:ring-offset-4 focus-visible:after:ring-offset-cream"
+          >
+            {post.title}
+          </Link>
+        </Heading>
+        {post.excerpt && (
+          <p className="mt-2 font-body text-sm leading-relaxed text-charcoal/75 line-clamp-3">{post.excerpt}</p>
+        )}
+        <span aria-hidden="true" className="mt-4 font-heading text-sm font-semibold text-gold-deep">
+          Read the story <span className="inline-block transition-transform group-hover:translate-x-1">&rarr;</span>
+        </span>
+      </div>
+    </article>
   )
 }

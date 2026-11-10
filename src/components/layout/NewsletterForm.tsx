@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { usePathname } from 'next/navigation'
 
 type Status = 'idle' | 'loading' | 'success' | 'duplicate' | 'error'
 
-export function NewsletterForm() {
+/** Dark-background newsletter signup. `inline` puts the fields in one row on wider screens. */
+export function NewsletterForm({ layout = 'stacked', cta = 'Join' }: { layout?: 'stacked' | 'inline'; cta?: string }) {
   const pathname = usePathname()
+  const id = useId()
   const [firstName, setFirstName] = useState('')
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<Status>('idle')
@@ -28,51 +30,61 @@ export function NewsletterForm() {
     }
   }
 
+  const disabled = status === 'loading' || status === 'success'
+  const inputClass =
+    'w-full min-h-11 rounded-md bg-forest/80 border border-cream/25 text-cream placeholder:text-cream/50 px-3 py-2 text-base sm:text-sm font-body focus:outline-none focus-visible:border-gold-light focus-visible:ring-2 focus-visible:ring-gold-light/40'
+
   return (
     <div>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+      <form
+        onSubmit={handleSubmit}
+        className={layout === 'inline' ? 'flex flex-col sm:flex-row gap-2' : 'flex flex-col gap-2'}
+      >
+        <label htmlFor={`${id}-name`} className="sr-only">First name</label>
         <input
+          id={`${id}-name`}
           type="text"
           required
+          autoComplete="given-name"
           placeholder="Your first name"
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
-          disabled={status === 'loading' || status === 'success'}
-          className="w-full rounded-md bg-forest/80 border border-cream/20 text-cream placeholder:text-cream/40 px-3 py-2 text-sm focus:outline-none focus:border-gold font-body"
+          disabled={disabled}
+          className={inputClass}
         />
+        <label htmlFor={`${id}-email`} className="sr-only">Email address</label>
         <input
+          id={`${id}-email`}
           type="email"
           required
+          autoComplete="email"
+          inputMode="email"
           placeholder="Your email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          disabled={status === 'loading' || status === 'success'}
-          className="w-full rounded-md bg-forest/80 border border-cream/20 text-cream placeholder:text-cream/40 px-3 py-2 text-sm focus:outline-none focus:border-gold font-body"
+          disabled={disabled}
+          className={inputClass}
         />
         <button
           type="submit"
-          disabled={status === 'loading' || status === 'success'}
-          className="w-full mt-2 rounded-md bg-gold text-forest font-heading font-semibold text-sm py-2 px-4 hover:bg-gold/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          disabled={disabled}
+          className={`min-h-11 rounded-md bg-gold-light text-forest font-heading font-semibold text-sm py-2 px-5 hover:bg-cream transition-colors disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream focus-visible:ring-offset-2 focus-visible:ring-offset-forest whitespace-nowrap ${layout === 'inline' ? '' : 'w-full mt-2'}`}
         >
-          {status === 'loading' ? 'Joining...' : 'Join'}
+          {status === 'loading' ? 'Joining…' : cta}
         </button>
       </form>
 
-      {status === 'success' && (
-        <p className="text-sm font-body text-gold mt-3">
-          {"You're in! Welcome to the Twinkle family."}
-        </p>
-      )}
-      {status === 'duplicate' && (
-        <p className="text-sm font-body text-cream/70 mt-3">
-          {"Looks like you're already on the list!"}
-        </p>
-      )}
-      {status === 'error' && (
-        <p className="text-sm font-body text-red-400 mt-3">
-          Something went wrong. Please try again.
-        </p>
-      )}
+      <div aria-live="polite">
+        {status === 'success' && (
+          <p className="text-sm font-body text-gold-light mt-3">You&apos;re in! Welcome to the Twinkle family.</p>
+        )}
+        {status === 'duplicate' && (
+          <p className="text-sm font-body text-cream/80 mt-3">Looks like you&apos;re already on the list!</p>
+        )}
+        {status === 'error' && (
+          <p className="text-sm font-body text-red-300 mt-3">Something went wrong. Please try again.</p>
+        )}
+      </div>
     </div>
   )
 }

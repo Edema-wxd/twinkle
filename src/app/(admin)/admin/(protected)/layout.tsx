@@ -16,7 +16,7 @@ export default async function AdminProtectedLayout({
 
       {/* Main content area */}
       {/* Mobile: add top padding for the fixed mobile header bar */}
-      <main className="flex-1 pt-14 lg:pt-0 overflow-auto">
+      <main className="flex-1 min-w-0 pt-14 lg:pt-0 overflow-x-clip">
         {children}
       </main>
     </div>

@@ -3,6 +3,7 @@ import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { faqs } from '@/db'
 import { eq } from 'drizzle-orm'
+import { revalidateFaqs } from '@/lib/content-api'
 
 export async function PUT(
   req: NextRequest,
@@ -23,15 +24,16 @@ export async function PUT(
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { category, question, answer, display_order } = body as {
+  const { category, question, answer, display_order, is_featured } = body as {
     category?: unknown
     question?: unknown
     answer?: unknown
     display_order?: unknown
+    is_featured?: unknown
   }
 
   // Build update payload — only include provided fields
-  const updatePayload: Record<string, string | number> = {}
+  const updatePayload: Partial<typeof faqs.$inferInsert> = {}
   if (typeof category === 'string' && category.trim() !== '') {
     updatePayload.category = category.trim()
   }
@@ -43,6 +45,13 @@ export async function PUT(
   }
   if (typeof display_order === 'number') {
     updatePayload.displayOrder = display_order
+  }
+  if (typeof is_featured === 'boolean') {
+    updatePayload.isFeatured = is_featured
+  }
+
+  if (Object.keys(updatePayload).length === 0) {
+    return NextResponse.json({ error: 'Nothing to update' }, { status: 400 })
   }
 
   // Check row exists
@@ -58,6 +67,7 @@ export async function PUT(
 
   try {
     await db.update(faqs).set(updatePayload).where(eq(faqs.id, id))
+    revalidateFaqs()
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('Failed to update FAQ:', err)
@@ -90,6 +100,7 @@ export async function DELETE(
 
   try {
     await db.delete(faqs).where(eq(faqs.id, id))
+    revalidateFaqs()
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('Failed to delete FAQ:', err)
