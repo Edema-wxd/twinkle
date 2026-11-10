@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { db, products as productsTable, reviews as reviewsTable } from '@/db'
 import { eq, desc, ne, and } from 'drizzle-orm'
+import { applyStockToProducts } from '@/lib/stock'
 import { Product, ProductMaterial, ProductVariant } from '@/lib/types/product'
 import { Review } from '@/lib/types/review'
 import { ProductDetailClient } from '@/components/product/ProductDetailClient'
@@ -84,7 +85,7 @@ export default async function ProductDetailPage({
 
   if (!row) return notFound()
 
-  const product: Product = {
+  const productBase: Product = {
     id: row.id,
     name: row.name,
     slug: row.slug,
@@ -98,6 +99,8 @@ export default async function ProductDetailPage({
     created_at: row.createdAt.toISOString(),
     images: row.images?.length ? row.images : undefined,
   }
+  // Live stock counts (sizes and pack sizes sell out automatically)
+  const [product] = await applyStockToProducts([productBase])
 
   // Fetch reviews for this product
   const reviewsData = await db
@@ -186,7 +189,7 @@ export default async function ProductDetailPage({
       .limit(1)
 
     if (shearsData) {
-      shearsProduct = {
+      ;[shearsProduct] = await applyStockToProducts([{
         id: shearsData.id,
         name: shearsData.name,
         slug: shearsData.slug,
@@ -199,7 +202,7 @@ export default async function ProductDetailPage({
         price_max: shearsData.priceMax,
         created_at: shearsData.createdAt.toISOString(),
         images: shearsData.images?.length ? shearsData.images : undefined,
-      }
+      }])
     }
   }
 
@@ -218,7 +221,7 @@ export default async function ProductDetailPage({
     .orderBy(desc(productsTable.isFeatured))
     .limit(4)
 
-  const relatedProducts: Product[] = relatedData.map((r) => ({
+  const relatedProducts: Product[] = await applyStockToProducts(relatedData.map((r) => ({
     id: r.id,
     name: r.name,
     slug: r.slug,
@@ -231,7 +234,7 @@ export default async function ProductDetailPage({
     price_max: r.priceMax,
     created_at: r.createdAt.toISOString(),
     images: r.images?.length ? r.images : undefined,
-  }))
+  })))
 
   return (
     <div className="bg-cream min-h-screen">

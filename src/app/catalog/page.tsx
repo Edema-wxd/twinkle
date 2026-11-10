@@ -3,6 +3,7 @@ import { db, products as productsTable } from '@/db'
 import { eq, desc } from 'drizzle-orm'
 import { Product, ProductMaterial, ProductVariant } from '@/lib/types/product'
 import { CatalogClient } from '@/components/catalog/CatalogClient'
+import { applyStockToProducts } from '@/lib/stock'
 
 export const metadata: Metadata = {
   title: { absolute: 'Buy Loc Beads Online in Nigeria | Twinkle Locs' },
@@ -22,7 +23,7 @@ export default async function CatalogPage() {
     .where(eq(productsTable.isActive, true))
     .orderBy(desc(productsTable.createdAt))
 
-  const products: Product[] = productsData.map((row) => ({
+  const mapped: Product[] = productsData.map((row) => ({
     id: row.id,
     name: row.name,
     slug: row.slug,
@@ -36,6 +37,9 @@ export default async function CatalogPage() {
     created_at: row.createdAt.toISOString(),
     images: row.images?.length ? row.images : undefined,
   }))
+
+  // Live stock counts: sizes sell out automatically when their last pack goes
+  const products = await applyStockToProducts(mapped)
 
   return <CatalogClient products={products} />
 }

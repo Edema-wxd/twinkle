@@ -8,6 +8,7 @@ import {
   numeric,
   timestamp,
   unique,
+  primaryKey,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
@@ -81,6 +82,21 @@ export const products = pgTable('products', {
   variants: jsonb('variants').notNull().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+// Stock on hand per product variant (size), counted in beads, or items for Tools.
+// A pack of 100 uses 100. No row = not tracked: the variant's in_stock flag decides.
+// Kept out of products.variants (JSON) so saving a product form can never
+// overwrite a decrement made by an order while the form was open.
+export const productStock = pgTable(
+  'product_stock',
+  {
+    productId: uuid('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+    variantId: text('variant_id').notNull(),
+    units: integer('units').notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.productId, t.variantId] })]
+)
 
 export const reviews = pgTable('reviews', {
   id: uuid('id').primaryKey().defaultRandom(),

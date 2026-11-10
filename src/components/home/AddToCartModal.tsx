@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Product } from '@/lib/types/product'
 import { useCart } from '@/lib/cart/CartContext'
 import { THREAD_COLOURS } from '@/lib/cart/threadColours'
+import { firstFittingTier, lowStockLabel, packFits } from '@/lib/stockDisplay'
 import { useDialogFocus } from '@/lib/useDialogFocus'
 
 interface AddToCartModalProps {
@@ -18,7 +19,7 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
   const initialVariant = product.variants.find((v) => v.in_stock) ?? product.variants[0]
   const [selectedVariantId, setSelectedVariantId] = useState(initialVariant?.id ?? '')
   const [selectedTierQty, setSelectedTierQty] = useState(
-    initialVariant?.price_tiers[0]?.qty ?? 0
+    firstFittingTier(initialVariant)
   )
   const [selectedThreadColour, setSelectedThreadColour] = useState<string | null>(
     isTool ? '' : null
@@ -33,12 +34,12 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
   const displayPrice = selectedTier?.price ?? selectedVariant?.price ?? product.price_min
 
   const isSoldOut = !product.variants.some((v) => v.in_stock)
-  const canAddToCart = !!selectedVariant?.in_stock && (isTool || selectedThreadColour !== null)
+  const canAddToCart = packFits(selectedVariant, selectedTierQty) && (isTool || selectedThreadColour !== null)
 
   function handleVariantChange(variantId: string) {
     setSelectedVariantId(variantId)
     const newVariant = product.variants.find((v) => v.id === variantId)
-    setSelectedTierQty(newVariant?.price_tiers[0]?.qty ?? 0)
+    setSelectedTierQty(firstFittingTier(newVariant))
   }
 
   function handleAddToCart() {
@@ -132,8 +133,10 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
                   key={tier.qty}
                   type="button"
                   aria-pressed={selectedTierQty === tier.qty}
+                  disabled={!packFits(selectedVariant, tier.qty)}
+                  title={packFits(selectedVariant, tier.qty) ? undefined : 'Not enough left for this pack size'}
                   onClick={() => setSelectedTierQty(tier.qty)}
-                  className={`rounded-lg px-4 py-2 font-body text-sm transition-all ${
+                  className={`rounded-lg px-4 py-2 font-body text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:line-through ${
                     selectedTierQty === tier.qty
                       ? 'border-2 border-gold bg-gold/10 text-forest'
                       : 'border-2 border-charcoal/15 bg-white text-charcoal hover:border-gold'
@@ -144,6 +147,10 @@ export function AddToCartModal({ product, onClose }: AddToCartModalProps) {
               ))}
             </div>
           </div>
+        )}
+
+        {lowStockLabel(selectedVariant, isTool) && (
+          <p role="status" className="mb-4 font-body text-xs font-medium text-amber-800">{lowStockLabel(selectedVariant, isTool)}</p>
         )}
 
         {/* Thread colour selection (non-Tools only) */}

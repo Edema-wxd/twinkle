@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { getAdminSession } from '@/lib/auth/server'
+import { pruneStock, setStock } from '@/lib/stock'
 import { db } from '@/db'
 import { products } from '@/db'
 import { eq } from 'drizzle-orm'
@@ -127,6 +128,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
+    // Stock counts live in product_stock (not the variants JSON), so a stale form can
+    // never overwrite an order's decrement: only counts the admin changed are written.
+    await pruneStock(id, processedVariants.map((v) => v.id))
+    for (const c of stockChanges(rawVariants, processedVariants.map((v) => v.id))) {
+      await setStock(id, c.variantId, c.units)
+    }
+
     // Delete removed UploadThing files (best-effort; never touches legacy URLs).
     const prevImages = before?.images ?? []
     const nextImages = Array.isArray(images) ? images.filter((u): u is string => typeof u === 'string') : prevImages
@@ -190,4 +198,17 @@ export async function DELETE(
     console.error('Failed to delete product:', err)
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 })
   }
+}
+
+/** Stock edits from the product form: only values the admin changed (vs. what the form loaded). */
+function stockChanges(rawVariants: unknown[], ids: string[]): { variantId: string; units: number | null }[] {
+  const out: { variantId: string; units: number | null }[] = []
+  rawVariants.forEach((raw, i) => {
+    const v = raw as { stock?: unknown; stock_loaded?: unknown }
+    const norm = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? Math.max(0, Math.floor(x)) : null)
+    const next = norm(v.stock)
+    const loaded = norm(v.stock_loaded)
+    if (next !== loaded) out.push({ variantId: ids[i], units: next })
+  })
+  return out
 }

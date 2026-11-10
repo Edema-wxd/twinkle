@@ -13,6 +13,7 @@ deploying, or the blog, FAQ and home pages will fail to query:
 - `faqs`: `is_featured`
 - `blog_posts.previous_slugs` (added in the blog review below)
 - `orders.amount_paid`, `orders.payment_issue` (payment verification, below)
+- new table `product_stock` (stock counts, below)
 
 Also set `ADMIN_EMAILS` (comma-separated) in production. See the security note below.
 
@@ -146,7 +147,12 @@ This was tested in a real browser against a throwaway in-memory Postgres. The te
   - Stale prices are updated in the bag, with a notice.
   - Paystack only opens if the bag is exactly what the server would charge.
 - **Now, at payment:** if an item sells out between that check and the charge, the webhook marks the order `payment_review` ("marked sold out") instead of `paid`.
-- **Limit:** the catalogue only stores in or out of stock per variant, with no counts. Two people buying the last item at the same moment are both caught for review rather than prevented. Adding stock counts (decremented on payment) would be the next step if that matters.
+- **Stock counts (added):** each size can have a count in the new `product_stock` table, in beads (or items for Tools), where a pack of 100 uses 100. Blank means not tracked, and the In Stock tick decides.
+  - **Shop pages:** catalog, product, home and related products overlay live counts. A size shows as sold out when fewer beads than the smallest pack remain, pack sizes bigger than what's left are disabled, and an "Only N beads left" note appears when stock is low.
+  - **Checkout:** `check-cart` adds a `low_stock` status. Lines of the same size share one count, and the review step offers **Reduce to N**.
+  - **Payment:** `recordPaidOrder()` takes stock with one conditional `UPDATE … WHERE units >= need` per size, so two simultaneous orders can't both take the last units. The loser is held as `payment_review` with an explanation. Only the winning insert takes stock, so retries never double-count, and the affected shop pages are revalidated.
+  - **Admin:** a Stock column in the product editor, and stock per size in the products list. Saving only writes counts the admin changed, so a form left open can't undo an order's decrement.
+  - **Not automatic:** refunded or cancelled orders don't return stock. Adjust the count by hand.
 
 ## Still open (not changed, needs a decision or a follow-up)
 

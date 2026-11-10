@@ -3,7 +3,9 @@ import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { products } from '@/db'
 import { desc } from 'drizzle-orm'
-import { ProductListTable } from '../../../_components/ProductListTable'
+import { ProductListTable, type StockCell } from '../../../_components/ProductListTable'
+import { getStockMap, withStock } from '@/lib/stock'
+import type { ProductVariant } from '@/lib/types/product'
 
 export const metadata = {
   title: 'Products — Twinkle Locs Admin',
@@ -24,6 +26,7 @@ export default async function AdminProductsPage() {
     price_min: number
     price_max: number
     created_at: string
+    stock: StockCell[]
   }[] = []
 
   try {
@@ -38,10 +41,12 @@ export default async function AdminProductsPage() {
         priceMin: products.priceMin,
         priceMax: products.priceMax,
         createdAt: products.createdAt,
+        variants: products.variants,
       })
       .from(products)
       .orderBy(desc(products.createdAt))
 
+    const stockMap = await getStockMap(rows.map((r) => r.id))
     productsData = rows.map((r) => ({
       id: r.id,
       name: r.name,
@@ -52,6 +57,12 @@ export default async function AdminProductsPage() {
       price_min: r.priceMin,
       price_max: r.priceMax,
       created_at: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+      stock: withStock(r.id, (r.variants as ProductVariant[]) ?? [], stockMap).map((v) => ({
+        name: v.name,
+        units: v.stock ?? null,
+        soldOut: !v.in_stock,
+        low: v.stock != null && v.in_stock && v.stock < Math.max(1, ...v.price_tiers.map((t) => t.qty)) * 2,
+      })),
     }))
   } catch (error) {
     console.error('Failed to fetch products for admin:', error)

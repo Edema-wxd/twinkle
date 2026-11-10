@@ -5,6 +5,7 @@ import { Product, ProductMaterial } from '@/lib/types/product'
 import { ProductImageGallery } from './ProductImageGallery'
 import { useCart } from '@/lib/cart/CartContext'
 import { THREAD_COLOURS } from '@/lib/cart/threadColours'
+import { firstFittingTier, lowStockLabel, packFits } from '@/lib/stockDisplay'
 import { BUSINESS } from '@/lib/config/business'
 
 interface ProductDetailClientProps {
@@ -27,7 +28,7 @@ export function ProductDetailClient({ product, descriptionHtml }: ProductDetailC
 
   const [selectedVariantId, setSelectedVariantId] = useState(initialVariant?.id ?? '')
   const [selectedTierQty, setSelectedTierQty] = useState(
-    initialVariant?.price_tiers[0]?.qty ?? 0
+    firstFittingTier(initialVariant)
   )
   const [selectedThreadColour, setSelectedThreadColour] = useState<string | null>(
     product.material === 'Tools' ? '' : null
@@ -43,12 +44,12 @@ export function ProductDetailClient({ product, descriptionHtml }: ProductDetailC
   const hasMultipleTiers = (selectedVariant?.price_tiers.length ?? 0) > 1
 
   const isSoldOut = !product.variants.some((v) => v.in_stock)
-  const canAddToCart = !!selectedVariant?.in_stock && (product.material === 'Tools' || selectedThreadColour !== null)
+  const canAddToCart = packFits(selectedVariant, selectedTierQty) && (product.material === 'Tools' || selectedThreadColour !== null)
 
   function handleVariantChange(variantId: string) {
     setSelectedVariantId(variantId)
     const newVariant = product.variants.find((v) => v.id === variantId)
-    setSelectedTierQty(newVariant?.price_tiers[0]?.qty ?? 0)
+    setSelectedTierQty(firstFittingTier(newVariant))
   }
 
   function handleAddToCart() {
@@ -157,8 +158,10 @@ export function ProductDetailClient({ product, descriptionHtml }: ProductDetailC
                   key={tier.qty}
                   type="button"
                   aria-pressed={selectedTierQty === tier.qty}
+                  disabled={!packFits(selectedVariant, tier.qty)}
+                  title={packFits(selectedVariant, tier.qty) ? undefined : 'Not enough left for this pack size'}
                   onClick={() => setSelectedTierQty(tier.qty)}
-                  className={`rounded-lg px-4 py-2 font-body text-sm border-2 transition-all ${
+                  className={`rounded-lg px-4 py-2 font-body text-sm border-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:line-through ${
                     selectedTierQty === tier.qty
                       ? 'border-gold bg-gold/10 text-forest font-semibold'
                       : 'border-charcoal/20 text-charcoal hover:border-gold'
@@ -169,6 +172,13 @@ export function ProductDetailClient({ product, descriptionHtml }: ProductDetailC
               ))}
             </div>
           </div>
+        )}
+
+        {lowStockLabel(selectedVariant, product.material === 'Tools') && (
+          <p role="status" className="-mt-2 mb-6 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 font-body text-xs font-medium text-amber-900 ring-1 ring-amber-200">
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            {lowStockLabel(selectedVariant, product.material === 'Tools')}
+          </p>
         )}
 
         {/* Thread colour picker — interactive, not shown for Tools (e.g. Shears) */}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { getAdminSession } from '@/lib/auth/server'
+import { setStock } from '@/lib/stock'
 import { db } from '@/db'
 import { products } from '@/db'
 
@@ -102,6 +103,13 @@ export async function POST(req: NextRequest) {
       images: [],
     }).returning()
 
+    if (data) {
+      // Stock counts live in product_stock, not the variants JSON
+      for (const c of stockChanges(rawVariants, processedVariants.map((v) => v.id))) {
+        await setStock(data.id, c.variantId, c.units)
+      }
+    }
+
     if (!data) {
       return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })
     }
@@ -117,4 +125,17 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })
   }
+}
+
+/** Stock edits from the product form: only values the admin changed (vs. what the form loaded). */
+function stockChanges(rawVariants: unknown[], ids: string[]): { variantId: string; units: number | null }[] {
+  const out: { variantId: string; units: number | null }[] = []
+  rawVariants.forEach((raw, i) => {
+    const v = raw as { stock?: unknown; stock_loaded?: unknown }
+    const norm = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? Math.max(0, Math.floor(x)) : null)
+    const next = norm(v.stock)
+    const loaded = norm(v.stock_loaded)
+    if (next !== loaded) out.push({ variantId: ids[i], units: next })
+  })
+  return out
 }

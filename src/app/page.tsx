@@ -9,6 +9,7 @@ import { FaqTeaserSection } from '@/components/home/FaqTeaserSection'
 import type { FaqItem } from '@/components/faq/FaqAccordion'
 import { db, products as productsTable, testimonials as testimonialsTable, blogPosts as blogPostsTable, faqs as faqsTable } from '@/db'
 import { formatNaira, getShippingInfo } from '@/lib/checkout/shippingInfo'
+import { applyStockToProducts } from '@/lib/stock'
 import { faqAnswerHtml, htmlToText, toBlogCard, type BlogCardPost } from '@/lib/content'
 import { eq, and, asc, desc } from 'drizzle-orm'
 import type { Product, ProductMaterial, ProductVariant } from '@/lib/types/product'
@@ -102,7 +103,7 @@ export default async function HomePage() {
     return { id: r.id, category: r.category, question: r.question, answerHtml, answerText: htmlToText(answerHtml) }
   })
 
-  const featuredProducts: Product[] = productRows.map((row) => ({
+  const featuredBase: Product[] = productRows.map((row) => ({
     id: row.id,
     name: row.name,
     slug: row.slug,
@@ -116,6 +117,8 @@ export default async function HomePage() {
     created_at: row.createdAt.toISOString(),
     images: row.images?.length ? row.images : undefined,
   }))
+
+  const featuredProducts = await applyStockToProducts(featuredBase)
 
   const testimonials: Testimonial[] = testimonialRows.map((row) => ({
     id: row.id,

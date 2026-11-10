@@ -9,6 +9,8 @@ export interface ProductVariant {
   price: number;              // lowest available tier price (display/sort price)
   in_stock: boolean;
   price_tiers: PriceTier[];   // all available pack sizes with their prices
+  /** Units on hand (beads, or items for Tools) when stock is tracked; null/undefined = not tracked */
+  stock?: number | null;
 }
 
 export type ProductMaterial = 'Gold' | 'Silver' | 'Crystal' | 'Tools';

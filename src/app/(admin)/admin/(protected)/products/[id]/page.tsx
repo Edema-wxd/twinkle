@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { products } from '@/db'
 import { eq } from 'drizzle-orm'
 import { ProductForm } from '../../../../_components/ProductForm'
+import { getStockMap } from '@/lib/stock'
 
 export const metadata = {
   title: 'Edit Product — Twinkle Locs Admin',
@@ -26,6 +27,14 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
     notFound()
   }
 
+  // Stock lives in its own table; the form gets the current count and remembers it
+  // (stock_loaded) so saving only changes counts the admin actually edited
+  const stockMap = await getStockMap([row.id])
+  const variantsWithStock = (Array.isArray(row.variants) ? row.variants : []).map((v: { id?: string }) => {
+    const units = v.id ? stockMap.get(`${row.id}:${v.id}`) : undefined
+    return { ...v, stock: units ?? null, stock_loaded: units ?? null }
+  })
+
   // Map camelCase Drizzle row to snake_case shape expected by ProductForm
   const product = {
     id: row.id,
@@ -39,7 +48,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
     price_max: row.priceMax,
     image: row.image,
     images: row.images,
-    variants: row.variants,
+    variants: variantsWithStock,
     seo_description: row.seoDescription ?? null,
     created_at: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
   }

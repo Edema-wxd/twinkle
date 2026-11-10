@@ -41,6 +41,8 @@ function parseVariants(raw: unknown): VariantRow[] {
     name: typeof v.name === 'string' ? v.name : '',
     price: typeof v.price === 'number' ? v.price : 0,
     in_stock: typeof v.in_stock === 'boolean' ? v.in_stock : true,
+    stock: typeof v.stock === 'number' ? v.stock : null,
+    stock_loaded: typeof v.stock_loaded === 'number' ? v.stock_loaded : null,
     price_tiers:
       Array.isArray(v.price_tiers) && v.price_tiers.length > 0
         ? v.price_tiers
@@ -272,6 +274,10 @@ export function ProductForm({ product }: ProductFormProps) {
         </label>
         <p className="text-xs text-stone-500 mb-2">
           Each variant is a size/option. Set price_tiers for bulk pricing; a single tier is fine for simple pricing.
+          <br />
+          <strong className="text-stone-400">Stock</strong> is counted in beads for that size (items for tools): a pack of 100 uses 100.
+          It goes down automatically with every paid order, and the size shows as sold out once there&apos;s less than the smallest pack.
+          Leave it blank to manage availability with the In Stock tick instead.
         </p>
         <VariantTable variants={variants} onChange={setVariants} />
       </div>

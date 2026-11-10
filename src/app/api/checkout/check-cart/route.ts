@@ -40,6 +40,8 @@ export async function POST(req: NextRequest) {
       threadColour: l.threadColour,
       status: l.status,
       unitPrice: l.serverUnitPrice,
+      // Units left for this size, only when it's short (don't advertise exact stock otherwise)
+      available: l.status === 'low_stock' ? l.available : null,
     })),
     subtotal: priced.subtotal,
     discount: priced.discount,

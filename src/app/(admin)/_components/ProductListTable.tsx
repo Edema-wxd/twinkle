@@ -13,7 +13,11 @@ type ProductRow = {
   price_min: number
   price_max: number
   created_at: string
+  stock: StockCell[]
 }
+
+/** One size's stock for the list: units null = not tracked (In Stock tick only) */
+export type StockCell = { name: string; units: number | null; soldOut: boolean; low: boolean }
 
 type Category = 'All' | 'Gold' | 'Silver' | 'Crystal' | 'Tools'
 
@@ -139,6 +143,7 @@ export function ProductListTable({ products }: ProductListTableProps) {
                 <th className="px-4 py-3 text-left font-medium">Name</th>
                 <th className="px-4 py-3 text-left font-medium">Category</th>
                 <th className="px-4 py-3 text-left font-medium">Price range</th>
+                <th className="px-4 py-3 text-left font-medium">Stock</th>
                 <th className="px-4 py-3 text-left font-medium">Status</th>
                 <th className="px-4 py-3 text-left font-medium">Actions</th>
               </tr>
@@ -166,6 +171,28 @@ export function ProductListTable({ products }: ProductListTableProps) {
                     {/* Price range */}
                     <td className="px-4 py-3 text-stone-300 whitespace-nowrap">
                       {formatPriceRange(product.price_min, product.price_max)}
+                    </td>
+
+                    {/* Stock per size */}
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {product.stock.length === 0 && <span className="text-xs text-stone-500">No sizes</span>}
+                        {product.stock.map((c, i) => (
+                          <span
+                            key={i}
+                            title={c.units === null ? 'Not tracked: In Stock tick decides' : `${c.units} on hand`}
+                            className={`px-2 py-0.5 rounded text-[11px] whitespace-nowrap ring-1 ${
+                              c.soldOut
+                                ? 'bg-red-950/60 text-red-300 ring-red-800'
+                                : c.low
+                                  ? 'bg-amber-950/60 text-amber-200 ring-amber-700'
+                                  : 'bg-stone-800 text-stone-300 ring-stone-700'
+                            }`}
+                          >
+                            {c.name || 'Size'}: {c.soldOut ? 'sold out' : c.units === null ? 'in stock' : c.units.toLocaleString()}
+                          </span>
+                        ))}
+                      </div>
                     </td>
 
                     {/* Status badge */}

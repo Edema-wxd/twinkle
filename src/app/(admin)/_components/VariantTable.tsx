@@ -8,6 +8,10 @@ export interface VariantRow {
   price: number
   in_stock: boolean
   price_tiers: { qty: number; price: number }[]
+  /** Units on hand: beads (or items for Tools). null = not tracked, the In Stock tick decides */
+  stock: number | null
+  /** Value when the form loaded; the API only writes stock that changed */
+  stock_loaded?: number | null
 }
 
 interface VariantTableProps {
@@ -33,6 +37,8 @@ export function VariantTable({ variants, onChange }: VariantTableProps) {
       price: 0,
       in_stock: true,
       price_tiers: [{ qty: 1, price: 0 }],
+      stock: null,
+      stock_loaded: null,
     }
     onChange([...variants, newVariant])
   }
@@ -92,6 +98,7 @@ export function VariantTable({ variants, onChange }: VariantTableProps) {
               <th className="px-3 py-2 font-medium">Name</th>
               <th className="px-3 py-2 font-medium">Price (₦)</th>
               <th className="px-3 py-2 font-medium text-center">In Stock</th>
+              <th className="px-3 py-2 font-medium" title="Beads on hand for this size (items for tools). Leave blank to not track.">Stock</th>
               <th className="px-3 py-2 font-medium">Price Tiers</th>
               <th className="px-3 py-2 font-medium w-10"></th>
             </tr>
@@ -99,7 +106,7 @@ export function VariantTable({ variants, onChange }: VariantTableProps) {
           <tbody className="divide-y divide-stone-700">
             {variants.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-4 text-center text-stone-500">
+                <td colSpan={6} className="px-3 py-4 text-center text-stone-500">
                   No variants yet. Click &quot;+ Add variant&quot; below.
                 </td>
               </tr>
@@ -136,6 +143,30 @@ export function VariantTable({ variants, onChange }: VariantTableProps) {
                     />
                   </td>
                   <td className="px-3 py-2">
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      step={1}
+                      value={v.stock ?? ''}
+                      placeholder="Not tracked"
+                      aria-label={`Stock for ${v.name || 'this variant'}`}
+                      onChange={(e) =>
+                        updateVariant(v.id, {
+                          stock: e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value))),
+                        })
+                      }
+                      className={`w-28 bg-stone-900 border text-white placeholder-stone-500 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-gold ${
+                        v.stock !== null && v.stock < Math.min(...v.price_tiers.map((t) => t.qty || 1))
+                          ? 'border-red-500'
+                          : 'border-stone-600'
+                      }`}
+                    />
+                    {v.stock !== null && v.stock < Math.min(...v.price_tiers.map((t) => t.qty || 1)) && (
+                      <span className="block mt-1 text-[11px] text-red-300">Sold out on the shop</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2">
                     <div className="flex items-center gap-2">
                       <span className="text-stone-400 text-xs truncate max-w-[140px]">
                         {tierSummary(v.price_tiers)}
@@ -166,7 +197,7 @@ export function VariantTable({ variants, onChange }: VariantTableProps) {
                 {/* Expanded tier editor */}
                 {expandedTiersId === v.id && (
                   <tr key={`${v.id}-tiers`} className="bg-stone-900">
-                    <td colSpan={5} className="px-4 py-3">
+                    <td colSpan={6} className="px-4 py-3">
                       <div className="space-y-2">
                         <p className="text-xs font-medium text-stone-400 mb-2">
                           Price tiers for &quot;{v.name || 'this variant'}&quot;

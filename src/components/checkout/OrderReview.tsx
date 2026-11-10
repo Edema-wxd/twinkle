@@ -15,7 +15,13 @@ interface OrderReviewProps {
   onPaymentSuccess: (reference: string) => void;
 }
 
-type LineCheck = { key: string; name: string; status: 'ok' | 'sold_out' | 'unavailable' };
+type LineCheck = {
+  key: string;
+  name: string;
+  status: 'ok' | 'sold_out' | 'low_stock' | 'unavailable';
+  /** For low_stock: how many packs of this size can still be supplied */
+  maxQty?: number;
+};
 
 export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }: OrderReviewProps) {
   const { dispatch } = useCart();
@@ -38,7 +44,7 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
       });
       if (!res.ok) throw new Error(String(res.status));
       const data = (await res.json()) as {
-        lines: { productId: string; variantId: string; tierQty: number; threadColour: string; status: LineCheck['status']; unitPrice: number | null }[];
+        lines: { productId: string; variantId: string; tierQty: number; threadColour: string; status: LineCheck['status']; unitPrice: number | null; available: number | null }[];
       };
       setCheckFailed(false);
 
@@ -50,7 +56,11 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
         if (!item) return;
         const key = lineKey(item);
         if (line.status !== 'ok') {
-          blocked.push({ key, name: `${item.productName} ${item.variantName}`.trim(), status: line.status });
+          const maxQty =
+            line.status === 'low_stock' && typeof line.available === 'number'
+              ? Math.floor(line.available / Math.max(1, item.tierQty))
+              : undefined;
+          blocked.push({ key, name: `${item.productName} ${item.variantName}`.trim(), status: line.status, maxQty });
         } else if (typeof line.unitPrice === 'number' && line.unitPrice !== item.unitPrice) {
           reprice[key] = line.unitPrice;
           changed.push(item.productName);
@@ -231,8 +241,31 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
             {blockedLines.map((l) => (
               <li key={l.key} className="flex items-center justify-between gap-3 font-body text-sm text-red-800">
                 <span>
-                  {l.name} <span className="text-red-700/80">({l.status === 'sold_out' ? 'sold out' : 'no longer available'})</span>
+                  {l.name}{' '}
+                  <span className="text-red-700/80">
+                    (
+                    {l.status === 'sold_out'
+                      ? 'sold out'
+                      : l.status === 'low_stock'
+                        ? l.maxQty && l.maxQty > 0
+                          ? `only ${l.maxQty} ${l.maxQty === 1 ? 'pack' : 'packs'} left`
+                          : 'not enough left'
+                        : 'no longer available'}
+                    )
+                  </span>
                 </span>
+                {l.status === 'low_stock' && l.maxQty && l.maxQty > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      dispatch({ type: 'UPDATE_QTY', payload: { key: l.key, qty: l.maxQty! } });
+                      setBlockedLines((prev) => prev.filter((b) => b.key !== l.key));
+                    }}
+                    className="min-h-9 shrink-0 rounded-lg border border-red-300 bg-white px-3 font-heading text-xs font-semibold text-red-800 hover:bg-red-100"
+                  >
+                    Reduce to {l.maxQty}
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   aria-label={`Remove ${l.name} from your order`}

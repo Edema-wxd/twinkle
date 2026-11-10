@@ -1,8 +1,10 @@
 import { and, eq, gte, inArray, sql } from 'drizzle-orm'
+import { revalidatePath } from 'next/cache'
 import { db, orders, orderItems, abandonedOrders, products, promoCodes } from '@/db'
 import { getShippingInfo, quoteShipping, formatNaira } from '@/lib/checkout/shippingInfo'
 import type { ProductVariant } from '@/lib/types/product'
 import type { OrderEmailItem } from '@/lib/notifications/customerEmail'
+import { aggregateNeeds, getStockMap, takeStock, withStock } from '@/lib/stock'
 
 /**
  * Server-side source of truth for what a paid order costs.
@@ -70,13 +72,25 @@ export function parseCheckoutMetadata(raw: unknown): CheckoutMetadata | null {
 
 // ── Pricing ──────────────────────────────────────────────────────────────────
 
-/** ok = can be sold now; sold_out = variant marked out of stock; unavailable = product/variant/pack gone or archived */
-export type LineStatus = 'ok' | 'sold_out' | 'unavailable'
+/**
+ * ok = can be sold now; sold_out = none left (or marked sold out);
+ * low_stock = some left but not enough for this quantity (see `available`);
+ * unavailable = product/variant/pack gone or archived
+ */
+export type LineStatus = 'ok' | 'sold_out' | 'low_stock' | 'unavailable'
 
-export type PricedLine = ClaimedItem & { serverUnitPrice: number | null; lineTotal: number; status: LineStatus }
+export type PricedLine = ClaimedItem & {
+  serverUnitPrice: number | null
+  lineTotal: number
+  status: LineStatus
+  /** Tracked units left for this line's variant (beads, or items for Tools); null when not tracked */
+  available: number | null
+}
 
 export type PricedOrder = {
   lines: PricedLine[]
+  /** Slugs of the products in the order (for cache revalidation) */
+  slugs: string[]
   subtotal: number
   discount: number
   promoCode: string | null
@@ -91,11 +105,13 @@ export async function priceOrder(meta: CheckoutMetadata): Promise<PricedOrder> {
   const ids = [...new Set(meta.cart_items.map((i) => i.productId).filter((id) => UUID_RE.test(id)))]
   const rows = ids.length
     ? await db
-        .select({ id: products.id, name: products.name, variants: products.variants, isActive: products.isActive })
+        .select({ id: products.id, name: products.name, slug: products.slug, variants: products.variants, isActive: products.isActive, material: products.material })
         .from(products)
         .where(inArray(products.id, ids))
     : []
-  const byId = new Map(rows.map((r) => [r.id, r]))
+  // Live stock counts overlay the variants (sold out once fewer units than the smallest pack remain)
+  const stockMap = await getStockMap(ids)
+  const byId = new Map(rows.map((r) => [r.id, { ...r, variants: withStock(r.id, r.variants as ProductVariant[], stockMap) }]))
 
   const lines: PricedLine[] = meta.cart_items.map((item) => {
     const qty = Math.trunc(item.quantity)
@@ -126,13 +142,36 @@ export async function priceOrder(meta: CheckoutMetadata): Promise<PricedOrder> {
         problems.push(`"${product.name}" has been taken off the shop.`)
       } else if (status === 'ok' && !variant.in_stock) {
         status = 'sold_out'
-        problems.push(`"${product.name} ${variant.name}" is marked sold out.`)
+        problems.push(
+          typeof variant.stock === 'number'
+            ? `"${product.name} ${variant.name}" is sold out (stock: ${variant.stock}).`
+            : `"${product.name} ${variant.name}" is marked sold out.`,
+        )
       }
     }
     if (!(qty >= 1 && qty <= MAX_QTY)) problems.push(`"${item.productName}" has an invalid quantity (${item.quantity}).`)
     const unit = price ?? 0
-    return { ...item, quantity: qty, serverUnitPrice: price, lineTotal: unit * Math.max(0, qty), status }
+    return {
+      ...item,
+      quantity: qty,
+      serverUnitPrice: price,
+      lineTotal: unit * Math.max(0, qty),
+      status,
+      available: typeof variant?.stock === 'number' ? variant.stock : null,
+    }
   })
+
+  // Enough stock for the whole bag? Lines of the same size (e.g. two thread colours) share one count.
+  const needs = aggregateNeeds(
+    lines.filter((l) => l.status === 'ok').map((l) => ({ ...l, label: `${l.productName} ${l.variantName}`.trim() })),
+  )
+  for (const need of needs) {
+    const sample = lines.find((l) => l.productId === need.productId && l.variantId === need.variantId)
+    if (sample?.available == null || need.units <= sample.available) continue
+    const unitWord = byId.get(need.productId)?.material === 'Tools' ? 'left' : 'beads left'
+    problems.push(`Only ${sample.available} ${unitWord} of "${need.label}", but the order needs ${need.units}.`)
+    for (const l of lines) if (l.productId === need.productId && l.variantId === need.variantId) l.status = 'low_stock'
+  }
 
   const subtotal = lines.reduce((s, l) => s + l.lineTotal, 0)
 
@@ -159,7 +198,7 @@ export async function priceOrder(meta: CheckoutMetadata): Promise<PricedOrder> {
     }
   }
 
-  return { lines, subtotal, discount, promoCode, shipping, total: subtotal - discount + shipping, problems }
+  return { lines, slugs: rows.map((r) => r.slug), subtotal, discount, promoCode, shipping, total: subtotal - discount + shipping, problems }
 }
 
 // ── Recording ────────────────────────────────────────────────────────────────
@@ -248,6 +287,37 @@ export async function recordPaidOrder(charge: ChargeInput): Promise<RecordedOrde
     .returning({ id: orders.id })
 
   if (!inserted) return loadOrder(charge.reference) // lost the race
+
+  // Take the stock (only the winning insert does this, so retries never double-count).
+  // Each decrement is atomic, so simultaneous orders can't both take the last beads.
+  let finalIssue = paymentIssue
+  try {
+    const shortfalls = await takeStock(
+      aggregateNeeds(
+        priced.lines
+          .filter((l) => l.status === 'ok')
+          .map((l) => ({ ...l, label: `${l.productName} ${l.variantName}`.trim() })),
+      ),
+    )
+    if (shortfalls.length > 0) {
+      const text = shortfalls
+        .map((s) => `Not enough stock for "${s.need.label}": needed ${s.need.units}, only ${s.available} left (sold to another order at the same time).`)
+        .join(' ')
+      finalIssue = [paymentIssue, text].filter(Boolean).join(' ')
+      await db.update(orders).set({ status: PAYMENT_REVIEW_STATUS, paymentIssue: finalIssue }).where(eq(orders.id, inserted.id))
+      console.warn('[payments] Stock shortfall, order held for review', charge.reference, text)
+    }
+  } catch (e) {
+    console.error('[payments] Failed to take stock:', e)
+  }
+  // Cached shop pages show stock, so refresh the ones this order touched
+  try {
+    revalidatePath('/catalog')
+    revalidatePath('/')
+    for (const slug of new Set(priced.slugs)) revalidatePath(`/catalog/${slug}`)
+  } catch {
+    /* outside a request context (tests/scripts) */
+  }
 
   await db.insert(orderItems).values(
     priced.lines.map((l) => ({
