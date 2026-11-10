@@ -9,6 +9,7 @@ import { BlogShareButtons } from '@/components/blog/BlogShareButtons'
 import { BlogPostCard } from '@/components/blog/BlogPostCard'
 import { NewsletterBand } from '@/components/blog/NewsletterBand'
 import { ShopTheLook, type LookProduct } from '@/components/blog/ShopTheLook'
+import { PreferredSourceButton } from '@/components/blog/PreferredSourceButton'
 import { BUSINESS } from '@/lib/config/business'
 import {
   formatPostDate,
@@ -196,6 +197,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
         <div className="mt-14 flex flex-col gap-6 border-t border-forest/15 pt-8 sm:flex-row sm:items-center sm:justify-between">
           <BlogShareButtons title={post.title} canonicalUrl={canonicalUrl} />
+        </div>
+
+        {/* Google Preferred Sources: readers who add us see our stories more in Search, Top Stories and AI Overviews */}
+        <div className="mt-10">
+          <PreferredSourceButton />
         </div>
 
         {/* Soft conversion: questions go to WhatsApp, where Unoma closes most sales */}

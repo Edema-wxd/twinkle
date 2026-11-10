@@ -58,3 +58,11 @@ On phones, a wide table scrolls sideways inside its own box.
 - Leaving the editor with unsaved changes asks you first.
 - On a live post, **Update live post** publishes your changes straight away. Use **Unpublish** to take it down.
 - Renaming a live post's web address keeps the old link working. Anyone with the old link is redirected to the new one.
+
+## Google Preferred Sources
+
+Every post (and the blog page) ends with an **"Add as a preferred source"** button. Readers who tap it add twinklelocs.com to their Google preferred sources, so our posts show up more for them in Google Search, Top Stories, AI Overviews and AI Mode. It's the whole site, not one post, so one tap covers everything we publish.
+
+You can share the same link anywhere, for example in an Instagram bio, a WhatsApp broadcast or the newsletter: https://www.google.com/preferences/source?q=twinklelocs.com
+
+Google doesn't show how many people have added us.

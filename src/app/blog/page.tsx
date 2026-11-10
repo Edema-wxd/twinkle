@@ -6,6 +6,7 @@ import { desc, eq } from 'drizzle-orm'
 import { BlogPostCard } from '@/components/blog/BlogPostCard'
 import { BlogCategoryFilter } from '@/components/blog/BlogCategoryFilter'
 import { NewsletterBand } from '@/components/blog/NewsletterBand'
+import { PreferredSourceButton } from '@/components/blog/PreferredSourceButton'
 import { formatPostDate, toBlogCard, type BlogCardPost } from '@/lib/content'
 
 export const metadata: Metadata = {
@@ -135,7 +136,11 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           )}
         </section>
 
-        <div className="pb-20">
+        <div className="space-y-6 pb-20">
+          <PreferredSourceButton
+            title="Make Twinkle Locs a preferred source on Google"
+            description="One tap and our styling guides and loc care tips show up more in your Google Search, Top Stories and AI Overviews."
+          />
           <NewsletterBand />
         </div>
       </div>
