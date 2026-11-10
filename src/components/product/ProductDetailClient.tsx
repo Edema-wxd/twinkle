@@ -8,6 +8,8 @@ import { THREAD_COLOURS } from '@/lib/cart/threadColours'
 
 interface ProductDetailClientProps {
   product: Product
+  /** Sanitised HTML, prepared on the server */
+  descriptionHtml: string
 }
 
 const MATERIAL_BADGE: Record<ProductMaterial, string> = {
@@ -17,7 +19,7 @@ const MATERIAL_BADGE: Record<ProductMaterial, string> = {
   Tools: 'bg-forest/20 text-forest',
 }
 
-export function ProductDetailClient({ product }: ProductDetailClientProps) {
+export function ProductDetailClient({ product, descriptionHtml }: ProductDetailClientProps) {
   const { dispatch } = useCart()
 
   const initialVariant = product.variants.find((v) => v.in_stock) ?? product.variants[0]
@@ -105,9 +107,10 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
         {!hasMultipleTiers && <div className="mb-5" />}
 
         {/* Description */}
-        <p className="font-body text-charcoal/80 leading-relaxed mb-8">
-          {product.description}
-        </p>
+        <div
+          className="font-body text-charcoal/80 leading-relaxed mb-8 [&_p]:mb-4 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-4 [&_li]:mb-1 [&_strong]:font-semibold [&_strong]:text-charcoal [&_a]:text-gold [&_a]:underline"
+          dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+        />
 
         {/* Size picker */}
         <div className="mb-6">

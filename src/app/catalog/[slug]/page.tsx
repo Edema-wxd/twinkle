@@ -9,6 +9,7 @@ import { ProductDetailClient } from '@/components/product/ProductDetailClient'
 import { ProductReviews } from '@/components/product/ProductReviews'
 import { UpsellBlock } from '@/components/product/UpsellBlock'
 import { RelatedProducts } from '@/components/product/RelatedProducts'
+import { productDescriptionHtml, productDescriptionText } from '@/lib/product-description'
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>
@@ -52,7 +53,7 @@ export async function generateMetadata({
   if (!row) return {}
 
   const seo = PRODUCT_SEO[row.slug]
-  const description = seo?.description ?? (row.seoDescription ?? row.description).slice(0, 155)
+  const description = seo?.description ?? (row.seoDescription ?? productDescriptionText(row.description)).slice(0, 155)
   const ogImage = (row.images && row.images.length > 0 ? row.images[0] : null) ?? row.image
 
   return {
@@ -127,7 +128,7 @@ export default async function ProductDetailPage({
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    description: product.description,
+    description: productDescriptionText(product.description),
     image: (product.images && product.images.length > 0 ? product.images : [product.image]).map(absoluteUrl),
     brand: {
       '@type': 'Brand',
@@ -259,7 +260,10 @@ export default async function ProductDetailPage({
 
       {/* Main content grid — ProductDetailClient renders two children: gallery + info */}
       <div className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-2 gap-12">
-        <ProductDetailClient product={product} />
+        <ProductDetailClient
+          product={product}
+          descriptionHtml={productDescriptionHtml(product.description)}
+        />
       </div>
 
       {/* Reviews section */}
