@@ -25,7 +25,7 @@ type Row = {
 }
 
 function fmt(d: Date | null) {
-  return d ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null
+  return d ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Africa/Lagos' }) : null
 }
 
 export default async function AdminBlogPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
@@ -84,7 +84,7 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
 
       {loadError && (
         <p role="alert" className="rounded-lg bg-red-950/60 ring-1 ring-red-800 px-4 py-3 text-sm text-red-200">
-          Couldn&apos;t load posts. If you just deployed, run <code className="font-mono">npx drizzle-kit push</code> to add the new blog columns.
+          Couldn&apos;t load posts right now. Refresh in a moment; if it keeps happening, let Woods know (the database may need updating).
         </p>
       )}
 
@@ -165,7 +165,7 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
                   href={`/blog/${post.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="relative z-10 hidden sm:inline-flex px-3 py-1.5 text-xs text-stone-300 hover:text-white rounded-md ring-1 ring-stone-700 hover:ring-stone-500 transition-colors"
+                  className="relative z-10 inline-flex px-3 py-1.5 text-xs text-stone-300 hover:text-white rounded-md ring-1 ring-stone-700 hover:ring-stone-500 transition-colors"
                 >
                   View &#8599;
                 </a>

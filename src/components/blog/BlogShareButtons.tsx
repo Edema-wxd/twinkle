@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface BlogShareButtonsProps {
   title: string
@@ -12,6 +12,8 @@ const btn =
 
 export function BlogShareButtons({ title, canonicalUrl }: BlogShareButtonsProps) {
   const [copied, setCopied] = useState(false)
+  const [canShare, setCanShare] = useState(false)
+  useEffect(() => setCanShare(typeof navigator !== 'undefined' && 'share' in navigator), [])
   const waUrl = `https://wa.me/?text=${encodeURIComponent(`${title} ${canonicalUrl}`)}`
   const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(canonicalUrl)}`
   const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(canonicalUrl)}`
@@ -29,6 +31,15 @@ export function BlogShareButtons({ title, canonicalUrl }: BlogShareButtonsProps)
   return (
     <div className="flex flex-wrap items-center gap-2">
       <span className="mr-1 font-heading text-xs font-semibold uppercase tracking-[0.18em] text-charcoal/65">Share</span>
+      {canShare && (
+        <button
+          type="button"
+          onClick={() => navigator.share({ title, url: canonicalUrl }).catch(() => {})}
+          className={btn + ' bg-forest text-cream ring-forest'}
+        >
+          Share…
+        </button>
+      )}
       <a href={waUrl} target="_blank" rel="noopener noreferrer" className={btn}>
         WhatsApp
       </a>

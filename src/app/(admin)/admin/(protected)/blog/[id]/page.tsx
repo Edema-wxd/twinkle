@@ -3,7 +3,8 @@ import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { blogPosts } from '@/db'
 import { eq } from 'drizzle-orm'
-import { toBlogPostDto } from '@/lib/content'
+import { sanitizeArticleHtml, toBlogPostDto } from '@/lib/content'
+import { isUuid } from '@/lib/content-api'
 import { BlogPostForm } from '../../../../_components/BlogPostForm'
 import { getBlogEditorData } from '../../../../_lib/blog-editor-data'
 
@@ -20,6 +21,7 @@ export default async function EditBlogPostPage({ params }: EditBlogPostPageProps
   await requireAdminSession()
 
   const { id } = await params
+  if (!isUuid(id)) notFound()
 
   const [[row], { products, existingTags }] = await Promise.all([
     db.select().from(blogPosts).where(eq(blogPosts.id, id)).limit(1),
@@ -32,8 +34,7 @@ export default async function EditBlogPostPage({ params }: EditBlogPostPageProps
 
   return (
     <div className="px-6 lg:px-8">
-      {/* key forces a fresh form (and clean dirty state) after a save refresh */}
-      <BlogPostForm key={row.updatedAt.toISOString()} post={toBlogPostDto(row)} products={products} existingTags={existingTags} />
+      <BlogPostForm post={{ ...toBlogPostDto(row), body: sanitizeArticleHtml(row.body) }} products={products} existingTags={existingTags} />
     </div>
   )
 }

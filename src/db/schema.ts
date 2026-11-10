@@ -174,6 +174,7 @@ export const blogPosts = pgTable('blog_posts', {
   seoDescription: text('seo_description'), // overrides meta description when set
   isFeatured: boolean('is_featured').notNull().default(false), // hero slot on /blog
   featuredProductIds: text('featured_product_ids').array().notNull().default([]), // "Shop the look" on the post
+  previousSlugs: text('previous_slugs').array().notNull().default([]), // old URLs that 301 to this post
   published: boolean('published').notNull().default(false),
   publishedAt: timestamp('published_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

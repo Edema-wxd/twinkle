@@ -1,4 +1,4 @@
-import { asc, isNotNull } from 'drizzle-orm'
+import { asc, eq, isNotNull } from 'drizzle-orm'
 import { db, products, blogPosts } from '@/db'
 import type { PickerProduct } from '../_components/BlogPostForm'
 
@@ -9,6 +9,7 @@ export async function getBlogEditorData(): Promise<{ products: PickerProduct[]; 
       db
         .select({ id: products.id, name: products.name, slug: products.slug, image: products.image, priceMin: products.priceMin })
         .from(products)
+        .where(eq(products.isActive, true))
         .orderBy(asc(products.name)),
       db.selectDistinct({ tag: blogPosts.tag }).from(blogPosts).where(isNotNull(blogPosts.tag)),
     ])

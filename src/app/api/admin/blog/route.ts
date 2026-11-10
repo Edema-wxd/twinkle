@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Only one post holds the hero slot on /blog
-    if (data.isFeatured) {
+    if (data.isFeatured && data.published) {
       await db.update(blogPosts).set({ isFeatured: false }).where(ne(blogPosts.id, data.id))
     }
 
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     console.error('Failed to create blog post:', err)
     const pgErr = err as { code?: string }
     if (pgErr?.code === '23505') {
-      return NextResponse.json({ error: 'A post with this slug already exists' }, { status: 409 })
+      return NextResponse.json({ error: 'Another post already uses this web address. Change it under Search & sharing.' }, { status: 409 })
     }
     return NextResponse.json({ error: 'Failed to create blog post' }, { status: 500 })
   }

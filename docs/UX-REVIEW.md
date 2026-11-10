@@ -11,6 +11,9 @@ deploying, or the blog, FAQ and home pages will fail to query:
 
 - `blog_posts`: `seo_title`, `seo_description`, `is_featured`, `featured_product_ids`
 - `faqs`: `is_featured`
+- `blog_posts.previous_slugs` (added in the blog review below)
+
+Also set `ADMIN_EMAILS` (comma-separated) in production. See the security note below.
 
 ## Design tokens added
 
@@ -69,6 +72,58 @@ admin preview uses them too, so the preview matches the live page.
 - [P2] The About section nav covered the sticky header and caused sideways scrolling at 375px. It also had an id mismatch (`why-twinkles` vs `why-loc-beads`). It now builds from the real sections.
 - [P2] Review stars show a visible focus state and are larger targets.
 - [P2] Admin buttons used an off-brand `hover:bg-yellow-600`. They now use `gold-deep`.
+
+## Blog review, end to end (tested live)
+
+This was tested in a real browser against a throwaway in-memory Postgres. The test covered: log in, write a post with a table, save the draft, Cmd+S, the leave-page warning, restore after reload, import a `.md` file with images, paste Markdown, publish, view on desktop and iPhone, rename the slug, check the old link redirects, and delete.
+
+### Security (fixed)
+- **[P1] Anyone could become an admin.** Email sign-up was open, and every admin check only asked "is anyone logged in?". A stranger signed up and created a post (201) in the test. Sign-up now works only for the first account (first-run setup) or for emails in `ADMIN_EMAILS`. When `ADMIN_EMAILS` is set, it is also enforced on every admin request, which locks out any accounts created earlier. **Set it in production and check the `user` table for accounts you don't recognise.**
+- **[P1] Post HTML was stored raw.** The admin preview rendered it unsanitised, which allowed stored XSS. Post bodies are now sanitised when saved and when loaded into the editor.
+- **[P1, likely] Uploads were blocked by the CSP.** The browser uploads files straight to `*.ingest.uploadthing.com`, which `connect-src` didn't allow, so cover and inline uploads probably failed in production. That host is now allowed. Confirm with one upload after deploying.
+
+### Writing and editor (fixed)
+- **[P1]** Saving remounted the form, losing text typed during the save, the toast, preview mode, undo history and scroll position. The form no longer remounts.
+- **[P2]** Saving a new post twice could create a duplicate. After the first save, the form switches to updating and fixes the URL in place.
+- **[P2]** In-app links now ask before leaving with unsaved changes. Unsaved work is also backed up in the browser and can be restored.
+- **[P2]** The sticky formatting toolbar never stuck. It now sits under the action bar.
+- **[P2]** Failed image uploads were silent. They now show an error. Images can be pasted or dragged in, several at once, and alt text can be edited later.
+- **[P2]** The "Shop the look" picker listed archived products and kept deleted ones. It now shows only active products and drops missing ones.
+- **[P2]** A future publish date looked scheduled but published immediately. Future dates are now blocked (scheduling isn't supported). The date can also be set on drafts.
+- **[P2]** A draft marked "featured" emptied the hero slot. It now only takes the slot once published.
+- **[P2]** Changing a live post's slug broke shared links. Old slugs now 308-redirect to the new address.
+- **[P3]** Smaller fixes:
+  - Malformed post IDs return 404 instead of 500.
+  - Field lengths are capped.
+  - Lagos time zone is used for dates.
+  - Link insertion now works with no selected text, and `catalog/x` becomes an internal link.
+  - The drop cap no longer applies to the placeholder.
+  - The "View" link is shown on mobile.
+  - The save button now reads "Update live post".
+- Inline images are cleaned up from UploadThing when they're removed from a post or the post is deleted, unless another post uses them.
+
+### New: Markdown and tables
+- **Tables:** insert from the toolbar or from Markdown. There are row, column, header and merge controls. Tables are styled on the site and scroll sideways on phones.
+- **Markdown:**
+  - Paste it, drop a `.md` file into the editor, or use **Import Markdown**. You can choose to replace the post or add to the end.
+  - Front matter fills title, teaser, category, slug, cover and SEO fields.
+  - Local images are matched by file name and uploaded. Remote images are copied into storage by `/api/admin/blog/import-image`.
+  - Links to twinklelocs.com become internal links.
+  - Every import note is listed in a panel above the editor.
+- See `docs/BLOG-GUIDE.md` for the writer's guide.
+
+### Reading (fixed)
+- Inline images are now served through `/_next/image` with `srcset`, instead of multi-MB originals.
+- `?category=` only accepts real categories (case-insensitive), so a crafted link can't set the page heading.
+- The native share sheet is available on phones.
+- JSON-LD now has an image fallback.
+- The `<article>` now covers just the post.
+
+### Blog: still open
+- No scheduled publishing, revision history or "stage changes on a live post".
+- No image captions (the sanitizer already allows `figure`/`figcaption`).
+- `/blog` loads every post body to work out reading time. Store a word count column once there are 100+ posts.
+- **`middleware.ts` never runs.** It sits at the repo root, and with a `src/` layout Next only loads `src/middleware.ts`. As a result the lowercase-URL redirect is dead (`/BLOG` gives 404). Moving it would activate the cookie guard too, and that would block the setup page at `/admin/finedining` (the middleware only exempts `/admin/setup`). Fix the path list before moving it.
 
 ## Still open (not changed, needs a decision or a follow-up)
 

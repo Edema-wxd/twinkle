@@ -26,7 +26,6 @@ interface BlogPageProps {
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const { category } = await searchParams
-  const activeTag = category?.trim() || null
 
   let all: (BlogCardPost & { is_featured: boolean })[] = []
   try {
@@ -41,7 +40,10 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   }
 
   const tags = [...new Set(all.map((p) => p.tag).filter((t): t is string => Boolean(t)))].sort()
-  const filtered = activeTag ? all.filter((p) => p.tag === activeTag) : all
+  // Only honour real categories (case-insensitive), so a crafted ?category= can't rewrite the page heading
+  const wanted = category?.trim().toLowerCase()
+  const activeTag = wanted ? (tags.find((t) => t.toLowerCase() === wanted) ?? null) : null
+  const filtered = activeTag ? all.filter((p) => p.tag?.toLowerCase() === activeTag.toLowerCase()) : all
 
   // Hero = pinned post, else the newest. Only on the unfiltered view.
   const hero = activeTag ? null : (all.find((p) => p.is_featured) ?? all[0] ?? null)

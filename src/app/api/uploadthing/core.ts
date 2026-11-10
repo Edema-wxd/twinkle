@@ -24,6 +24,17 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ file }) => {
       return { url: file.ufsUrl }
     }),
+
+  // Several images at once: Markdown imports and drag-and-drop into the blog editor
+  blogImages: f({ image: { maxFileSize: '8MB', maxFileCount: 20 } })
+    .middleware(async () => {
+      const session = await getAdminSession()
+      if (!session) throw new UploadThingError('Unauthorized')
+      return { userId: session.user.id }
+    })
+    .onUploadComplete(async ({ file }) => {
+      return { url: file.ufsUrl }
+    }),
 } satisfies FileRouter
 
 export type OurFileRouter = typeof ourFileRouter

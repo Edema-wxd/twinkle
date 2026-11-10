@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import { cache } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { db, blogPosts as blogPostsTable, products as productsTable } from '@/db'
-import { and, desc, eq, inArray, ne } from 'drizzle-orm'
+import { and, arrayContains, desc, eq, inArray, ne } from 'drizzle-orm'
 import { BlogShareButtons } from '@/components/blog/BlogShareButtons'
 import { BlogPostCard } from '@/components/blog/BlogPostCard'
 import { NewsletterBand } from '@/components/blog/NewsletterBand'
@@ -64,7 +64,16 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params
   const post = await getPost(slug)
-  if (!post) return notFound()
+  if (!post) {
+    // Renamed post: send old links (already shared on WhatsApp etc.) to the new address
+    const [moved] = await db
+      .select({ slug: blogPostsTable.slug })
+      .from(blogPostsTable)
+      .where(and(eq(blogPostsTable.published, true), arrayContains(blogPostsTable.previousSlugs, [slug])))
+      .limit(1)
+    if (moved) permanentRedirect(`/blog/${moved.slug}`)
+    return notFound()
+  }
 
   const productIds = post.featuredProductIds ?? []
 
@@ -112,7 +121,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
   const related = [...relatedMap.values()]
 
-  const html = sanitizeArticleHtml(post.body)
+  const html = sanitizeArticleHtml(post.body, { forDisplay: true })
   const minutes = readingTime(post.body)
   const date = formatPostDate(post.publishedAt?.toISOString())
   const canonicalUrl = `${BASE}/blog/${post.slug}`
@@ -122,7 +131,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     '@type': 'BlogPosting',
     headline: post.title,
     description: post.seoDescription || post.excerpt || undefined,
-    image: post.featuredImage ?? undefined,
+    image: post.featuredImage ?? `${BASE}/og-image.jpg`,
     datePublished: post.publishedAt ? post.publishedAt.toISOString() : undefined,
     dateModified: post.updatedAt.toISOString(),
     wordCount: wordCount(post.body),
@@ -143,10 +152,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   return (
-    <article className="bg-cream">
+    <div className="bg-cream">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd).replace(/</g, '\\u003c') }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c') }} />
 
+      <article>
       {/* Header */}
       <header className={`relative overflow-hidden bg-forest ${post.featuredImage ? 'pb-28 md:pb-40' : 'pb-16'}`}>
         <div aria-hidden="true" className="absolute inset-0 bg-pattern-01 opacity-[0.06]" />
@@ -204,6 +214,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </a>
         </aside>
       </div>
+      </article>
 
       <div className="mx-auto max-w-6xl space-y-16 px-4 pb-20">
         <ShopTheLook products={lookProducts} />
@@ -221,6 +232,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
         <NewsletterBand />
       </div>
-    </article>
+    </div>
   )
 }

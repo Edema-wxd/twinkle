@@ -4,7 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import type { Editor } from '@tiptap/react'
 import { RichTextEditor } from './RichTextEditor'
+import { MarkdownImportDialog } from './MarkdownImportDialog'
+import type { MarkdownImportResult } from '@/lib/markdown-import'
 import { useUploadThing } from '@/lib/uploadthing'
 import type { BlogPost } from '@/types/db'
 
@@ -45,7 +48,11 @@ type Snapshot = Record<string, unknown>
 export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const isEdit = !!post
+  // Set after the first save of a new post so later saves update it instead of creating a duplicate
+  const [createdId, setCreatedId] = useState<string | null>(null)
+  const postId = post?.id ?? createdId
+  const isEdit = !!postId
+  const backupKey = `twinkle:blog-draft:${postId ?? 'new'}`
 
   const [title, setTitle] = useState(post?.title ?? '')
   const [slug, setSlug] = useState(post?.slug ?? '')
@@ -57,9 +64,15 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
   const [seoTitle, setSeoTitle] = useState(post?.seo_title ?? '')
   const [seoDescription, setSeoDescription] = useState(post?.seo_description ?? '')
   const [isFeatured, setIsFeatured] = useState(post?.is_featured ?? false)
-  const [productIds, setProductIds] = useState<string[]>(post?.featured_product_ids ?? [])
+  // Drop products that were deleted/archived since the post was written
+  const [productIds, setProductIds] = useState<string[]>(() =>
+    (post?.featured_product_ids ?? []).filter((id) => products.some((p) => p.id === id)),
+  )
   const [published, setPublished] = useState(post?.published ?? false)
-  const [publishedAt, setPublishedAt] = useState(toLocalInput(post?.published_at ?? null))
+  // Stored as an ISO string (timezone-neutral); converted to local time only in the browser
+  const [publishedAt, setPublishedAt] = useState<string>(post?.published_at ?? '')
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
   const [mode, setMode] = useState<'write' | 'preview'>('write')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -67,8 +80,13 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [productQuery, setProductQuery] = useState('')
+  const [importOpen, setImportOpen] = useState(false)
+  const [importNotes, setImportNotes] = useState<string[]>([])
+  const [backup, setBackup] = useState<{ savedAt: number; data: Snapshot } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const editorRef = useRef<Editor | null>(null)
+  const actionBarRef = useRef<HTMLDivElement>(null)
 
   const { startUpload } = useUploadThing('contentImages', {
     onClientUploadComplete: (res) => {
@@ -90,9 +108,113 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault()
     }
+    // In-app links (sidebar, "All posts") don't fire beforeunload, so ask first
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement | null)?.closest('a')
+      if (!a || a.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey) return
+      const href = a.getAttribute('href') ?? ''
+      if (!href.startsWith('/') || href.startsWith('/blog/')) return
+      if (!window.confirm('You have unsaved changes. Leave without saving?')) {
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    }
     window.addEventListener('beforeunload', handler)
-    return () => window.removeEventListener('beforeunload', handler)
+    document.addEventListener('click', onClick, true)
+    return () => {
+      window.removeEventListener('beforeunload', handler)
+      document.removeEventListener('click', onClick, true)
+    }
   }, [isDirty])
+
+  // Local safety net: keep unsaved work in this browser (survives a crash, a closed tab, a dead battery)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(backupKey)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as { savedAt: number; data: Snapshot }
+      const serverTime = post ? new Date(post.updated_at).getTime() : 0
+      if (parsed.savedAt > serverTime && JSON.stringify(parsed.data) !== JSON.stringify(snapshot)) setBackup(parsed)
+      else localStorage.removeItem(backupKey)
+    } catch {
+      /* storage unavailable */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (!isDirty || backup) return
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(backupKey, JSON.stringify({ savedAt: Date.now(), data: snapshot }))
+      } catch {
+        /* storage full/unavailable */
+      }
+    }, 800)
+    return () => clearTimeout(t)
+  }, [snapshot, isDirty, backup, backupKey])
+
+  function restoreBackup() {
+    if (!backup) return
+    const d = backup.data as Record<string, unknown>
+    setTitle(String(d.title ?? ''))
+    setSlug(String(d.slug ?? ''))
+    setExcerpt(String(d.excerpt ?? ''))
+    const html = String(d.body ?? '')
+    setBody(html)
+    editorRef.current?.commands.setContent(html, false)
+    setFeaturedImage((d.featuredImage as string | null) ?? null)
+    setTag(String(d.tag ?? ''))
+    setSeoTitle(String(d.seoTitle ?? ''))
+    setSeoDescription(String(d.seoDescription ?? ''))
+    setIsFeatured(Boolean(d.isFeatured))
+    setProductIds(String(d.productIds ?? '').split(',').filter((id) => products.some((p) => p.id === id)))
+    setBackup(null)
+    showToast('success', 'Unsaved changes restored. Save to keep them.')
+  }
+
+  function discardBackup() {
+    try {
+      localStorage.removeItem(backupKey)
+    } catch {
+      /* ignore */
+    }
+    setBackup(null)
+  }
+
+  // Keep the editor's formatting toolbar pinned just below this action bar
+  useEffect(() => {
+    const bar = actionBarRef.current
+    if (!bar) return
+    const update = () => {
+      const adminBar = window.matchMedia('(min-width: 1024px)').matches ? 0 : 56
+      document.documentElement.style.setProperty('--editor-sticky-top', `${adminBar + bar.offsetHeight}px`)
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(bar)
+    window.addEventListener('resize', update)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', update)
+      document.documentElement.style.removeProperty('--editor-sticky-top')
+    }
+  }, [])
+
+  function applyMarkdownMeta(result: MarkdownImportResult, overwrite: boolean) {
+    const m = result.meta
+    const take = (current: string, next: string | undefined) => (next && (overwrite || !current.trim()) ? next : current)
+    if (m.title && (overwrite || !title.trim())) handleTitleChange(m.title)
+    setExcerpt((v) => take(v, m.excerpt))
+    setTag((v) => take(v, m.tag))
+    setSeoTitle((v) => take(v, m.seoTitle))
+    setSeoDescription((v) => take(v, m.seoDescription))
+    if (m.slug && (overwrite || !slugTouched)) {
+      setSlugTouched(true)
+      setSlug(slugify(m.slug))
+    }
+    if (m.cover && (overwrite || !featuredImage)) setFeaturedImage(m.cover)
+  }
 
   function showToast(type: 'success' | 'error', message: string) {
     if (toastTimer.current) clearTimeout(toastTimer.current)
@@ -159,6 +281,10 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
         showToast('error', 'Give your post a title first')
         return
       }
+      if (publishedAt && new Date(publishedAt).getTime() > Date.now() + 60_000) {
+        showToast('error', 'The publish date is in the future. Scheduling isn’t supported yet, so pick today or earlier.')
+        return
+      }
       const finalSlug = slugify(slug || title)
       if (!finalSlug) {
         showToast('error', 'The URL slug needs at least one letter or number')
@@ -179,10 +305,10 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
             is_featured: isFeatured,
             featured_product_ids: productIds,
             published: nextPublished,
-            published_at: nextPublished && publishedAt ? new Date(publishedAt).toISOString() : undefined,
+            published_at: publishedAt || undefined,
           }
 
-          const res = await fetch(isEdit ? `/api/admin/blog/${post.id}` : '/api/admin/blog', {
+          const res = await fetch(isEdit ? `/api/admin/blog/${postId}` : '/api/admin/blog', {
             method: isEdit ? 'PUT' : 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -198,32 +324,43 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
           setSlug(finalSlug)
           setPublished(nextPublished)
           const savedAt = saved?.publishedAt ?? saved?.published_at ?? null
-          const nextPublishedAt = nextPublished ? toLocalInput(savedAt) || publishedAt : ''
+          const nextPublishedAt = nextPublished ? (savedAt ? new Date(savedAt).toISOString() : publishedAt) : ''
           setPublishedAt(nextPublishedAt)
           setSavedSnapshot(
             JSON.stringify({ ...snapshot, slug: finalSlug, published: nextPublished, publishedAt: nextPublishedAt }),
           )
 
-          const verb = nextPublished ? (post?.published ? 'Changes are live' : 'Published, it is live on the blog') : 'Draft saved'
+          const wasLive = published
+          const verb = nextPublished ? (wasLive ? 'Changes are live' : 'Published, it is live on the blog') : wasLive ? 'Unpublished, now a draft' : 'Draft saved'
           showToast('success', verb)
+          try {
+            localStorage.removeItem(backupKey)
+          } catch {
+            /* ignore */
+          }
 
           if (!isEdit && saved?.id) {
-            router.replace(`/admin/blog/${saved.id}`)
-          } else {
-            router.refresh()
+            // Stay in the editor (keeps undo history, scroll, toast); just fix the address bar
+            setCreatedId(saved.id)
+            window.history.replaceState(null, '', `/admin/blog/${saved.id}`)
+            try {
+              localStorage.removeItem('twinkle:blog-draft:new')
+            } catch {
+              /* ignore */
+            }
           }
         } catch {
           showToast('error', 'Network error, please try again')
         }
       })
     },
-    [title, slug, excerpt, body, featuredImage, tag, seoTitle, seoDescription, isFeatured, productIds, publishedAt, isEdit, post, router, snapshot],
+    [title, slug, excerpt, body, featuredImage, tag, seoTitle, seoDescription, isFeatured, productIds, publishedAt, isEdit, postId, published, snapshot, backupKey],
   )
 
   // Cmd/Ctrl + S saves without changing publish state
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 's') {
         e.preventDefault()
         if (!isPending) save(published)
       }
@@ -233,10 +370,10 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
   }, [save, published, isPending])
 
   function handleDelete() {
-    if (!post) return
+    if (!postId) return
     startTransition(async () => {
       try {
-        const res = await fetch(`/api/admin/blog/${post.id}`, { method: 'DELETE' })
+        const res = await fetch(`/api/admin/blog/${postId}`, { method: 'DELETE' })
         if (!res.ok) {
           const data = await res.json().catch(() => ({}))
           showToast('error', data.error ?? 'Failed to delete post')
@@ -244,6 +381,11 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
           return
         }
         setSavedSnapshot(JSON.stringify(snapshot))
+        try {
+          localStorage.removeItem(backupKey)
+        } catch {
+          /* ignore */
+        }
         router.push('/admin/blog')
         router.refresh()
       } catch {
@@ -253,7 +395,7 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
     })
   }
 
-  const liveUrl = `/blog/${post?.slug ?? effectiveSlug}`
+  const liveUrl = `/blog/${slug || effectiveSlug}`
 
   return (
     <form
@@ -279,7 +421,7 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
       </div>
 
       {/* Sticky action bar */}
-      <div className="sticky top-14 lg:top-0 z-20 -mx-6 lg:-mx-8 px-6 lg:px-8 py-3 mb-6 bg-stone-950/90 backdrop-blur border-b border-stone-800 flex flex-wrap items-center gap-3">
+      <div ref={actionBarRef} className="sticky top-14 lg:top-0 z-20 -mx-6 lg:-mx-8 px-6 lg:px-8 py-3 mb-6 bg-stone-950/90 backdrop-blur border-b border-stone-800 flex flex-wrap items-center gap-3">
         <Link href="/admin/blog" className="text-sm text-stone-400 hover:text-white transition-colors">
           &larr; All posts
         </Link>
@@ -301,7 +443,14 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
               </button>
             ))}
           </div>
-          {isEdit && post?.published && (
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="px-3 py-2 text-sm text-stone-300 hover:text-white transition-colors"
+          >
+            Import Markdown
+          </button>
+          {isEdit && published && !isDirty && (
             <a href={liveUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-stone-300 hover:text-white transition-colors">
               View live &#8599;
             </a>
@@ -311,8 +460,13 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
               <button type="button" onClick={() => save(false)} disabled={isPending} className="px-3 py-2 text-sm text-stone-300 hover:text-white disabled:opacity-50 transition-colors">
                 Unpublish
               </button>
-              <button type="submit" disabled={isPending} className="px-4 py-2 bg-gold hover:bg-gold-deep disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
-                {isPending ? 'Saving…' : 'Update post'}
+              <button
+                type="submit"
+                disabled={isPending}
+                title="Changes go live on the blog straight away"
+                className="px-4 py-2 bg-gold hover:bg-gold-deep disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                {isPending ? 'Saving…' : 'Update live post'}
               </button>
             </>
           ) : (
@@ -327,6 +481,44 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
           )}
         </div>
       </div>
+
+      {backup && (
+        <div role="alert" className="mb-6 flex flex-wrap items-center gap-3 rounded-xl bg-amber-950/70 ring-1 ring-amber-700 px-4 py-3">
+          <p className="flex-1 text-sm text-amber-100">
+            This browser has unsaved changes from {new Date(backup.savedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}.
+          </p>
+          <button type="button" onClick={restoreBackup} className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-stone-950 text-sm font-semibold rounded-lg">
+            Restore them
+          </button>
+          <button type="button" onClick={discardBackup} className="px-3 py-1.5 text-sm text-amber-200 hover:text-white">
+            Discard
+          </button>
+        </div>
+      )}
+
+      {importOpen && (
+        <MarkdownImportDialog
+          hasContent={!!body || !!title}
+          onClose={() => setImportOpen(false)}
+          onImported={(result, mode) => {
+            const ed = editorRef.current
+            if (mode === 'replace') {
+              ed?.commands.setContent(result.html, true)
+              if (!ed) setBody(result.html)
+            } else {
+              ed?.chain().focus('end').insertContent(result.html).run()
+            }
+            applyMarkdownMeta(result, mode === 'replace')
+            setMode('write')
+            setImportOpen(false)
+            setImportNotes(result.warnings)
+            showToast(
+              'success',
+              `Imported ${result.stats.words.toLocaleString()} words${result.stats.images ? `, ${result.stats.images} images` : ''}${result.stats.tables ? `, ${result.stats.tables} tables` : ''}${result.stats.links ? `, ${result.stats.links} links` : ''}. Review, then save.`,
+            )
+          }}
+        />
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-8">
         {/* ── Main column ─────────────────────────────────────────────── */}
@@ -368,13 +560,40 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
                     {words.toLocaleString()} words &middot; {minutes} min read
                   </span>
                 </div>
+                {importNotes.length > 0 && (
+                  <div role="status" className="rounded-lg bg-amber-950/60 ring-1 ring-amber-800 px-4 py-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm font-medium text-amber-100">
+                        {importNotes.length} thing{importNotes.length === 1 ? '' : 's'} to check from the import
+                      </p>
+                      <button type="button" onClick={() => setImportNotes([])} className="text-xs text-amber-200 hover:text-white">
+                        Dismiss
+                      </button>
+                    </div>
+                    <ul className="mt-2 list-disc pl-5 space-y-1 text-xs text-amber-100/90">
+                      {importNotes.map((n, i) => (
+                        <li key={i}>{n}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <RichTextEditor
                   value={body}
                   onChange={setBody}
+                  onReady={(ed) => {
+                    editorRef.current = ed
+                  }}
+                  onMarkdownImported={(r) => {
+                    applyMarkdownMeta(r, false)
+                    setImportNotes(r.warnings)
+                  }}
                   variant="article"
                   canvas="light"
-                  placeholder="Start your story. Use H2 for sections, the quote button for a stand-out line, and the link button to point readers to a product."
+                  placeholder="Start your story, or paste/drop a Markdown file. Use H2 for sections, the quote button for a stand-out line, and the link button to point readers to a product."
                 />
+                <p className="text-xs text-stone-500">
+                  Tip: paste Markdown or drop a .md file (with its images) straight in. Drag photos in to add them. Tables come from the grid button or Markdown.
+                </p>
               </div>
             </>
           ) : (
@@ -417,16 +636,30 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
 
           <Card title="Publishing">
             <div className="space-y-4">
-              {published && (
-                <Field id="post-date" label="Publish date" hint="Change to backdate a post. Newest posts show first.">
-                  <input id="post-date" type="datetime-local" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} className={inputClass + ' [color-scheme:dark]'} />
-                </Field>
-              )}
+              <Field
+                id="post-date"
+                label="Publish date"
+                hint={published ? 'Change to backdate a post. Newest posts show first.' : 'Optional. Leave blank to use the moment you press Publish.'}
+              >
+                <input
+                  id="post-date"
+                  type="datetime-local"
+                  value={mounted && publishedAt ? toLocalInput(publishedAt) : ''}
+                  max={mounted ? toLocalInput(new Date().toISOString()) : undefined}
+                  onChange={(e) => setPublishedAt(e.target.value ? new Date(e.target.value).toISOString() : '')}
+                  suppressHydrationWarning
+                  className={inputClass + ' [color-scheme:dark]'}
+                />
+              </Field>
               <Toggle
                 checked={isFeatured}
                 onChange={setIsFeatured}
                 label="Feature at the top of the blog"
-                hint="Takes the big hero spot on /blog. Only one post can be featured, so this replaces the current one."
+                hint={
+                  published
+                    ? 'Takes the big hero spot on /blog. Only one post can be featured, so this replaces the current one.'
+                    : 'Takes the hero spot once this post is published (it replaces the current one then, not now).'
+                }
               />
             </div>
           </Card>

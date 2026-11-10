@@ -16,6 +16,9 @@
 
 @layer base {
   html { scroll-behavior: smooth; }
+  /* Height of the fixed mobile admin bar; sticky admin toolbars sit below it */
+  :root { --admin-header-h: 3.5rem; }
+  @media (min-width: 1024px) { :root { --admin-header-h: 0px; } }
   /* Default keyboard focus ring for anything that doesn't define its own */
   :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
     outline: 2px solid var(--color-gold);
@@ -137,7 +140,7 @@
     margin-block: 2em;
   }
   /* Drop cap on the opening paragraph of an article */
-  .tl-prose--article > p:first-child::first-letter {
+  .tl-prose--article > p:first-child:not(.is-editor-empty)::first-letter {
     float: left;
     font-family: var(--font-display);
     font-size: 4.2em;
@@ -145,6 +148,49 @@
     padding: 0.08em 0.12em 0 0;
     color: var(--color-gold-deep);
   }
+
+  /* Tables: full width; the wrapper scrolls sideways on phones instead of squashing */
+  .tl-prose .tableWrapper,
+  .tl-prose .tl-table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    margin-block: 2em;
+    border-radius: 0.75rem;
+  }
+  .tl-prose .tableWrapper > table,
+  .tl-prose .tl-table-scroll > table { margin: 0; }
+  .tl-prose table {
+    width: 100%;
+    margin-block: 2em;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.95em;
+    line-height: 1.5;
+    border: 1px solid color-mix(in srgb, var(--color-forest) 15%, transparent);
+    border-radius: 0.75rem;
+    background: #fff;
+  }
+  .tl-prose th,
+  .tl-prose td {
+    min-width: 7rem;
+    padding: 0.7em 0.9em;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-forest) 10%, transparent);
+  }
+  .tl-prose th + th, .tl-prose td + td { border-left: 1px solid color-mix(in srgb, var(--color-forest) 8%, transparent); }
+  .tl-prose tr:last-child > td { border-bottom: 0; }
+  .tl-prose th {
+    background: var(--color-forest);
+    color: var(--color-cream);
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.85em;
+    letter-spacing: 0.02em;
+  }
+  .tl-prose tbody tr:nth-child(even) > td { background: color-mix(in srgb, var(--color-stone) 70%, transparent); }
+  .tl-prose td > p, .tl-prose th > p { margin: 0; }
+  .tl-prose td > p + p, .tl-prose th > p + p { margin-top: 0.5em; }
 
   /* Compact variant for FAQ answers */
   .tl-prose--compact { font-size: 0.95rem; line-height: 1.7; }

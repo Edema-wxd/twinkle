@@ -15,18 +15,33 @@ const ARTICLE_TAGS = [
   'ul', 'ol', 'li',
   'blockquote', 'hr',
   'a', 'img', 'figure', 'figcaption',
+  'table', 'thead', 'tbody', 'tr', 'th', 'td', 'colgroup', 'col',
 ]
 
-/** Sanitise Tiptap HTML for a blog article body. */
-export function sanitizeArticleHtml(html: string | null | undefined): string {
+/** Hosts whose images Next can optimise (must match next.config images.remotePatterns). */
+const OPTIMISABLE_IMAGE_HOSTS = ['ta1u3ge9om.ufs.sh']
+
+function optimisedSrc(src: string, width: number): string {
+  return `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=75`
+}
+
+/**
+ * Sanitise Tiptap HTML for a blog article body.
+ * `forDisplay` additionally routes uploaded images through Next's image optimiser
+ * (resized, modern formats) instead of shipping multi-MB originals to phones.
+ */
+export function sanitizeArticleHtml(html: string | null | undefined, { forDisplay = false } = {}): string {
   if (!html) return ''
-  return sanitizeHtml(html, {
+  const clean = sanitizeHtml(html, {
     allowedTags: ARTICLE_TAGS,
     allowedAttributes: {
       a: ['href', 'target', 'rel'],
-      img: ['src', 'alt', 'title', 'width', 'height', 'loading'],
+      img: ['src', 'srcset', 'sizes', 'alt', 'title', 'width', 'height', 'loading', 'decoding'],
+      th: ['colspan', 'rowspan'],
+      td: ['colspan', 'rowspan'],
     },
     allowedSchemes: ['http', 'https', 'mailto', 'tel'],
+    allowedSchemesByTag: { img: ['http', 'https'] },
     transformTags: {
       a: (tagName, attribs) => {
         const href = attribs.href ?? ''
@@ -36,12 +51,29 @@ export function sanitizeArticleHtml(html: string | null | undefined): string {
           : { href, target: '_blank', rel: 'noopener noreferrer' }
         return { tagName, attribs: out }
       },
-      img: (tagName, attribs) => ({
-        tagName,
-        attribs: { ...attribs, loading: 'lazy', alt: attribs.alt ?? '' },
-      }),
+      img: (tagName, attribs) => {
+        const out: Record<string, string> = { src: attribs.src ?? '', alt: attribs.alt ?? '' }
+        if (attribs.title) out.title = attribs.title
+        if (forDisplay) {
+          out.loading = 'lazy'
+          out.decoding = 'async'
+          let host = ''
+          try { host = new URL(out.src).hostname } catch { /* relative or invalid */ }
+          if (OPTIMISABLE_IMAGE_HOSTS.includes(host)) {
+            const original = out.src
+            out.src = optimisedSrc(original, 1080)
+            out.srcset = [640, 828, 1080, 1920].map((w) => `${optimisedSrc(original, w)} ${w}w`).join(', ')
+            out.sizes = '(max-width: 720px) 100vw, 680px'
+          }
+        }
+        return { tagName, attribs: out }
+      },
     },
   })
+  // Wide tables scroll inside their own box on phones instead of stretching the page
+  return forDisplay
+    ? clean.replace(/<table>/g, '<div class="tl-table-scroll"><table>').replace(/<\/table>/g, '</table></div>')
+    : clean
 }
 
 /** Render an FAQ answer (legacy plain text or Tiptap HTML) as safe HTML. */
@@ -86,7 +118,7 @@ export function slugify(input: string): string {
 
 export function formatPostDate(iso: string | null | undefined): string | null {
   if (!iso) return null
-  return new Date(iso).toLocaleDateString('en-NG', { year: 'numeric', month: 'long', day: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-NG', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Africa/Lagos' })
 }
 
 // ── Drizzle row → DTO mappers ────────────────────────────────────────────────

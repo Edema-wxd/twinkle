@@ -1,4 +1,5 @@
 import { revalidatePath } from 'next/cache'
+import { sanitizeArticleHtml } from '@/lib/content'
 
 /**
  * Validation + cache helpers shared by the admin blog/FAQ API routes.
@@ -34,30 +35,33 @@ export function parseBlogInput(raw: unknown): BlogInput {
   const b = (raw ?? {}) as Record<string, unknown>
   const out: BlogInput = {}
 
-  if (typeof b.title === 'string') out.title = b.title.trim()
-  if (typeof b.slug === 'string') out.slug = b.slug.trim()
-  if (typeof b.body === 'string') out.body = b.body
-  if (typeof b.excerpt === 'string') out.excerpt = b.excerpt.trim()
+  if (typeof b.title === 'string') out.title = b.title.trim().slice(0, 200)
+  if (typeof b.slug === 'string') out.slug = b.slug.trim().slice(0, 120)
+  // Stored sanitised, so nothing unsafe can reach the admin preview or the site
+  if (typeof b.body === 'string') out.body = sanitizeArticleHtml(b.body.slice(0, 500_000))
+  if (typeof b.excerpt === 'string') out.excerpt = b.excerpt.trim().slice(0, 500)
 
   const featuredImage = optionalText(b.featured_image)
-  if (featuredImage !== undefined) out.featuredImage = featuredImage
+  // Only https URLs (UploadThing) — anything else would break next/image in production
+  if (featuredImage !== undefined) out.featuredImage = featuredImage && /^https:\/\//.test(featuredImage) ? featuredImage : null
   const tag = optionalText(b.tag)
-  if (tag !== undefined) out.tag = tag
+  if (tag !== undefined) out.tag = tag ? tag.slice(0, 60) : tag
   const seoTitle = optionalText(b.seo_title)
-  if (seoTitle !== undefined) out.seoTitle = seoTitle
+  if (seoTitle !== undefined) out.seoTitle = seoTitle ? seoTitle.slice(0, 200) : seoTitle
   const seoDescription = optionalText(b.seo_description)
-  if (seoDescription !== undefined) out.seoDescription = seoDescription
+  if (seoDescription !== undefined) out.seoDescription = seoDescription ? seoDescription.slice(0, 500) : seoDescription
 
   if (typeof b.is_featured === 'boolean') out.isFeatured = b.is_featured
   if (Array.isArray(b.featured_product_ids)) {
-    out.featuredProductIds = [...new Set(b.featured_product_ids.filter((x): x is string => typeof x === 'string'))].slice(0, 4)
+    out.featuredProductIds = [...new Set(b.featured_product_ids.filter((x): x is string => typeof x === 'string' && isUuid(x)))].slice(0, 4)
   }
   if (typeof b.published === 'boolean') out.published = b.published
 
   if (b.published_at === null) out.publishedAt = null
   else if (typeof b.published_at === 'string' && b.published_at) {
     const d = new Date(b.published_at)
-    if (!Number.isNaN(d.getTime())) out.publishedAt = d
+    // No scheduling yet: a future date would show "published tomorrow" today, so clamp to now
+    if (!Number.isNaN(d.getTime())) out.publishedAt = d.getTime() > Date.now() ? new Date() : d
   }
 
   return out
@@ -75,4 +79,16 @@ export function revalidateBlog(...slugs: (string | null | undefined)[]) {
 export function revalidateFaqs() {
   revalidatePath('/faq')
   revalidatePath('/')
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+/** Postgres throws on a malformed uuid; treat those as "not found" instead of a 500. */
+export function isUuid(id: string): boolean {
+  return UUID_RE.test(id)
+}
+
+/** All UploadThing image URLs used inside an article body. */
+export function bodyImageUrls(html: string | null | undefined): string[] {
+  if (!html) return []
+  return [...new Set(Array.from(html.matchAll(/<img\b[^>]*\bsrc="(https:\/\/[^"]+\.ufs\.sh\/[^"]+)"/gi)).map((m) => m[1]))]
 }

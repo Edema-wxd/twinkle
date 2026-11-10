@@ -23,7 +23,8 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://ta1u3ge9om.ufs.sh",
-              "connect-src 'self' https://api.paystack.co https://js.paystack.co",
+              // UploadThing: the browser PUTs files straight to {region}.ingest.uploadthing.com
+              "connect-src 'self' https://api.paystack.co https://js.paystack.co https://*.uploadthing.com https://*.ufs.sh",
               "font-src 'self'",
               "frame-ancestors 'none'",
             ].join("; "),
