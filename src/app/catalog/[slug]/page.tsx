@@ -79,7 +79,7 @@ export default async function ProductDetailPage({
   const [row] = await db
     .select()
     .from(productsTable)
-    .where(eq(productsTable.slug, slug))
+    .where(and(eq(productsTable.slug, slug), eq(productsTable.isActive, true)))
     .limit(1)
 
   if (!row) return notFound()
@@ -182,7 +182,7 @@ export default async function ProductDetailPage({
     const [shearsData] = await db
       .select()
       .from(productsTable)
-      .where(eq(productsTable.slug, 'shears'))
+      .where(and(eq(productsTable.slug, 'shears'), eq(productsTable.isActive, true)))
       .limit(1)
 
     if (shearsData) {
@@ -212,6 +212,7 @@ export default async function ProductDetailPage({
         ne(productsTable.slug, slug),
         ne(productsTable.slug, 'shears'),
         ne(productsTable.material, 'Tools'),
+        eq(productsTable.isActive, true),
       )
     )
     .orderBy(desc(productsTable.isFeatured))
@@ -233,7 +234,7 @@ export default async function ProductDetailPage({
   }))
 
   return (
-    <main className="bg-cream min-h-screen">
+    <div className="bg-cream min-h-screen">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -247,12 +248,12 @@ export default async function ProductDetailPage({
         }}
       />
       {/* Breadcrumb */}
-      <nav className="max-w-6xl mx-auto px-4 pt-6 pb-0">
+      <nav aria-label="Breadcrumb" className="max-w-6xl mx-auto px-4 pt-6 pb-0">
         <Link
           href="/catalog"
-          className="text-gold hover:underline font-body text-sm"
+          className="text-forest underline decoration-gold underline-offset-2 hover:text-gold-deep font-body text-sm"
         >
-          Catalog
+          Shop
         </Link>
         <span className="text-charcoal/40 mx-1">›</span>
         <span className="font-body text-sm text-charcoal/70">{product.name}</span>
@@ -280,6 +281,6 @@ export default async function ProductDetailPage({
           <UpsellBlock shears={shearsProduct} />
         </section>
       )}
-    </main>
+    </div>
   )
 }

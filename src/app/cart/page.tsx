@@ -22,10 +22,16 @@ export default function CartPage() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl text-forest mb-8">Your Cart</h1>
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <h1 className="font-display text-4xl text-forest mb-8">Your Cart</h1>
 
-      {items.length === 0 ? (
+      {!state.hydrated ? (
+        <div role="status" className="space-y-4" aria-label="Loading your cart">
+          {[0, 1].map((i) => (
+            <div key={i} className="h-24 rounded-xl bg-white/60 animate-pulse" />
+          ))}
+        </div>
+      ) : items.length === 0 ? (
         /* Empty state */
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <p className="font-body text-charcoal/60 text-lg mb-6">
@@ -33,7 +39,7 @@ export default function CartPage() {
           </p>
           <Link
             href="/catalog"
-            className="font-heading font-semibold text-gold underline underline-offset-2 hover:text-forest transition-colors"
+            className="inline-flex min-h-12 items-center rounded-lg bg-forest px-7 font-heading font-semibold text-cream hover:bg-forest/90 transition-colors"
           >
             Continue Shopping
           </Link>
@@ -107,6 +113,6 @@ export default function CartPage() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

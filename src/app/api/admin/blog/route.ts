@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { ne } from 'drizzle-orm'
 import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { blogPosts } from '@/db'
-
-function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-}
+import { slugify } from '@/lib/content'
+import { parseBlogInput, revalidateBlog } from '@/lib/content-api'
 
 export async function POST(req: NextRequest) {
   // Auth check — validate against auth server (not just local JWT)
@@ -17,69 +13,63 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  let body: unknown
+  let raw: unknown
   try {
-    body = await req.json()
+    raw = await req.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { title, slug: rawSlug, body: postBody, excerpt, featured_image, tag, published, published_at } = body as {
-    title?: unknown
-    slug?: unknown
-    body?: unknown
-    excerpt?: unknown
-    featured_image?: unknown
-    tag?: unknown
-    published?: unknown
-    published_at?: unknown
-  }
+  const input = parseBlogInput(raw)
 
-  // Validate required fields
-  if (!title || typeof title !== 'string' || title.trim() === '') {
+  if (!input.title) {
     return NextResponse.json({ error: 'title is required' }, { status: 400 })
   }
 
-  const trimmedTitle = title.trim()
-  const slug =
-    rawSlug && typeof rawSlug === 'string' && rawSlug.trim() !== ''
-      ? rawSlug.trim()
-      : generateSlug(trimmedTitle)
-
+  const slug = slugify(input.slug || input.title)
   if (!slug) {
     return NextResponse.json({ error: 'slug could not be generated from title' }, { status: 400 })
   }
 
-  const isPublished = typeof published === 'boolean' ? published : false
-
+  const isPublished = input.published ?? false
   // Auto-set published_at when publishing and not explicitly provided
-  const resolvedPublishedAt =
-    isPublished
-      ? (typeof published_at === 'string' && published_at ? new Date(published_at) : new Date())
-      : null
+  const publishedAt = isPublished ? (input.publishedAt ?? new Date()) : null
 
   try {
-    const [data] = await db.insert(blogPosts).values({
-      title: trimmedTitle,
-      slug,
-      body: typeof postBody === 'string' ? postBody : '',
-      excerpt: typeof excerpt === 'string' ? excerpt : '',
-      featuredImage: typeof featured_image === 'string' && featured_image ? featured_image : null,
-      tag: typeof tag === 'string' && tag.trim() ? tag.trim() : null,
-      published: isPublished,
-      publishedAt: resolvedPublishedAt,
-    }).returning()
+    const [data] = await db
+      .insert(blogPosts)
+      .values({
+        title: input.title,
+        slug,
+        body: input.body ?? '',
+        excerpt: input.excerpt ?? '',
+        featuredImage: input.featuredImage ?? null,
+        tag: input.tag ?? null,
+        seoTitle: input.seoTitle ?? null,
+        seoDescription: input.seoDescription ?? null,
+        isFeatured: input.isFeatured ?? false,
+        featuredProductIds: input.featuredProductIds ?? [],
+        published: isPublished,
+        publishedAt,
+      })
+      .returning()
 
     if (!data) {
       return NextResponse.json({ error: 'Failed to create blog post' }, { status: 500 })
     }
 
+    // Only one post holds the hero slot on /blog
+    if (data.isFeatured && data.published) {
+      await db.update(blogPosts).set({ isFeatured: false }).where(ne(blogPosts.id, data.id))
+    }
+
+    revalidateBlog(data.slug)
     return NextResponse.json({ post: data }, { status: 201 })
   } catch (err: unknown) {
     console.error('Failed to create blog post:', err)
     const pgErr = err as { code?: string }
     if (pgErr?.code === '23505') {
-      return NextResponse.json({ error: 'A post with this slug already exists' }, { status: 409 })
+      return NextResponse.json({ error: 'Another post already uses this web address. Change it under Search & sharing.' }, { status: 409 })
     }
     return NextResponse.json({ error: 'Failed to create blog post' }, { status: 500 })
   }

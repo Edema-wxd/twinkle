@@ -4,22 +4,31 @@ import { FeaturedProductsSection } from '@/components/home/FeaturedProductsSecti
 import { BrandStorySection } from '@/components/home/BrandStorySection'
 import { TestimonialsSection } from '@/components/home/TestimonialsSection'
 import { InstagramCTASection } from '@/components/home/InstagramCTASection'
-import { db, products as productsTable, testimonials as testimonialsTable } from '@/db'
+import { JournalTeaserSection } from '@/components/home/JournalTeaserSection'
+import { FaqTeaserSection } from '@/components/home/FaqTeaserSection'
+import type { FaqItem } from '@/components/faq/FaqAccordion'
+import { db, products as productsTable, testimonials as testimonialsTable, blogPosts as blogPostsTable, faqs as faqsTable } from '@/db'
+import { formatNaira, getShippingInfo } from '@/lib/checkout/shippingInfo'
+import { faqAnswerHtml, htmlToText, toBlogCard, type BlogCardPost } from '@/lib/content'
 import { eq, and, asc, desc } from 'drizzle-orm'
 import type { Product, ProductMaterial, ProductVariant } from '@/lib/types/product'
 import type { Testimonial } from '@/components/home/TestimonialsSection'
 
-export const metadata: Metadata = {
-  title: {
-    absolute: 'Loc Beads Nigeria - Gold, Silver & Crystal | Twinkle Locs',
-  },
-  description: 'Buy handcrafted loc beads online in Nigeria. Gold, silver, crystal, and onyx styles from NGN 15,000. Ships Lagos in 1-2 days, nationwide in 3-5 days.',
-  openGraph: {
-    title: 'Loc Beads Nigeria - Gold, Silver & Crystal | Twinkle Locs',
-    description: 'Buy handcrafted loc beads online in Nigeria. Gold, silver, crystal, and onyx styles from NGN 15,000. Ships Lagos in 1-2 days, nationwide in 3-5 days.',
-    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Twinkle Locs – Nigerian Loc Beads' }],
-    type: 'website',
-  },
+// Shipping figures come from the same settings checkout charges from
+export async function generateMetadata(): Promise<Metadata> {
+  const info = await getShippingInfo()
+  const title = 'Loc Beads Nigeria - Gold, Silver & Crystal | Twinkle Locs'
+  const description = `Buy handcrafted loc beads online in Nigeria. Gold, silver, crystal, and onyx styles from NGN 15,000. Lagos delivery from ${formatNaira(info.lagosFrom)}, same day in most areas; nationwide in ${info.otherDays}.`
+  return {
+    title: { absolute: title },
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Twinkle Locs – Nigerian Loc Beads' }],
+      type: 'website',
+    },
+  }
 }
 
 const storeJsonLd = {
@@ -63,6 +72,36 @@ export default async function HomePage() {
     return [[], []] as const
   })
 
+  // Content teasers load independently so a content-table hiccup never blanks the shop
+  const [postRows, faqRows] = await Promise.all([
+    db
+      .select()
+      .from(blogPostsTable)
+      .where(eq(blogPostsTable.published, true))
+      .orderBy(desc(blogPostsTable.publishedAt))
+      .limit(3)
+      .catch((err) => {
+        console.error('[HomePage] blog query failed:', err)
+        return []
+      }),
+    db
+      .select()
+      .from(faqsTable)
+      .where(eq(faqsTable.isFeatured, true))
+      .orderBy(asc(faqsTable.displayOrder))
+      .limit(6)
+      .catch((err) => {
+        console.error('[HomePage] faq query failed:', err)
+        return []
+      }),
+  ])
+
+  const latestPosts: BlogCardPost[] = postRows.map(toBlogCard)
+  const featuredFaqs: FaqItem[] = faqRows.map((r) => {
+    const answerHtml = faqAnswerHtml(r.answer)
+    return { id: r.id, category: r.category, question: r.question, answerHtml, answerText: htmlToText(answerHtml) }
+  })
+
   const featuredProducts: Product[] = productRows.map((row) => ({
     id: row.id,
     name: row.name,
@@ -85,7 +124,7 @@ export default async function HomePage() {
   }))
 
   return (
-    <main>
+    <div>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -96,7 +135,9 @@ export default async function HomePage() {
       <FeaturedProductsSection products={featuredProducts} />
       <BrandStorySection />
       <TestimonialsSection testimonials={testimonials} />
+      <FaqTeaserSection faqs={featuredFaqs} />
+      <JournalTeaserSection posts={latestPosts} />
       <InstagramCTASection />
-    </main>
+    </div>
   )
 }

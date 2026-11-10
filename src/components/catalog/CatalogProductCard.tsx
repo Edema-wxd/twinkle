@@ -18,33 +18,27 @@ export function CatalogProductCard({ product }: CatalogProductCardProps) {
   const badgeClasses = MATERIAL_COLOURS[product.material]
 
   return (
-    <Link href={`/catalog/${product.slug}`}>
+    <Link href={`/catalog/${product.slug}`} className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-cream">
       <article className="bg-white rounded-xl overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all duration-200 cursor-pointer">
         <div className="relative aspect-square w-full">
           <Image
             src={product.image}
             alt={product.name}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            sizes="(max-width: 768px) 50vw, 33vw"
             className="object-cover"
           />
         </div>
-        <div className="p-4">
+        <div className="p-3 sm:p-4">
           <span
             className={`inline-block text-xs font-body font-medium px-2 py-0.5 rounded-full mb-2 ${badgeClasses}`}
           >
             {product.material}
           </span>
-          <h3 className="font-heading font-semibold text-forest text-base mb-1">
-            {product.name.split('').map((char, idx) =>
-              /[0-9]/.test(char) ? (
-                <span key={idx} className="font-mistrully">{char}</span>
-              ) : (
-                <span key={idx} className="font-halimun">{char}</span>
-              )
-            )}
+          <h3 className="font-heading font-semibold text-forest text-sm sm:text-base leading-snug mb-1">
+            {product.name}
           </h3>
-    
+
           <p className="font-body text-sm text-charcoal/60 mb-3">
             From &#8358;{product.price_min.toLocaleString()}
           </p>

@@ -20,11 +20,11 @@ export function CatalogClient({ products }: CatalogClientProps) {
   const filteredProducts = useMemo(() => {
     let result = [...products]
 
-    if (searchQuery.trim().length > 0) {
-      result = result.filter((p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    } else if (activeCategory !== 'All') {
+    const q = searchQuery.trim().toLowerCase()
+    if (q.length > 0) {
+      result = result.filter((p) => p.name.toLowerCase().includes(q) || p.material.toLowerCase().includes(q))
+    }
+    if (activeCategory !== 'All') {
       result = result.filter((p) => p.material === activeCategory)
     }
 
@@ -43,8 +43,13 @@ export function CatalogClient({ products }: CatalogClientProps) {
     return result
   }, [products, activeCategory, sortOrder, searchQuery])
 
-  const showEmptyMessage =
-    searchQuery.trim().length > 0 && filteredProducts.length === 0
+  const hasFilters = searchQuery.trim().length > 0 || activeCategory !== 'All'
+  const showEmptyMessage = filteredProducts.length === 0
+
+  function clearFilters() {
+    setSearchQuery('')
+    setActiveCategory('All')
+  }
 
   return (
     <div className="bg-cream min-h-screen">
@@ -74,26 +79,43 @@ export function CatalogClient({ products }: CatalogClientProps) {
 
           {/* Filters button — mobile only */}
           <button
-            className="md:hidden bg-white border border-charcoal/20 rounded-lg px-4 py-2 text-sm font-body text-charcoal cursor-pointer"
+            type="button"
+            className="md:hidden min-h-11 bg-white border border-charcoal/20 rounded-lg px-4 py-2 text-sm font-body text-charcoal cursor-pointer"
             onClick={() => setIsFilterOpen(true)}
           >
-            Filters
+            Filters{activeCategory !== 'All' ? ` · ${activeCategory}` : ''}
           </button>
         </div>
 
-        {/* Empty state message */}
-        {showEmptyMessage && (
-          <p className="font-body text-charcoal/60 text-center py-8">
-            No products match &ldquo;{searchQuery}&rdquo; — showing all products
-          </p>
-        )}
+        <p aria-live="polite" className="sr-only">
+          {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} shown
+        </p>
 
-        {/* Product grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {(showEmptyMessage ? products : filteredProducts).map((p) => (
-            <CatalogProductCard key={p.id} product={p} />
-          ))}
-        </div>
+        {showEmptyMessage ? (
+          <div className="rounded-2xl bg-white ring-1 ring-forest/10 px-6 py-14 text-center">
+            <p className="font-heading font-semibold text-forest">
+              {products.length === 0 ? 'New pieces are on the way' : 'Nothing matches that yet'}
+            </p>
+            <p className="mt-1 font-body text-sm text-charcoal/70">
+              {products.length === 0 ? 'Check back soon or ask us on WhatsApp.' : 'Try another word, or browse everything.'}
+            </p>
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-5 inline-flex min-h-11 items-center rounded-lg bg-forest px-5 font-heading text-sm font-semibold text-cream hover:bg-forest/90"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
+            {filteredProducts.map((p) => (
+              <CatalogProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Filter Drawer — mobile */}
@@ -101,15 +123,10 @@ export function CatalogClient({ products }: CatalogClientProps) {
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         activeCategory={activeCategory}
-        onCategoryChange={(cat) => {
-          setActiveCategory(cat)
-          setIsFilterOpen(false)
-        }}
+        onCategoryChange={setActiveCategory}
         sortOrder={sortOrder}
-        onSortChange={(sort) => {
-          setSortOrder(sort)
-          setIsFilterOpen(false)
-        }}
+        onSortChange={setSortOrder}
+        resultCount={filteredProducts.length}
       />
     </div>
   )

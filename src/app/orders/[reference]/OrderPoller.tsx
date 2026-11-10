@@ -9,7 +9,7 @@ interface OrderPollerProps {
   reference: string;
 }
 
-type FullOrder = Order & { order_items: OrderItem[] };
+type FullOrder = Order & { order_items: OrderItem[]; delivery_estimate?: string };
 
 export function OrderPoller({ reference }: OrderPollerProps) {
   const [order, setOrder] = useState<FullOrder | null>(null);

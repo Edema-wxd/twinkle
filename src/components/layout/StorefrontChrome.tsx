@@ -10,12 +10,20 @@ export function StorefrontChrome({ children }: { children: React.ReactNode }) {
   if (pathname.startsWith('/admin')) {
     return <>{children}</>
   }
+  // The floating button would cover the Pay button on mobile checkout
+  const showWhatsApp = !pathname.startsWith('/checkout')
   return (
     <>
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-cream focus:px-4 focus:py-3 focus:font-heading focus:text-sm focus:font-semibold focus:text-forest focus:shadow-lg"
+      >
+        Skip to content
+      </a>
       <Header />
-      <main className="flex-1">{children}</main>
+      <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">{children}</main>
       <Footer />
-      <WhatsAppButton />
+      {showWhatsApp && <WhatsAppButton />}
     </>
   )
 }

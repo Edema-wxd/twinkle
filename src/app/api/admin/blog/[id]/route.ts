@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { and, eq, like, ne, sql } from 'drizzle-orm'
 import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { blogPosts } from '@/db'
-import { eq } from 'drizzle-orm'
 import { deleteUploadthingFilesByUrls } from '@/lib/uploadthing/server'
+import { slugify } from '@/lib/content'
+import { bodyImageUrls, isUuid, parseBlogInput, revalidateBlog } from '@/lib/content-api'
 
 export async function PUT(
   req: NextRequest,
@@ -16,32 +18,27 @@ export async function PUT(
   }
 
   const { id } = await params
+  if (!isUuid(id)) return NextResponse.json({ error: 'Post not found' }, { status: 404 })
 
-  let body: unknown
+  let raw: unknown
   try {
-    body = await req.json()
+    raw = await req.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { title, slug, body: postBody, excerpt, featured_image, tag, published, published_at } = body as {
-    title?: unknown
-    slug?: unknown
-    body?: unknown
-    excerpt?: unknown
-    featured_image?: unknown
-    tag?: unknown
-    published?: unknown
-    published_at?: unknown
-  }
+  const input = parseBlogInput(raw)
 
   // Fetch current post to detect published transition + cleanup replaced featured image
   const [currentPost] = await db
     .select({
       id: blogPosts.id,
+      slug: blogPosts.slug,
       published: blogPosts.published,
       publishedAt: blogPosts.publishedAt,
       featuredImage: blogPosts.featuredImage,
+      previousSlugs: blogPosts.previousSlugs,
+      body: blogPosts.body,
     })
     .from(blogPosts)
     .where(eq(blogPosts.id, id))
@@ -51,36 +48,38 @@ export async function PUT(
     return NextResponse.json({ error: 'Post not found' }, { status: 404 })
   }
 
-  const updates: Record<string, unknown> = {}
+  const updates: Partial<typeof blogPosts.$inferInsert> = {}
 
-  if (typeof title === 'string' && title.trim() !== '') {
-    updates.title = title.trim()
-  }
-  if (typeof slug === 'string' && slug.trim() !== '') {
-    updates.slug = slug.trim()
-  }
-  if (typeof postBody === 'string') {
-    updates.body = postBody
-  }
-  if (typeof excerpt === 'string') {
-    updates.excerpt = excerpt
-  }
-  if (featured_image === null || (typeof featured_image === 'string')) {
-    updates.featuredImage = featured_image || null
-  }
-  if (tag === null || typeof tag === 'string') {
-    updates.tag = typeof tag === 'string' && tag.trim() ? tag.trim() : null
-  }
-  if (typeof published === 'boolean') {
-    updates.published = published
-
-    // Auto-set publishedAt when transitioning from unpublished to published
-    if (published && !currentPost.published) {
-      updates.publishedAt =
-        typeof published_at === 'string' && published_at
-          ? new Date(published_at)
-          : new Date()
+  if (input.title) updates.title = input.title
+  if (input.slug) {
+    const s = slugify(input.slug)
+    if (s && s !== currentPost.slug) {
+      updates.slug = s
+      // Remember the old address so links already shared on WhatsApp/Instagram keep working
+      if (currentPost.published || currentPost.publishedAt) {
+        updates.previousSlugs = [...new Set([...(currentPost.previousSlugs ?? []), currentPost.slug])].filter((x) => x !== s)
+      }
     }
+  }
+  if (input.body !== undefined) updates.body = input.body
+  if (input.excerpt !== undefined) updates.excerpt = input.excerpt
+  if (input.featuredImage !== undefined) updates.featuredImage = input.featuredImage
+  if (input.tag !== undefined) updates.tag = input.tag
+  if (input.seoTitle !== undefined) updates.seoTitle = input.seoTitle
+  if (input.seoDescription !== undefined) updates.seoDescription = input.seoDescription
+  if (input.isFeatured !== undefined) updates.isFeatured = input.isFeatured
+  if (input.featuredProductIds !== undefined) updates.featuredProductIds = input.featuredProductIds
+
+  if (input.published !== undefined) {
+    updates.published = input.published
+    // Auto-set publishedAt when transitioning from unpublished to published
+    if (input.published && !currentPost.published) {
+      updates.publishedAt = input.publishedAt ?? new Date()
+    }
+  }
+  // Explicit date change (backdating / correcting) on an already-published post
+  if (input.publishedAt && currentPost.published && input.published !== false) {
+    updates.publishedAt = input.publishedAt
   }
 
   updates.updatedAt = new Date()
@@ -96,29 +95,46 @@ export async function PUT(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    // Delete replaced/removed featured image (best-effort).
-    const previous = currentPost.featuredImage
-    const next =
-      typeof featured_image === 'string'
-        ? (featured_image || null)
-        : featured_image === null
-          ? null
-          : previous
+    // Only a live post may take the hero slot, otherwise a draft would empty it
+    if (data.isFeatured && data.published) {
+      await db
+        .update(blogPosts)
+        .set({ isFeatured: false })
+        .where(and(ne(blogPosts.id, data.id), eq(blogPosts.isFeatured, true)))
+    }
 
-    if (previous && previous !== next) {
+    // A new slug must not shadow another post's old address
+    if (updates.slug) {
+      await db
+        .update(blogPosts)
+        .set({ previousSlugs: sql`array_remove(${blogPosts.previousSlugs}, ${data.slug})` })
+        .where(ne(blogPosts.id, data.id))
+    }
+
+    // Delete replaced/removed images (cover + inline), best-effort, never ones another post still uses
+    const previous = currentPost.featuredImage
+    const next = input.featuredImage === undefined ? previous : input.featuredImage
+    const orphans = new Set<string>()
+    if (previous && previous !== next) orphans.add(previous)
+    if (input.body !== undefined) {
+      const kept = new Set(bodyImageUrls(input.body))
+      for (const url of bodyImageUrls(currentPost.body)) if (!kept.has(url) && url !== next) orphans.add(url)
+    }
+    if (orphans.size > 0) {
       try {
-        await deleteUploadthingFilesByUrls([previous])
+        await deleteUploadthingFilesByUrls(await unusedElsewhere([...orphans], id))
       } catch (err) {
-        console.error('UploadThing cleanup failed (blog featured image):', err)
+        console.error('UploadThing cleanup failed (blog images):', err)
       }
     }
 
+    revalidateBlog(currentPost.slug, data.slug)
     return NextResponse.json({ ok: true, post: data })
   } catch (err: unknown) {
     console.error('Failed to update blog post:', err)
     const pgErr = err as { code?: string }
     if (pgErr?.code === '23505') {
-      return NextResponse.json({ error: 'A post with this slug already exists' }, { status: 409 })
+      return NextResponse.json({ error: 'Another post already uses this web address. Change it under Search & sharing.' }, { status: 409 })
     }
     return NextResponse.json({ error: 'Failed to update blog post' }, { status: 500 })
   }
@@ -135,27 +151,44 @@ export async function DELETE(
   }
 
   const { id } = await params
+  if (!isUuid(id)) return NextResponse.json({ error: 'Post not found' }, { status: 404 })
 
   try {
     const [before] = await db
-      .select({ featuredImage: blogPosts.featuredImage })
+      .select({ featuredImage: blogPosts.featuredImage, slug: blogPosts.slug, body: blogPosts.body })
       .from(blogPosts)
       .where(eq(blogPosts.id, id))
       .limit(1)
 
     await db.delete(blogPosts).where(eq(blogPosts.id, id))
 
-    if (before?.featuredImage) {
+    const urls = [...(before?.featuredImage ? [before.featuredImage] : []), ...bodyImageUrls(before?.body)]
+    if (urls.length > 0) {
       try {
-        await deleteUploadthingFilesByUrls([before.featuredImage])
+        await deleteUploadthingFilesByUrls(await unusedElsewhere(urls, id))
       } catch (err) {
         console.error('UploadThing cleanup failed (blog delete):', err)
       }
     }
 
+    revalidateBlog(before?.slug)
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('Failed to delete blog post:', err)
     return NextResponse.json({ error: 'Failed to delete blog post' }, { status: 500 })
   }
+}
+
+/** Keep only URLs no other post references (as cover or inside its body). */
+async function unusedElsewhere(urls: string[], exceptId: string): Promise<string[]> {
+  const out: string[] = []
+  for (const url of urls) {
+    const [other] = await db
+      .select({ id: blogPosts.id })
+      .from(blogPosts)
+      .where(and(ne(blogPosts.id, exceptId), sql`(${blogPosts.featuredImage} = ${url} OR ${like(blogPosts.body, `%${url}%`)})`))
+      .limit(1)
+    if (!other) out.push(url)
+  }
+  return out
 }

@@ -14,6 +14,11 @@ export default function AdminLoginPage() {
     setErrorMsg(null)
     setIsPending(true)
 
+    // Return to the admin page that sent us here (set by middleware). Only /admin/* paths,
+    // so a crafted ?next= can't send someone off-site.
+    const next = new URLSearchParams(window.location.search).get('next') ?? ''
+    const destination = /^\/admin\/[\w\-/]*$/.test(next) && !next.startsWith('/admin/login') ? next : '/admin'
+
     const formData = new FormData(e.currentTarget)
     const email = (formData.get('email') as string).trim()
     const password = formData.get('password') as string
@@ -21,7 +26,7 @@ export default function AdminLoginPage() {
     const { error } = await authClient.signIn.email({
       email,
       password,
-      callbackURL: '/admin',
+      callbackURL: destination,
     })
 
     if (error) {
@@ -30,7 +35,7 @@ export default function AdminLoginPage() {
       return
     }
 
-    router.push('/admin')
+    router.push(destination)
     router.refresh()
   }
 
@@ -88,7 +93,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={isPending}
-            className="w-full py-2.5 bg-gold text-white font-heading font-semibold text-sm rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-2.5 bg-gold text-white font-heading font-semibold text-sm rounded-lg hover:bg-gold-deep transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isPending ? 'Signing in…' : 'Sign in'}
           </button>

@@ -1,204 +1,243 @@
 import type { Metadata } from 'next'
+import { cache } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
-import { db, blogPosts as blogPostsTable } from '@/db'
-import { eq, desc, ne, and } from 'drizzle-orm'
-import { Tables } from '@/types/db'
+import { notFound, permanentRedirect } from 'next/navigation'
+import { db, blogPosts as blogPostsTable, products as productsTable } from '@/db'
+import { and, arrayContains, desc, eq, inArray, ne } from 'drizzle-orm'
 import { BlogShareButtons } from '@/components/blog/BlogShareButtons'
 import { BlogPostCard } from '@/components/blog/BlogPostCard'
+import { NewsletterBand } from '@/components/blog/NewsletterBand'
+import { ShopTheLook, type LookProduct } from '@/components/blog/ShopTheLook'
+import { PreferredSourceButton } from '@/components/blog/PreferredSourceButton'
+import { BUSINESS } from '@/lib/config/business'
+import {
+  formatPostDate,
+  htmlToText,
+  readingTime,
+  sanitizeArticleHtml,
+  toBlogCard,
+  wordCount,
+  type BlogCardPost,
+} from '@/lib/content'
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>
 }
 
-type BlogPostCardShape = Pick<
-  Tables<'blog_posts'>,
-  'id' | 'title' | 'slug' | 'excerpt' | 'featured_image' | 'tag' | 'published_at'
->
+const BASE = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com').replace(/\/$/, '')
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}): Promise<Metadata> {
-  const { slug } = await params
-
+// Shared between generateMetadata and the page so the DB is hit once per request
+const getPost = cache(async (slug: string) => {
   const [row] = await db
-    .select({
-      title: blogPostsTable.title,
-      excerpt: blogPostsTable.excerpt,
-      featuredImage: blogPostsTable.featuredImage,
-      slug: blogPostsTable.slug,
-      publishedAt: blogPostsTable.publishedAt,
-    })
+    .select()
     .from(blogPostsTable)
     .where(and(eq(blogPostsTable.slug, slug), eq(blogPostsTable.published, true)))
     .limit(1)
+  return row ?? null
+})
 
+export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
+  const { slug } = await params
+  const row = await getPost(slug)
   if (!row) return {}
 
+  const title = row.seoTitle || row.title
+  const description = row.seoDescription || row.excerpt || htmlToText(row.body).slice(0, 160)
+
   return {
-    title: row.title,
-    description: row.excerpt ?? undefined,
+    title,
+    description,
     openGraph: {
-      title: row.title,
-      description: row.excerpt ?? undefined,
-      images: row.featuredImage
-        ? [{ url: row.featuredImage }]
-        : [{ url: '/og-image.jpg', width: 1200, height: 630 }],
+      title,
+      description,
+      images: row.featuredImage ? [{ url: row.featuredImage }] : [{ url: '/og-image.jpg', width: 1200, height: 630 }],
       type: 'article',
       publishedTime: row.publishedAt ? row.publishedAt.toISOString() : undefined,
+      modifiedTime: row.updatedAt.toISOString(),
+      tags: row.tag ? [row.tag] : undefined,
     },
-    alternates: {
-      canonical: `/blog/${row.slug}`,
-    },
+    twitter: { card: 'summary_large_image', title, description },
+    alternates: { canonical: `/blog/${row.slug}` },
   }
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params
-
-  // Fetch the post — must be published; draft posts are 404
-  const [post] = await db
-    .select()
-    .from(blogPostsTable)
-    .where(and(eq(blogPostsTable.slug, slug), eq(blogPostsTable.published, true)))
-    .limit(1)
-
-  if (!post) return notFound()
-
-  // Fetch related posts from same tag (skip if no tag)
-  let relatedPostsRaw: typeof blogPostsTable.$inferSelect[] = []
-  if (post.tag) {
-    relatedPostsRaw = await db
-      .select()
+  const post = await getPost(slug)
+  if (!post) {
+    // Renamed post: send old links (already shared on WhatsApp etc.) to the new address
+    const [moved] = await db
+      .select({ slug: blogPostsTable.slug })
       .from(blogPostsTable)
-      .where(
-        and(
-          eq(blogPostsTable.published, true),
-          eq(blogPostsTable.tag, post.tag),
-          ne(blogPostsTable.id, post.id),
-        )
-      )
-      .orderBy(desc(blogPostsTable.publishedAt))
-      .limit(3)
+      .where(and(eq(blogPostsTable.published, true), arrayContains(blogPostsTable.previousSlugs, [slug])))
+      .limit(1)
+    if (moved) permanentRedirect(`/blog/${moved.slug}`)
+    return notFound()
   }
 
-  // Map Drizzle camelCase to snake_case shape expected by BlogPostCard component
-  const relatedPosts: BlogPostCardShape[] = relatedPostsRaw.map((r) => ({
-    id: r.id,
-    title: r.title,
-    slug: r.slug,
-    excerpt: r.excerpt,
-    featured_image: r.featuredImage,
-    tag: r.tag,
-    published_at: r.publishedAt ? r.publishedAt.toISOString() : null,
-  }))
+  const productIds = post.featuredProductIds ?? []
 
-  const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com'}/blog/${post.slug}`
-  const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com'
+  const [productRows, sameTagRows, latestRows] = await Promise.all([
+    productIds.length
+      ? db
+          .select({
+            id: productsTable.id,
+            name: productsTable.name,
+            slug: productsTable.slug,
+            image: productsTable.image,
+            priceMin: productsTable.priceMin,
+            material: productsTable.material,
+          })
+          .from(productsTable)
+          .where(and(inArray(productsTable.id, productIds), eq(productsTable.isActive, true)))
+      : Promise.resolve([]),
+    post.tag
+      ? db
+          .select()
+          .from(blogPostsTable)
+          .where(and(eq(blogPostsTable.published, true), eq(blogPostsTable.tag, post.tag), ne(blogPostsTable.id, post.id)))
+          .orderBy(desc(blogPostsTable.publishedAt))
+          .limit(3)
+      : Promise.resolve([]),
+    db
+      .select()
+      .from(blogPostsTable)
+      .where(and(eq(blogPostsTable.published, true), ne(blogPostsTable.id, post.id)))
+      .orderBy(desc(blogPostsTable.publishedAt))
+      .limit(3),
+  ])
+
+  // Keep the admin's chosen order
+  const lookProducts: LookProduct[] = productIds
+    .map((id) => productRows.find((p) => p.id === id))
+    .filter((p): p is NonNullable<typeof p> => Boolean(p))
+    .map((p) => ({ id: p.id, name: p.name, slug: p.slug, image: p.image, price_min: p.priceMin, material: p.material }))
+
+  // Related: same category first, topped up with the latest stories
+  const relatedMap = new Map<string, BlogCardPost>()
+  for (const r of [...sameTagRows, ...latestRows]) {
+    if (relatedMap.size >= 3) break
+    if (!relatedMap.has(r.id)) relatedMap.set(r.id, toBlogCard(r))
+  }
+  const related = [...relatedMap.values()]
+
+  const html = sanitizeArticleHtml(post.body, { forDisplay: true })
+  const minutes = readingTime(post.body)
+  const date = formatPostDate(post.publishedAt?.toISOString())
+  const canonicalUrl = `${BASE}/blog/${post.slug}`
 
   const blogJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: post.title,
-    description: post.excerpt ?? undefined,
-    image: post.featuredImage ?? undefined,
+    description: post.seoDescription || post.excerpt || undefined,
+    image: post.featuredImage ?? `${BASE}/og-image.jpg`,
     datePublished: post.publishedAt ? post.publishedAt.toISOString() : undefined,
-    dateModified: post.updatedAt ? post.updatedAt.toISOString() : undefined,
-    author: {
-      '@type': 'Organization',
-      name: 'Twinkle Locs',
-      url: BASE,
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: 'Twinkle Locs',
-      url: BASE,
-    },
-    url: `${BASE}/blog/${post.slug}`,
-    mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': `${BASE}/blog/${post.slug}`,
-    },
+    dateModified: post.updatedAt.toISOString(),
+    wordCount: wordCount(post.body),
+    articleSection: post.tag ?? undefined,
+    author: { '@type': 'Organization', name: 'Twinkle Locs', url: BASE },
+    publisher: { '@type': 'Organization', name: 'Twinkle Locs', url: BASE, logo: { '@type': 'ImageObject', url: `${BASE}/images/Logo.png` } },
+    url: canonicalUrl,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl },
+  }
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${BASE}/blog` },
+      { '@type': 'ListItem', position: 3, name: post.title, item: canonicalUrl },
+    ],
   }
 
-  const formattedDate = post.publishedAt
-    ? new Date(post.publishedAt).toLocaleDateString('en-NG', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    : null
-
   return (
-    <main className="max-w-3xl mx-auto px-4 py-12">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(blogJsonLd).replace(/</g, '\\u003c'),
-        }}
-      />
-      {/* Back link */}
-      <Link
-        href="/blog"
-        className="inline-flex items-center gap-1 text-sm text-charcoal/60 hover:text-charcoal transition-colors mb-6"
-      >
-        &larr; Back to Blog
-      </Link>
+    <div className="bg-cream">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd).replace(/</g, '\\u003c') }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c') }} />
 
-      {/* Post header */}
-      <h1 className="font-heading text-4xl font-bold text-charcoal mt-6 mb-3 leading-tight">
-        {post.title}
-      </h1>
+      <article>
+      {/* Header */}
+      <header className={`relative overflow-hidden bg-forest ${post.featuredImage ? 'pb-28 md:pb-40' : 'pb-16'}`}>
+        <div aria-hidden="true" className="absolute inset-0 bg-pattern-01 opacity-[0.06]" />
+        <div className="relative mx-auto max-w-3xl px-4 pt-10 text-center md:pt-14">
+          <nav aria-label="Breadcrumb" className="font-body text-xs text-cream/70">
+            <Link href="/blog" className="hover:text-cream underline-offset-4 hover:underline">Journal</Link>
+            {post.tag && (
+              <>
+                <span aria-hidden="true" className="mx-2">/</span>
+                <Link href={`/blog?category=${encodeURIComponent(post.tag)}`} className="hover:text-cream underline-offset-4 hover:underline">
+                  {post.tag}
+                </Link>
+              </>
+            )}
+          </nav>
+          <h1 className="mt-6 font-heading text-3xl font-bold leading-[1.15] text-cream text-balance md:text-5xl">{post.title}</h1>
+          {post.excerpt && <p className="mx-auto mt-5 max-w-2xl font-body text-base leading-relaxed text-cream/80 md:text-lg">{post.excerpt}</p>}
+          <p className="mt-6 font-heading text-xs font-semibold uppercase tracking-[0.2em] text-gold-light">
+            {date && <time dateTime={post.publishedAt?.toISOString()}>{date}</time>}
+            {date && <span aria-hidden="true"> &middot; </span>}
+            {minutes} min read
+          </p>
+        </div>
+      </header>
 
-      <div className="flex items-center gap-3 mb-4">
-        {post.tag && (
-          <span className="inline-block text-xs font-medium px-2.5 py-0.5 rounded-full bg-[var(--color-gold,#C9A84C)] text-white">
-            {post.tag}
-          </span>
-        )}
-        {formattedDate && (
-          <p className="text-charcoal/50 text-sm">{formattedDate}</p>
-        )}
-      </div>
-
-      {/* Featured image */}
       {post.featuredImage && (
-        <div className="relative w-full aspect-video mb-8 rounded-xl overflow-hidden">
-          <Image
-            src={post.featuredImage}
-            alt={post.title}
-            fill
-            className="object-cover"
-            priority
-          />
+        <div className="relative z-10 mx-auto -mt-20 max-w-5xl px-4 md:-mt-32">
+          <div className="relative aspect-[16/9] overflow-hidden rounded-3xl shadow-2xl shadow-forest/20">
+            <Image src={post.featuredImage} alt="" fill priority sizes="(max-width: 1024px) 100vw, 1024px" className="object-cover" />
+          </div>
         </div>
       )}
 
-      {/* Body — Tiptap HTML rendered with [&_tag]: selectors; no prose class */}
-      <div
-        className="[&_h2]:font-heading [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mb-4 [&_h2]:mt-8 [&_h3]:font-heading [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:mb-3 [&_h3]:mt-6 [&_p]:mb-4 [&_p]:leading-relaxed [&_p]:text-charcoal/80 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4 [&_li]:mb-1 [&_a]:text-[var(--color-gold,#C9A84C)] [&_a]:underline [&_a]:hover:opacity-80 [&_strong]:font-semibold [&_em]:italic [&_blockquote]:border-l-4 [&_blockquote]:border-stone-200 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-charcoal/60 [&_blockquote]:mb-4"
-        dangerouslySetInnerHTML={{ __html: post.body }}
-      />
+      {/* Body */}
+      <div className="mx-auto max-w-2xl px-4 py-14 md:py-20">
+        <div className="tl-prose tl-prose--article" dangerouslySetInnerHTML={{ __html: html }} />
 
-      {/* Share buttons */}
-      <div className="mt-12 pt-8 border-t border-stone-200">
-        <BlogShareButtons title={post.title} canonicalUrl={canonicalUrl} />
-      </div>
+        <div className="mt-14 flex flex-col gap-6 border-t border-forest/15 pt-8 sm:flex-row sm:items-center sm:justify-between">
+          <BlogShareButtons title={post.title} canonicalUrl={canonicalUrl} />
+        </div>
 
-      {/* Related posts */}
-      {relatedPosts.length > 0 && (
-        <section className="mt-16">
-          <h2 className="font-heading text-2xl font-bold text-charcoal mb-6">Related Posts</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {relatedPosts.map((p) => (
-              <BlogPostCard key={p.id} post={p} />
-            ))}
+        {/* Google Preferred Sources: readers who add us see our stories more in Search, Top Stories and AI Overviews */}
+        <div className="mt-10">
+          <PreferredSourceButton />
+        </div>
+
+        {/* Soft conversion: questions go to WhatsApp, where Unoma closes most sales */}
+        <aside className="mt-10 flex flex-col gap-4 rounded-2xl bg-white p-6 ring-1 ring-forest/10 sm:flex-row sm:items-center">
+          <div className="flex-1">
+            <p className="font-heading font-semibold text-forest">Not sure which beads suit your locs?</p>
+            <p className="mt-1 font-body text-sm text-charcoal/75">Send us a photo on WhatsApp and we&apos;ll recommend a size and finish.</p>
           </div>
-        </section>
-      )}
-    </main>
+          <a
+            href={BUSINESS.whatsapp.url(`Hi! I just read "${post.title}" and I'd love a recommendation.`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-forest px-6 font-heading text-sm font-semibold text-cream transition-colors hover:bg-forest/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
+          >
+            Ask on WhatsApp
+          </a>
+        </aside>
+      </div>
+      </article>
+
+      <div className="mx-auto max-w-6xl space-y-16 px-4 pb-20">
+        <ShopTheLook products={lookProducts} />
+
+        {related.length > 0 && (
+          <section aria-labelledby="keep-reading">
+            <h2 id="keep-reading" className="mb-8 font-display text-4xl text-forest">Keep reading</h2>
+            <div className="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+              {related.map((p) => (
+                <BlogPostCard key={p.id} post={p} headingLevel="h3" />
+              ))}
+            </div>
+          </section>
+        )}
+
+        <NewsletterBand />
+      </div>
+    </div>
   )
 }

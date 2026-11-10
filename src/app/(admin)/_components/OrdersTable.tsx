@@ -5,15 +5,21 @@ import Link from 'next/link'
 import { Order } from '@/types/db'
 import { OrderStatusSelect } from './OrderStatusSelect'
 
-type StatusTab = 'All' | 'Paid' | 'Processing' | 'Shipped' | 'Delivered'
+type StatusTab = 'All' | 'Needs review' | 'Paid' | 'Processing' | 'Shipped' | 'Delivered'
 
 const STATUS_TABS: StatusTab[] = [
   'All',
+  'Needs review',
   'Paid',
   'Processing',
   'Shipped',
   'Delivered',
 ]
+
+/** Tab label → stored status ('Needs review' = payments that didn't match the order total) */
+function tabStatus(tab: StatusTab): string {
+  return tab === 'Needs review' ? 'payment_review' : tab.toLowerCase()
+}
 
 function formatNaira(amount: number): string {
   return '₦' + amount.toLocaleString('en-NG')
@@ -41,7 +47,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
   const filteredOrders = useMemo(() => {
     if (activeTab === 'All') return orders
     return orders.filter(
-      (o) => o.status.toLowerCase() === activeTab.toLowerCase()
+      (o) => o.status.toLowerCase() === tabStatus(activeTab)
     )
   }, [orders, activeTab])
 
@@ -49,7 +55,7 @@ export function OrdersTable({ orders }: OrdersTableProps) {
   function countForTab(tab: StatusTab): number {
     if (tab === 'All') return orders.length
     return orders.filter(
-      (o) => o.status.toLowerCase() === tab.toLowerCase()
+      (o) => o.status.toLowerCase() === tabStatus(tab)
     ).length
   }
 

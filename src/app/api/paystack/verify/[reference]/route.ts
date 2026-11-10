@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/db'
-import { orders, orderItems, abandonedOrders, promoCodes } from '@/db'
-import { eq, and, gte, sql } from 'drizzle-orm'
+import { recordPaidOrder } from '@/lib/payments/paidOrder'
 
 type PaystackVerifyResponse = {
   status: boolean
@@ -15,32 +13,6 @@ type PaystackVerifyResponse = {
     ip_address?: string | null
     metadata?: unknown
   }
-}
-
-type PaystackMetadata = {
-  cart_items: Array<{
-    productId: string
-    productName: string
-    variantId: string
-    variantName: string
-    tierQty: number
-    threadColour: string
-    unitPrice: number
-    quantity: number
-    isTool: boolean
-  }>
-  customer_details: {
-    first_name: string
-    last_name: string
-    phone: string
-    delivery_address: string
-    state: string
-  }
-  subtotal: number
-  shipping_cost: number
-  promo_code?: string | null
-  discount_amount?: number
-  discount_type?: string | null
 }
 
 export async function GET(
@@ -105,111 +77,22 @@ export async function GET(
     )
   }
 
-  const metadata = payload.data.metadata as PaystackMetadata | undefined
-  const { customer_details, cart_items, subtotal, shipping_cost, promo_code, discount_amount, discount_type } = metadata ?? ({} as Partial<PaystackMetadata>)
+  // Re-price server-side and compare with the amount Paystack actually charged.
+  // Idempotent with the webhook: whichever arrives first creates the order; this
+  // never rewinds an existing order's status (e.g. 'shipped' back to 'paid').
+  const recorded = await recordPaidOrder({
+    reference,
+    amountKobo: payload.data.amount,
+    currency: payload.data.currency,
+    customerEmail: payload.data.customer.email,
+    ipAddress: payload.data.ip_address ?? null,
+    payload: payload.data,
+    metadata: payload.data.metadata,
+  })
 
-  if (!customer_details || !Array.isArray(cart_items) || cart_items.length === 0) {
-    return NextResponse.json(
-      { error: 'Missing required metadata to build order', reference },
-      { status: 400 }
-    )
+  if (!recorded) {
+    return NextResponse.json({ error: 'Missing required metadata to build order', reference }, { status: 400 })
   }
 
-  if (typeof subtotal !== 'number' || typeof shipping_cost !== 'number') {
-    return NextResponse.json(
-      { error: 'Missing subtotal/shipping_cost in metadata', reference },
-      { status: 400 }
-    )
-  }
-
-  // Upsert-ish behavior: if order exists, mark it paid and store payload;
-  // if it doesn't exist yet (webhook not delivered), create it now.
-  const [existing] = await db
-    .select({ id: orders.id })
-    .from(orders)
-    .where(eq(orders.paystackReference, reference))
-    .limit(1)
-
-  let orderId: string
-
-  if (existing) {
-    orderId = existing.id
-    await db
-      .update(orders)
-      .set({ status: 'paid', paystackPayload: payload.data as unknown })
-      .where(eq(orders.id, orderId))
-  } else {
-    const appliedDiscount = discount_amount ?? 0
-
-    const [order] = await db
-      .insert(orders)
-      .values({
-        paystackReference: reference,
-        paystackPayload: payload.data as unknown,
-        status: 'paid',
-        customerName: `${customer_details.first_name} ${customer_details.last_name}`.trim(),
-        customerEmail: payload.data.customer.email.toLowerCase(),
-        customerPhone: customer_details.phone,
-        customerIp: payload.data.ip_address ?? null,
-        deliveryAddress: customer_details.delivery_address,
-        deliveryState: customer_details.state,
-        shippingCost: shipping_cost,
-        subtotal,
-        total: subtotal - appliedDiscount + shipping_cost,
-        promoCode: promo_code ?? null,
-        discountAmount: appliedDiscount,
-      })
-      .returning({ id: orders.id })
-
-    if (!order) {
-      return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
-    }
-
-    orderId = order.id
-
-    const items = cart_items.map((item) => ({
-      orderId,
-      productId: item.productId,
-      productName: item.productName,
-      variantId: item.variantId,
-      variantName: item.variantName,
-      tierQty: item.tierQty,
-      threadColour: item.isTool ? null : item.threadColour,
-      unitPrice: item.unitPrice,
-      quantity: item.quantity,
-      lineTotal: item.unitPrice * item.quantity,
-    }))
-
-    await db.insert(orderItems).values(items)
-
-    if (promo_code && discount_type) {
-      try {
-        await db
-          .update(promoCodes)
-          .set({ currentUses: sql`${promoCodes.currentUses} + 1` })
-          .where(eq(promoCodes.code, promo_code.toUpperCase().trim()))
-      } catch (e) {
-        console.error('[verify] Failed to increment promo code usage:', e)
-      }
-    }
-  }
-
-  // Mark matching abandoned checkouts as recovered (same logic as webhook handler)
-  try {
-    await db
-      .update(abandonedOrders)
-      .set({ recovered: true, recoveredAt: new Date() })
-      .where(
-        and(
-          eq(abandonedOrders.customerEmail, payload.data.customer.email.toLowerCase()),
-          eq(abandonedOrders.recovered, false),
-          gte(abandonedOrders.createdAt, new Date(Date.now() - 48 * 60 * 60 * 1000))
-        )
-      )
-  } catch (e) {
-    console.error('[verify] Failed to mark abandoned orders recovered:', e)
-  }
-
-  return NextResponse.json({ ok: true, reference, orderId })
+  return NextResponse.json({ ok: true, reference, orderId: recorded.orderId, status: recorded.status })
 }
-

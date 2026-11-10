@@ -1,11 +1,12 @@
 import { db } from '@/db'
 import { orders } from '@/db'
 import { eq } from 'drizzle-orm'
+import { deliveryEstimateForOrder, getShippingInfo } from '@/lib/checkout/shippingInfo'
 import { Order, OrderItem, Json } from '@/types/db'
 import { OrderConfirmationView } from './OrderConfirmationView'
 import { OrderPoller } from './OrderPoller'
 
-type FullOrder = Order & { order_items: OrderItem[] };
+type FullOrder = Order & { order_items: OrderItem[]; delivery_estimate?: string };
 
 async function fetchOrderByReference(
   reference: string
@@ -30,6 +31,7 @@ async function fetchOrderByReference(
     customer_ip: result.customerIp ?? null,
     delivery_address: result.deliveryAddress,
     delivery_state: result.deliveryState,
+    delivery_estimate: deliveryEstimateForOrder(await getShippingInfo(), result.deliveryState, result.paystackPayload),
     shipping_cost: result.shippingCost,
     subtotal: result.subtotal,
     total: result.total,

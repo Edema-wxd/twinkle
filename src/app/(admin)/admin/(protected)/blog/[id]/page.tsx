@@ -3,7 +3,10 @@ import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { blogPosts } from '@/db'
 import { eq } from 'drizzle-orm'
+import { sanitizeArticleHtml, toBlogPostDto } from '@/lib/content'
+import { isUuid } from '@/lib/content-api'
 import { BlogPostForm } from '../../../../_components/BlogPostForm'
+import { getBlogEditorData } from '../../../../_lib/blog-editor-data'
 
 export const metadata = {
   title: 'Edit Blog Post — Twinkle Locs Admin',
@@ -18,36 +21,20 @@ export default async function EditBlogPostPage({ params }: EditBlogPostPageProps
   await requireAdminSession()
 
   const { id } = await params
+  if (!isUuid(id)) notFound()
 
-  const [row] = await db.select().from(blogPosts).where(eq(blogPosts.id, id)).limit(1)
+  const [[row], { products, existingTags }] = await Promise.all([
+    db.select().from(blogPosts).where(eq(blogPosts.id, id)).limit(1),
+    getBlogEditorData(),
+  ])
 
   if (!row) {
     notFound()
   }
 
-  // Map camelCase Drizzle row to snake_case shape expected by BlogPostForm
-  const post = {
-    id: row.id,
-    title: row.title,
-    slug: row.slug,
-    body: row.body,
-    excerpt: row.excerpt,
-    featured_image: row.featuredImage ?? null,
-    tag: row.tag ?? null,
-    published: row.published,
-    published_at: row.publishedAt instanceof Date ? row.publishedAt.toISOString() : (row.publishedAt ?? null),
-    created_at: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
-    updated_at: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
-  }
-
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      <div>
-        <h1 className="font-heading text-2xl font-bold text-white">Edit Blog Post</h1>
-        <p className="text-stone-400 text-sm mt-1">Update the post details below.</p>
-      </div>
-
-      <BlogPostForm post={post} />
+    <div className="px-6 lg:px-8">
+      <BlogPostForm post={{ ...toBlogPostDto(row), body: sanitizeArticleHtml(row.body) }} products={products} existingTags={existingTags} />
     </div>
   )
 }

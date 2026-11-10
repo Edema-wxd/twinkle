@@ -14,12 +14,26 @@
   }
 }
 
+@layer base {
+  html { scroll-behavior: smooth; }
+  /* Height of the fixed mobile admin bar; sticky admin toolbars sit below it */
+  :root { --admin-header-h: 3.5rem; }
+  @media (min-width: 1024px) { :root { --admin-header-h: 0px; } }
+  /* Default keyboard focus ring for anything that doesn't define its own */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
+}
+
 @theme {
   /* =============================================
      Brand colour palette (Twinkle Locs guide)
      ============================================= */
   --color-forest:   #1A3C34;   /* Primary — dominant background, headers */
   --color-gold:     #927750;   /* Accent — CTAs, highlights, ruled lines */
+  --color-gold-light: #C9A96E; /* Gold for TEXT on forest/dark (5.4:1 on forest) */
+  --color-gold-deep:  #6F5A39; /* Gold for TEXT on cream/white (5.0:1 on cream) */
   --color-cream:    #E8E0D0;   /* Text on dark backgrounds, light layouts */
 
   /* Utility shades */
@@ -35,4 +49,159 @@
   --font-accent-display: var(--font-mistrully), serif;
   --font-heading: var(--font-montserrat), sans-serif;
   --font-body:    var(--font-montserrat), sans-serif;
+}
+
+
+/* =============================================
+   Editorial typography — blog articles, FAQ
+   answers and the admin live preview share this
+   so what Unoma writes is what customers see.
+   ============================================= */
+@layer components {
+  .tl-prose {
+    font-family: var(--font-body);
+    color: color-mix(in srgb, var(--color-charcoal) 85%, transparent);
+    font-size: 1.0625rem;
+    line-height: 1.8;
+  }
+  .tl-prose > * + * { margin-top: 1.25em; }
+  .tl-prose h2 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.6rem;
+    line-height: 1.25;
+    color: var(--color-forest);
+    margin-top: 2.4em;
+    padding-top: 0.9em;
+    border-top: 1px solid color-mix(in srgb, var(--color-gold) 35%, transparent);
+  }
+  .tl-prose h3 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-gold-deep);
+    margin-top: 2em;
+  }
+  .tl-prose h4 { font-weight: 600; color: var(--color-forest); margin-top: 1.6em; }
+  .tl-prose h2 + *, .tl-prose h3 + *, .tl-prose h4 + * { margin-top: 0.6em; }
+  .tl-prose strong, .tl-prose b { font-weight: 600; color: var(--color-charcoal); }
+  .tl-prose a {
+    color: var(--color-forest);
+    text-decoration: underline;
+    text-decoration-color: var(--color-gold);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    transition: color 150ms ease;
+  }
+  .tl-prose a:hover { color: var(--color-gold-deep); }
+  .tl-prose ul, .tl-prose ol { padding-left: 1.4em; }
+  .tl-prose ul { list-style: none; }
+  .tl-prose ul > li { position: relative; }
+  .tl-prose ul > li::before {
+    content: '';
+    position: absolute;
+    left: -1.1em;
+    top: 0.72em;
+    width: 0.4em;
+    height: 0.4em;
+    border-radius: 9999px;
+    background: var(--color-gold);
+  }
+  .tl-prose ol { list-style: decimal; }
+  .tl-prose ol > li::marker { color: var(--color-gold-deep); font-weight: 600; }
+  .tl-prose li + li { margin-top: 0.4em; }
+  .tl-prose li > p { margin: 0; }
+  .tl-prose blockquote {
+    margin-block: 2em;
+    padding: 0.2em 0 0.2em 1.25em;
+    border-left: 3px solid var(--color-gold);
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    line-height: 1.5;
+    font-weight: 500;
+    color: var(--color-forest);
+  }
+  .tl-prose blockquote p { margin: 0; }
+  .tl-prose hr {
+    border: 0;
+    height: 1.5rem;
+    margin-block: 2.5em;
+    background:
+      radial-gradient(circle, var(--color-gold) 0 3px, transparent 3.5px) center / 1.5rem 1.5rem repeat-x;
+    width: 4.5rem;
+    margin-inline: auto;
+  }
+  .tl-prose img {
+    width: 100%;
+    height: auto;
+    border-radius: 1rem;
+    margin-block: 2em;
+  }
+  /* Drop cap on the opening paragraph of an article */
+  .tl-prose--article > p:first-child:not(.is-editor-empty)::first-letter {
+    float: left;
+    font-family: var(--font-display);
+    font-size: 4.2em;
+    line-height: 0.8;
+    padding: 0.08em 0.12em 0 0;
+    color: var(--color-gold-deep);
+  }
+
+  /* Tables: full width; the wrapper scrolls sideways on phones instead of squashing */
+  .tl-prose .tableWrapper,
+  .tl-prose .tl-table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    margin-block: 2em;
+    border-radius: 0.75rem;
+  }
+  .tl-prose .tableWrapper > table,
+  .tl-prose .tl-table-scroll > table { margin: 0; }
+  .tl-prose table {
+    width: 100%;
+    margin-block: 2em;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.95em;
+    line-height: 1.5;
+    border: 1px solid color-mix(in srgb, var(--color-forest) 15%, transparent);
+    border-radius: 0.75rem;
+    background: #fff;
+  }
+  .tl-prose th,
+  .tl-prose td {
+    min-width: 7rem;
+    padding: 0.7em 0.9em;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-forest) 10%, transparent);
+  }
+  .tl-prose th + th, .tl-prose td + td { border-left: 1px solid color-mix(in srgb, var(--color-forest) 8%, transparent); }
+  .tl-prose tr:last-child > td { border-bottom: 0; }
+  .tl-prose th {
+    background: var(--color-forest);
+    color: var(--color-cream);
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.85em;
+    letter-spacing: 0.02em;
+  }
+  .tl-prose tbody tr:nth-child(even) > td { background: color-mix(in srgb, var(--color-stone) 70%, transparent); }
+  .tl-prose td > p, .tl-prose th > p { margin: 0; }
+  .tl-prose td > p + p, .tl-prose th > p + p { margin-top: 0.5em; }
+
+  /* Compact variant for FAQ answers */
+  .tl-prose--compact { font-size: 0.95rem; line-height: 1.7; }
+  .tl-prose--compact > * + * { margin-top: 0.75em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

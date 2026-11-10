@@ -11,7 +11,7 @@ import {
   type OrderEmailItem,
 } from '@/lib/notifications/customerEmail'
 
-const VALID_STATUSES = ['paid', 'processing', 'shipped', 'delivered'] as const
+const VALID_STATUSES = ['payment_review', 'paid', 'processing', 'shipped', 'delivered'] as const
 type OrderStatus = (typeof VALID_STATUSES)[number]
 
 function isValidStatus(s: string): s is OrderStatus {
@@ -19,6 +19,13 @@ function isValidStatus(s: string): s is OrderStatus {
 }
 
 const NOTIFIABLE_STATUSES: OrderStatus[] = ['processing', 'shipped', 'delivered']
+
+/** Customer email to send for a status. Moving a held order to 'paid' sends the
+ *  'confirmed' email it never got (claims are idempotent, so never twice). */
+function emailEventFor(status: OrderStatus): CustomerEmailEvent | null {
+  if (status === 'paid') return 'confirmed'
+  return NOTIFIABLE_STATUSES.includes(status) ? (status as CustomerEmailEvent) : null
+}
 
 export async function PATCH(
   req: NextRequest,
@@ -104,15 +111,16 @@ export async function PATCH(
     return NextResponse.json({ error: 'Failed to update order status' }, { status: 500 })
   }
 
-  if (NOTIFIABLE_STATUSES.includes(status)) {
-    const claimId = await tryClaimStatusEmail(id, status as CustomerEmailEvent).catch(() => null)
+  const emailEvent = emailEventFor(status)
+  if (emailEvent) {
+    const claimId = await tryClaimStatusEmail(id, emailEvent).catch(() => null)
     if (claimId) {
       sendCustomerEmail({
         to: existing.customerEmail,
         customerName: existing.customerName,
         orderReference: existing.paystackReference,
         totalNaira: existing.total,
-        event: status as CustomerEmailEvent,
+        event: emailEvent,
         trackingNumber: cleanTracking ?? null,
         items: emailItems,
         orderId: id,

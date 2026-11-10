@@ -175,7 +175,7 @@ export function ReviewsTable({ reviews: initial }: ReviewsTableProps) {
                       <button
                         onClick={() => handleSave(review.id)}
                         disabled={isPending}
-                        className="px-3 py-1 bg-gold hover:bg-yellow-600 disabled:opacity-50 text-white text-xs font-medium rounded transition-colors"
+                        className="px-3 py-1 bg-gold hover:bg-gold-deep disabled:opacity-50 text-white text-xs font-medium rounded transition-colors"
                       >
                         Save
                       </button>

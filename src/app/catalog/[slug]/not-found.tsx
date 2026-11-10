@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function ProductNotFound() {
   return (
-    <main className="bg-cream min-h-screen flex items-center justify-center">
+    <div className="bg-cream min-h-screen flex items-center justify-center">
       <div className="text-center px-4">
         <h1 className="font-display text-4xl text-forest mb-4">
           Product not found
@@ -17,6 +17,6 @@ export default function ProductNotFound() {
           ← Back to catalog
         </Link>
       </div>
-    </main>
+    </div>
   )
 }

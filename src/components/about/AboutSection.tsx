@@ -21,7 +21,7 @@ export function AboutSection({ section }: AboutSectionProps) {
     : null
 
   return (
-    <section id={section.id} className="scroll-mt-20">
+    <section id={section.id} className="scroll-mt-40">
       <h2 className="font-heading text-2xl lg:text-3xl font-bold text-charcoal mb-6">
         {section.title}
       </h2>

@@ -89,6 +89,7 @@ export type Faq = {
   question: string
   answer: string
   display_order: number
+  is_featured: boolean
   created_at: string
 }
 
@@ -100,6 +101,10 @@ export type BlogPost = {
   excerpt: string
   featured_image: string | null
   tag: string | null
+  seo_title: string | null
+  seo_description: string | null
+  is_featured: boolean
+  featured_product_ids: string[]
   published: boolean
   published_at: string | null
   created_at: string

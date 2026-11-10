@@ -1,8 +1,6 @@
 import crypto from 'crypto'
 import { NextRequest, NextResponse, after } from 'next/server'
-import { db } from '@/db'
-import { orders, orderItems, abandonedOrders } from '@/db'
-import { eq, and, gte } from 'drizzle-orm'
+import { recordPaidOrder, PAYMENT_REVIEW_STATUS } from '@/lib/payments/paidOrder'
 import {
   claimOrderNotificationSend,
   ensureOrderNotification,
@@ -11,44 +9,18 @@ import {
   markOrderNotificationSent,
 } from '@/lib/notifications/notificationState'
 import { sendAdminOrderEmail } from '@/lib/notifications/adminOrderEmail'
-import { sendCustomerEmail, tryClaimStatusEmail, releaseStatusEmailClaim, type OrderEmailItem } from '@/lib/notifications/customerEmail'
+import { sendCustomerEmail, tryClaimStatusEmail, releaseStatusEmailClaim } from '@/lib/notifications/customerEmail'
 import { forwardSubscriptionEvent } from '@/lib/paystack/forwardSubscriptionEvent'
 
 // ── Paystack webhook payload types ──────────────────────────────────────────
 
-interface PaystackCustomer {
-  email: string
-}
-
 interface PaystackChargeData {
   reference: string
-  amount: number // in kobo
-  customer: PaystackCustomer
+  amount: number // in kobo: what Paystack actually charged
+  currency?: string
+  customer: { email: string }
   ip_address: string | null
-  metadata: PaystackMetadata
-}
-
-interface PaystackMetadata {
-  cart_items: Array<{
-    productId: string
-    productName: string
-    variantId: string
-    variantName: string
-    tierQty: number
-    threadColour: string
-    unitPrice: number
-    quantity: number
-    isTool: boolean
-  }>
-  customer_details: {
-    first_name: string
-    last_name: string
-    phone: string
-    delivery_address: string
-    state: string
-  }
-  subtotal: number
-  shipping_cost: number
+  metadata: unknown // untrusted (set by the browser); re-priced server-side
 }
 
 interface PaystackEvent {
@@ -114,145 +86,33 @@ export async function POST(req: NextRequest) {
 // ── Order creation ───────────────────────────────────────────────────────────
 
 async function handleChargeSuccess(data: PaystackChargeData) {
-  // Idempotency guard — do not re-insert order/items on duplicates,
-  // but still proceed to the notification path.
-  const [existing] = await db
-    .select({
-      id: orders.id,
-      customerName: orders.customerName,
-      customerEmail: orders.customerEmail,
-      customerPhone: orders.customerPhone,
-      deliveryState: orders.deliveryState,
-      total: orders.total,
-      status: orders.status,
-    })
-    .from(orders)
-    .where(eq(orders.paystackReference, data.reference))
-    .limit(1)
-
-  let orderId: string
-  let orderForEmail: {
-    customerName: string
-    customerEmail: string
-    customerPhone: string
-    deliveryState: string
-    totalNaira: number
+  // Re-prices the order server-side and compares with data.amount (see paidOrder.ts).
+  // Idempotent: on duplicates it returns the existing order and we continue to the
+  // notification path, which has its own idempotency.
+  const recorded = await recordPaidOrder({
+    reference: data.reference,
+    amountKobo: data.amount,
+    currency: data.currency,
+    customerEmail: data.customer.email,
+    ipAddress: data.ip_address,
+    payload: data,
+    metadata: data.metadata,
+  })
+  if (!recorded) {
+    console.error('[webhook] Missing metadata fields for reference:', data.reference)
+    return
   }
-  let emailItems: OrderEmailItem[] = []
 
-  if (existing) {
-    orderId = existing.id
-    orderForEmail = {
-      customerName: existing.customerName,
-      customerEmail: existing.customerEmail,
-      customerPhone: existing.customerPhone,
-      deliveryState: existing.deliveryState,
-      totalNaira: existing.total,
-    }
-
-    // If an order header already exists (e.g. created by a verify call),
-    // ensure it is marked paid and store the latest payload.
-    if (existing.status !== 'paid') {
-      try {
-        await db
-          .update(orders)
-          .set({ status: 'paid', paystackPayload: data as unknown })
-          .where(eq(orders.id, orderId))
-      } catch (e) {
-        console.error('[webhook] Failed to update existing order status:', e)
-      }
-    }
-  } else {
-    const { customer_details, cart_items, subtotal, shipping_cost } = data.metadata ?? {}
-    if (!customer_details || !Array.isArray(cart_items) || cart_items.length === 0) {
-      console.error('[webhook] Missing metadata fields for reference:', data.reference)
-      return
-    }
-
-    const [order] = await db
-      .insert(orders)
-      .values({
-        paystackReference: data.reference,
-        paystackPayload: data as unknown,
-        status: 'paid',
-        customerName: `${customer_details.first_name} ${customer_details.last_name}`.trim(),
-        customerEmail: data.customer.email.toLowerCase(),
-        customerPhone: customer_details.phone,
-        customerIp: data.ip_address,
-        deliveryAddress: customer_details.delivery_address,
-        deliveryState: customer_details.state,
-        shippingCost: shipping_cost,
-        subtotal,
-        total: subtotal + shipping_cost,
-      })
-      .returning({
-        id: orders.id,
-        customerName: orders.customerName,
-        customerEmail: orders.customerEmail,
-        customerPhone: orders.customerPhone,
-        deliveryState: orders.deliveryState,
-        total: orders.total,
-      })
-
-    if (!order) {
-      // Log error and abort — cannot insert items without an order ID
-      console.error('[webhook] Failed to insert order: no data returned')
-      return
-    }
-
-    orderId = order.id
-    orderForEmail = {
-      customerName: order.customerName,
-      customerEmail: order.customerEmail,
-      customerPhone: order.customerPhone,
-      deliveryState: order.deliveryState,
-      totalNaira: order.total,
-    }
-
-    emailItems = cart_items.map((item) => ({
-      productName: item.productName,
-      variantName: item.variantName,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      lineTotal: item.unitPrice * item.quantity,
-      tierQty: item.tierQty,
-      threadColour: item.isTool ? null : item.threadColour,
-    }))
-
-    const items = cart_items.map((item) => ({
-      orderId,
-      productId: item.productId,
-      productName: item.productName,
-      variantId: item.variantId,
-      variantName: item.variantName,
-      tierQty: item.tierQty,
-      threadColour: item.isTool ? null : item.threadColour,
-      unitPrice: item.unitPrice,
-      quantity: item.quantity,
-      lineTotal: item.unitPrice * item.quantity,
-    }))
-
-    // Throw on failure so the outer try/catch returns non-200 — Paystack will retry.
-    // The idempotency guard prevents a duplicate order header on retry.
-    await db.insert(orderItems).values(items)
-
-    // Mark any matching abandoned checkouts as recovered.
-    // Time-bounded to 48 h to avoid marking unrelated past carts for returning customers.
-    try {
-      await db
-        .update(abandonedOrders)
-        .set({ recovered: true, recoveredAt: new Date() })
-        .where(
-          and(
-            eq(abandonedOrders.customerEmail, data.customer.email.toLowerCase()),
-            eq(abandonedOrders.recovered, false),
-            gte(abandonedOrders.createdAt, new Date(Date.now() - 48 * 60 * 60 * 1000))
-          )
-        )
-    } catch (recoverErr) {
-      console.error('[webhook] Failed to mark abandoned orders recovered:', recoverErr)
-    }
+  const orderId = recorded.orderId
+  const flagged = recorded.status === PAYMENT_REVIEW_STATUS
+  const orderForEmail = {
+    customerName: recorded.customerName,
+    customerEmail: recorded.customerEmail,
+    customerPhone: recorded.customerPhone,
+    deliveryState: recorded.deliveryState,
+    totalNaira: recorded.totalNaira,
   }
+  const emailItems = recorded.emailItems
 
   // ── Admin notification (idempotent + bounded retries) ───────────────────────
 
@@ -264,7 +124,7 @@ async function handleChargeSuccess(data: PaystackChargeData) {
   const claimed = await claimOrderNotificationSend({ id: notif.id })
   if (!claimed) return
 
-  const itemCount = Array.isArray(data.metadata?.cart_items) ? data.metadata.cart_items.length : 0
+  const itemCount = emailItems.length
 
   try {
     await sendAdminOrderEmail({
@@ -277,6 +137,8 @@ async function handleChargeSuccess(data: PaystackChargeData) {
         deliveryState: orderForEmail.deliveryState,
         totalNaira: orderForEmail.totalNaira,
         itemCount,
+        amountPaidNaira: recorded.amountPaidNaira,
+        paymentIssue: recorded.paymentIssue,
       },
     })
     await markOrderNotificationSent({ id: notif.id })
@@ -295,6 +157,8 @@ async function handleChargeSuccess(data: PaystackChargeData) {
   }
 
   // ── Customer confirmation email (non-blocking) ───────────────────────────────
+  // Not for flagged orders: the admin confirms (or refunds) those by hand first.
+  if (flagged) return
 
   const claimId = await tryClaimStatusEmail(orderId, 'confirmed').catch(() => null)
   if (claimId) {

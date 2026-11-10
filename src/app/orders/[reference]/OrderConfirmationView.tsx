@@ -6,7 +6,7 @@ import { THREAD_COLOURS } from '@/lib/cart/threadColours';
 import { BUSINESS } from '@/lib/config/business';
 
 interface OrderConfirmationViewProps {
-  order: Order & { order_items: OrderItem[] };
+  order: Order & { order_items: OrderItem[]; delivery_estimate?: string };
 }
 
 export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
@@ -14,10 +14,16 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
     THREAD_COLOURS.map((c) => [c.id, c])
   );
 
-  const statusLabel =
-    typeof order.status === 'string' && order.status.trim()
-      ? order.status
-      : 'processing';
+  const STATUS_LABELS: Record<string, string> = {
+    payment_review: 'Being checked',
+    paid: 'Confirmed',
+    processing: 'Being prepared',
+    shipped: 'On its way',
+    delivered: 'Delivered',
+  };
+  const statusLabel = STATUS_LABELS[order.status] ?? 'Being prepared';
+  // Payment didn't match the order total (see lib/payments/paidOrder.ts): don't claim success
+  const underReview = order.status === 'payment_review';
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
@@ -36,10 +42,12 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
           </svg>
         </div>
         <h1 className="font-display text-3xl text-forest text-center">
-          Payment Successful
+          {underReview ? 'Payment received' : 'Payment Successful'}
         </h1>
-        <p className="font-body text-charcoal/60 text-center mt-2">
-          Your order was accepted and is being processed.
+        <p className="font-body text-charcoal/70 text-center mt-2 max-w-md">
+          {underReview
+            ? 'Thank you! We need to double-check a detail of your payment before we prepare your order. We’ll be in touch on WhatsApp or email shortly.'
+            : 'Your order was accepted and is being processed.'}
         </p>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
           <span className="inline-flex items-center rounded-full bg-stone-100 px-3 py-1 text-xs font-heading font-semibold text-forest">
@@ -151,9 +159,10 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
       </div>
 
       {/* Estimated delivery */}
-      <p className="font-body text-sm text-charcoal/60 text-center mt-6">
-        Estimated delivery: 3–5 business days (Lagos) or 5–7 business days
-        (other states).
+      <p className="font-body text-sm text-charcoal/70 text-center mt-6">
+        {order.delivery_estimate
+          ? <>Estimated delivery: {order.delivery_estimate}. We&apos;ll WhatsApp you when it&apos;s on its way.</>
+          : <>We&apos;ll WhatsApp you with delivery timing once your order is on its way.</>}
       </p>
 
       {/* Contact support */}

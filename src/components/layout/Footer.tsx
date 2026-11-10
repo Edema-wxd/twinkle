@@ -19,15 +19,15 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <Image src="https://ta1u3ge9om.ufs.sh/f/fBUPGtLq5gOYxli6v2v9bkGFeW9BCV3IvLqNKgMpAozSZDXJ" alt="Twinkle Locs" width={150} height={50} />
-            <p className="font-body text-sm text-cream/70 leading-relaxed">
+            <Image src="https://ta1u3ge9om.ufs.sh/f/fBUPGtLq5gOYxli6v2v9bkGFeW9BCV3IvLqNKgMpAozSZDXJ" alt="Twinkle Locs" width={150} height={50} className="mb-4" />
+            <p className="font-body text-sm text-cream/80 leading-relaxed">
               Premium loc bead accessories for your loc journey. Made with love for the African diaspora.
             </p>
           </div>
 
           {/* Navigation */}
           <div>
-            <h3 className="font-heading text-sm font-semibold uppercase tracking-wider text-cream/60 mb-4">
+            <h3 className="font-heading text-sm font-semibold uppercase tracking-wider text-gold-light mb-4">
               Navigation
             </h3>
             <ul className="flex flex-col gap-2">
@@ -35,7 +35,7 @@ export function Footer() {
                 <li key={href}>
                   <Link
                     href={href}
-                    className="font-body text-sm text-cream/80 hover:text-gold transition-colors"
+                    className="font-body text-sm text-cream/80 hover:text-gold-light transition-colors"
                   >
                     {label}
                   </Link>
@@ -46,7 +46,7 @@ export function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="font-heading text-sm font-semibold uppercase tracking-wider text-cream/60 mb-4">
+            <h3 className="font-heading text-sm font-semibold uppercase tracking-wider text-gold-light mb-4">
               Connect
             </h3>
             <ul className="flex flex-col gap-2">
@@ -55,9 +55,17 @@ export function Footer() {
                   href={BUSINESS.instagram.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-body text-sm text-cream/80 hover:text-gold transition-colors"
+                  className="font-body text-sm text-cream/80 hover:text-gold-light transition-colors"
                 >
                   Instagram @{BUSINESS.instagram.handle}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={`mailto:${BUSINESS.support.email}`}
+                  className="font-body text-sm text-cream/80 hover:text-gold-light transition-colors"
+                >
+                  {BUSINESS.support.email}
                 </a>
               </li>
               <li>
@@ -65,7 +73,7 @@ export function Footer() {
                   href={BUSINESS.whatsapp.url()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-body text-sm text-cream/80 hover:text-gold transition-colors"
+                  className="font-body text-sm text-cream/80 hover:text-gold-light transition-colors"
                 >
                   WhatsApp
                 </a>
@@ -75,7 +83,7 @@ export function Footer() {
 
           {/* Newsletter */}
           <div>
-            <h3 className="font-heading text-sm font-semibold uppercase tracking-wider text-cream/60 mb-4">
+            <h3 className="font-heading text-sm font-semibold uppercase tracking-wider text-gold-light mb-4">
               Join the Twinkle family
             </h3>
             <NewsletterForm />
@@ -83,11 +91,11 @@ export function Footer() {
         </div>
 
         <div className="mt-10 pt-6 border-t border-cream/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="font-body text-xs text-cream/40">
+          <p className="font-body text-xs text-cream/70">
             &copy; {new Date().getFullYear()} Twinkle Locs. All rights reserved.
           </p>
-          <p className="font-body text-xs text-cream/40">
-            Made with love in Nigeria
+          <p className="font-body text-xs text-cream/70">
+            Secure payments by Paystack &middot; Made with love in Nigeria
           </p>
         </div>
       </div>

@@ -11,6 +11,7 @@ import { ReviewReminderButton } from '../../../../_components/ReviewReminderButt
 type FullOrder = Order & { order_items: OrderItem[] }
 
 const STATUS_STYLES: Record<string, string> = {
+  payment_review: 'bg-amber-900/50 text-amber-300 border border-amber-600',
   paid: 'bg-gold/10 text-gold border border-gold/30',
   processing: 'bg-blue-900/40 text-blue-400 border border-blue-800',
   shipped: 'bg-purple-900/40 text-purple-400 border border-purple-800',
@@ -140,6 +141,18 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
           )}
         </div>
       </div>
+
+      {result.paymentIssue && (
+        <section role="alert" className="rounded-lg bg-amber-950/70 ring-1 ring-amber-600 p-5 space-y-2">
+          <h2 className="font-heading text-base font-semibold text-amber-100">Payment doesn&apos;t match this order. Don&apos;t ship yet.</h2>
+          <p className="text-sm text-amber-100/90">{result.paymentIssue}</p>
+          <p className="text-sm text-amber-200/80">
+            {typeof result.amountPaid === 'number' && <>Paystack charged <strong>₦{result.amountPaid.toLocaleString('en-NG')}</strong>; the order total below uses current prices. </>}
+            Check the payment in Paystack, then contact the customer to collect the difference or refund. If everything is fine, set the
+            status to <strong>paid</strong>: that sends the customer their order confirmation.
+          </p>
+        </section>
+      )}
 
       {/* Section 1 — Customer & Delivery */}
       <section className="bg-stone-900 rounded-lg p-6 space-y-4">

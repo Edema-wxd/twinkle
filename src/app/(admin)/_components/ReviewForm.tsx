@@ -169,7 +169,7 @@ export function ReviewForm({ products }: ReviewFormProps) {
       <button
         type="submit"
         disabled={isPending || products.length === 0}
-        className="px-6 py-2.5 bg-gold hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+        className="px-6 py-2.5 bg-gold hover:bg-gold-deep disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
       >
         {isPending ? 'Saving…' : 'Save review'}
       </button>

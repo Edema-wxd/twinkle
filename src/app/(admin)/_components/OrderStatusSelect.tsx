@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 
-const STATUS_OPTIONS = ['paid', 'processing', 'shipped', 'delivered'] as const
+const STATUS_OPTIONS = ['payment_review', 'paid', 'processing', 'shipped', 'delivered'] as const
 type OrderStatus = (typeof STATUS_OPTIONS)[number]
 
 const STATUS_COLOURS: Record<OrderStatus, string> = {
+  payment_review: 'text-amber-300',
   paid: 'text-gold/80',
   processing: 'text-blue-300',
   shipped: 'text-purple-300',
@@ -89,7 +90,7 @@ export function OrderStatusSelect({
         >
           {STATUS_OPTIONS.map((s) => (
             <option key={s} value={s} className={STATUS_COLOURS[s]}>
-              {s}
+              {s === 'payment_review' ? 'needs review' : s}
             </option>
           ))}
         </select>

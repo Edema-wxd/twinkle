@@ -222,7 +222,7 @@ Exports the `CustomerDetails` interface for use by `OrderReview` and the checkou
 
 ### `OrderReview`
 
-Client component. Step two of checkout. Shows the itemised order, a price breakdown (subtotal + shipping calculated from `getShippingCost(state)` + total in NGN), and a delivery address summary. Generates a stable Paystack reference on mount (`TW-{timestamp}-{random}`). Renders `PaystackButton` with the total amount in kobo.
+Client component. Step two of checkout. Shows the itemised order, a price breakdown (subtotal + shipping fetched from `/api/checkout/shipping-cost` (zone fee for Lagos areas, flat rate elsewhere, plus delivery time) + total in NGN), and a delivery address summary. Generates a stable Paystack reference on mount (`TW-{timestamp}-{random}`). Renders `PaystackButton` with the total amount in kobo.
 
 | Prop | Type | Description |
 |------|------|-------------|

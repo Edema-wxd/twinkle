@@ -31,11 +31,12 @@ export function SearchInput({
         </svg>
       </span>
       <input
-        type="text"
+        type="search"
+        aria-label="Search products"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full font-body text-sm bg-stone border border-charcoal/20 rounded-lg pl-9 pr-4 py-2 text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:ring-2 focus:ring-gold/40"
+        className="w-full min-h-11 font-body text-base sm:text-sm bg-white border border-charcoal/20 rounded-lg pl-9 pr-4 py-2 text-charcoal placeholder:text-charcoal/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
       />
     </div>
   )

@@ -131,20 +131,27 @@ describe('cartReducer', () => {
 });
 ```
 
-- `src/lib/checkout/shipping.ts` — `getShippingCost` is a pure function. Example:
+- `src/lib/checkout/shippingInfo.ts` — `quoteShipping` is a pure function over a `ShippingInfo` object. Example:
 
 ```ts
-import { describe, it, expect } from 'vitest';
-import { getShippingCost } from '@/lib/checkout/shipping';
+import { quoteShipping, type ShippingInfo } from '@/lib/checkout/shippingInfo';
+import { LAGOS_ZONES } from '@/lib/checkout/shippingZones';
 
-describe('getShippingCost', () => {
-  it('returns 3000 for Lagos', () => {
-    expect(getShippingCost('Lagos')).toBe(3000);
+const info: ShippingInfo = {
+  zones: LAGOS_ZONES.map((z) => ({ ...z, fee: z.defaultFee })),
+  lagosFrom: 3000, lagosTo: 13500, otherRate: 4500, otherDays: '3–5 business days',
+  intlMessage: '', pageIntro: '',
+};
+
+describe('quoteShipping', () => {
+  it('prices Lagos by area', () => {
+    expect(quoteShipping(info, 'Lagos', 'Ikeja').cost).toBe(7900);
   });
-
-  it('returns 4500 for all other states', () => {
-    expect(getShippingCost('Kano')).toBe(4500);
-    expect(getShippingCost('Rivers')).toBe(4500);
+  it('never undercharges Lagos without an area', () => {
+    expect(quoteShipping(info, 'Lagos').cost).toBe(13500);
+  });
+  it('uses the flat rate elsewhere', () => {
+    expect(quoteShipping(info, 'Kano')).toMatchObject({ cost: 4500, deliveryTime: '3–5 business days' });
   });
 });
 ```

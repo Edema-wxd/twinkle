@@ -70,7 +70,7 @@ export default async function AdminProductsPage() {
         </div>
         <Link
           href="/admin/products/new"
-          className="px-4 py-2 bg-gold hover:bg-yellow-600 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+          className="px-4 py-2 bg-gold hover:bg-gold-deep text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
         >
           + New product
         </Link>

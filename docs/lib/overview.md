@@ -22,7 +22,9 @@ src/lib/
 │   ├── CartContext.tsx     # CartProvider, useCart hook, localStorage persistence
 │   └── threadColours.ts   # THREAD_COLOURS constant + ThreadColourId type
 ├── checkout/
-│   └── shipping.ts         # NIGERIAN_STATES list + getShippingCost function
+│   ├── shipping.ts         # NIGERIAN_STATES list
+│   ├── shippingZones.ts    # Lagos zones: areas, delivery times, default fees
+│   └── shippingInfo.ts     # Shipping source of truth: getShippingInfo(), quoteShipping()
 ├── types/
 │   ├── product.ts          # Product, ProductVariant, PriceTier, ProductMaterial types
 │   └── review.ts           # Review type
@@ -183,11 +185,12 @@ Static array of the five available thread colours with `id`, `label`, and `hex` 
 ### `shipping.ts`
 
 ```typescript
-import { getShippingCost, NIGERIAN_STATES } from '@/lib/checkout/shipping'
+import { NIGERIAN_STATES } from '@/lib/checkout/shipping'
+import { getShippingInfo, quoteShipping } from '@/lib/checkout/shippingInfo'
 ```
 
 - **`NIGERIAN_STATES`** — array of all 36 states plus FCT Abuja. Used to populate the state dropdown on the checkout form.
-- **`getShippingCost(state: string): number`** — returns the flat shipping cost in Naira: Lagos → `3000`, all other states → `4500`. The function is pure and has no external dependencies.
+- **`getShippingInfo()`** reads zone fees and the other-states rate/timeframe from `settings` (falling back to the zone list defaults and ₦4,500 / 3–5 business days). **`quoteShipping(info, state, area)`** returns `{ cost, deliveryTime, zone }`; Lagos without a known area is charged the highest zone fee so it can never undercharge.
 
 ---
 

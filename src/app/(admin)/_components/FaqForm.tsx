@@ -3,12 +3,19 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Faq } from '@/types/db'
+import { RichTextEditor } from './RichTextEditor'
 
 interface FaqFormProps {
   faq?: Faq
+  categories?: string[]
+  /** Called after a successful create (used by the inline "Add FAQ" panel). */
+  onCreated?: () => void
 }
 
-export function FaqForm({ faq }: FaqFormProps) {
+const inputClass =
+  'w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold'
+
+export function FaqForm({ faq, categories = [], onCreated }: FaqFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -17,7 +24,8 @@ export function FaqForm({ faq }: FaqFormProps) {
   const [category, setCategory] = useState(faq?.category ?? '')
   const [question, setQuestion] = useState(faq?.question ?? '')
   const [answer, setAnswer] = useState(faq?.answer ?? '')
-  const [displayOrder, setDisplayOrder] = useState(faq?.display_order ?? 0)
+  const [isFeatured, setIsFeatured] = useState(faq?.is_featured ?? false)
+  const [editorKey, setEditorKey] = useState(0)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
@@ -28,6 +36,11 @@ export function FaqForm({ faq }: FaqFormProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    if (!answer.replace(/<[^>]+>/g, '').trim()) {
+      showToast('error', 'Write an answer first')
+      return
+    }
 
     startTransition(async () => {
       try {
@@ -41,7 +54,9 @@ export function FaqForm({ faq }: FaqFormProps) {
             category: category.trim(),
             question: question.trim(),
             answer: answer.trim(),
-            display_order: displayOrder,
+            is_featured: isFeatured,
+            // New FAQs go to the end of their category
+            ...(isEdit ? {} : { display_order: 9999 }),
           }),
         })
 
@@ -52,12 +67,20 @@ export function FaqForm({ faq }: FaqFormProps) {
         }
 
         if (isEdit) {
-          showToast('success', 'FAQ updated')
+          showToast('success', 'FAQ updated, live on /faq')
+          router.refresh()
         } else {
-          router.push('/admin/faqs')
+          // Keep the category so several questions can be added in a row
+          setQuestion('')
+          setAnswer('')
+          setIsFeatured(false)
+          setEditorKey((k) => k + 1)
+          showToast('success', 'FAQ added, live on /faq')
+          onCreated?.()
+          router.refresh()
         }
       } catch {
-        showToast('error', 'Network error — please try again')
+        showToast('error', 'Network error, please try again')
       }
     })
   }
@@ -67,134 +90,126 @@ export function FaqForm({ faq }: FaqFormProps) {
 
     startTransition(async () => {
       try {
-        const res = await fetch(`/api/admin/faqs/${faq.id}`, {
-          method: 'DELETE',
-        })
-
+        const res = await fetch(`/api/admin/faqs/${faq.id}`, { method: 'DELETE' })
         if (!res.ok) {
           const data = await res.json().catch(() => ({}))
           showToast('error', data.error ?? 'Failed to delete FAQ')
           return
         }
-
         router.push('/admin/faqs')
+        router.refresh()
       } catch {
-        showToast('error', 'Network error — please try again')
+        showToast('error', 'Network error, please try again')
       }
     })
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`px-4 py-3 rounded-lg text-sm font-medium ${
-            toast.type === 'success'
-              ? 'bg-emerald-900/60 text-emerald-300 ring-1 ring-emerald-600/40'
-              : 'bg-red-900/60 text-red-300 ring-1 ring-red-600/40'
-          }`}
-        >
-          {toast.message}
+      <div aria-live="polite">
+        {toast && (
+          <div
+            className={`px-4 py-3 rounded-lg text-sm font-medium ${
+              toast.type === 'success'
+                ? 'bg-emerald-900/60 text-emerald-300 ring-1 ring-emerald-600/40'
+                : 'bg-red-900/60 text-red-300 ring-1 ring-red-600/40'
+            }`}
+          >
+            {toast.message}
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-4">
+        <div className="space-y-1.5">
+          <label htmlFor={`faq-cat-${faq?.id ?? 'new'}`} className="block text-sm font-medium text-stone-300">Category</label>
+          <input
+            id={`faq-cat-${faq?.id ?? 'new'}`}
+            type="text"
+            list="faq-categories"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder="e.g. Shipping"
+            required
+            className={inputClass}
+          />
+          <datalist id="faq-categories">
+            {categories.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+        </div>
+        <div className="space-y-1.5">
+          <label htmlFor={`faq-q-${faq?.id ?? 'new'}`} className="block text-sm font-medium text-stone-300">Question</label>
+          <input
+            id={`faq-q-${faq?.id ?? 'new'}`}
+            type="text"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Write it the way a customer would ask, e.g. Will the beads fade?"
+            required
+            className={inputClass}
+          />
+        </div>
+      </div>
+
+      {categories.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 -mt-2">
+          {categories.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCategory(c)}
+              className={`px-2.5 py-1 rounded-full text-xs transition-colors ${category === c ? 'bg-gold text-white' : 'bg-stone-700 text-stone-300 hover:bg-stone-600'}`}
+            >
+              {c}
+            </button>
+          ))}
         </div>
       )}
 
-      {/* Category */}
       <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-stone-300">
-          Category
-        </label>
-        <input
-          type="text"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          placeholder="e.g. Shipping, Products, Care, Orders"
-          required
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
-        />
-      </div>
-
-      {/* Question */}
-      <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-stone-300">
-          Question
-        </label>
-        <input
-          type="text"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          placeholder="e.g. How long does delivery take?"
-          required
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
-        />
-      </div>
-
-      {/* Answer */}
-      <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-stone-300">
-          Answer
-        </label>
-        <textarea
+        <span className="block text-sm font-medium text-stone-300">Answer</span>
+        <RichTextEditor
+          key={editorKey}
           value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          placeholder="Write the answer here..."
-          required
-          rows={4}
-          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold resize-y"
+          onChange={setAnswer}
+          variant="faq"
+          placeholder="Keep it short and friendly. Link to a product or the shipping page if it helps."
         />
+        <p className="text-xs text-stone-500">Answers also appear in Google results, so lead with the direct answer.</p>
       </div>
 
-      {/* Display order */}
-      <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-stone-300">
-          Display order
-          <span className="ml-1.5 text-stone-500 font-normal">(optional — lower numbers appear first)</span>
-        </label>
-        <input
-          type="number"
-          value={displayOrder}
-          onChange={(e) => setDisplayOrder(Number(e.target.value))}
-          min={0}
-          className="w-32 px-3 py-2 bg-stone-800 border border-stone-600 text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
-        />
-      </div>
+      <label className="flex items-start gap-3 cursor-pointer">
+        <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="mt-0.5 w-4 h-4 accent-gold" />
+        <span>
+          <span className="block text-sm text-stone-200">Show on the home page</span>
+          <span className="block text-xs text-stone-500">Featured questions appear in the &ldquo;Good to know&rdquo; section. Pick the 3 to 6 that stop people buying.</span>
+        </span>
+      </label>
 
-      {/* Actions */}
       <div className="flex items-center gap-3 pt-1">
         <button
           type="submit"
           disabled={isPending}
-          className="px-6 py-2.5 bg-gold hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+          className="px-6 py-2.5 bg-gold hover:bg-gold-deep disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors"
         >
           {isPending ? 'Saving…' : isEdit ? 'Save changes' : 'Add FAQ'}
         </button>
 
         {isEdit && !showDeleteConfirm && (
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            className="px-4 py-2.5 text-red-400 hover:text-red-300 text-sm font-medium transition-colors"
-          >
+          <button type="button" onClick={() => setShowDeleteConfirm(true)} className="px-4 py-2.5 text-red-400 hover:text-red-300 text-sm font-medium transition-colors">
             Delete
           </button>
         )}
 
         {isEdit && showDeleteConfirm && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-stone-400">Are you sure?</span>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={isPending}
-              className="px-3 py-1.5 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
-            >
+            <span className="text-sm text-stone-400">Delete this question?</span>
+            <button type="button" onClick={handleDelete} disabled={isPending} className="px-3 py-1.5 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
               {isPending ? 'Deleting…' : 'Yes, delete'}
             </button>
-            <button
-              type="button"
-              onClick={() => setShowDeleteConfirm(false)}
-              className="px-3 py-1.5 text-stone-400 hover:text-white text-sm transition-colors"
-            >
+            <button type="button" onClick={() => setShowDeleteConfirm(false)} className="px-3 py-1.5 text-stone-400 hover:text-white text-sm transition-colors">
               Cancel
             </button>
           </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/cart/CartContext';
 import { CheckoutForm } from '@/components/checkout/CheckoutForm';
@@ -16,12 +16,15 @@ export default function CheckoutPage() {
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails | null>(null);
   const [isInternational, setIsInternational] = useState(false);
 
-  // Redirect to cart if empty
+  // Set once payment succeeds so clearing the cart doesn't bounce the customer to /cart
+  const paidRef = useRef(false);
+
+  // Redirect to cart if empty (only once the stored cart has been read)
   useEffect(() => {
-    if (state.items.length === 0) {
-      router.push('/cart');
+    if (state.hydrated && state.items.length === 0 && !paidRef.current) {
+      router.replace('/cart');
     }
-  }, [state.items.length, router]);
+  }, [state.hydrated, state.items.length, router]);
 
   function handleFormSubmit(details: CustomerDetails) {
     setCustomerDetails(details);
@@ -71,21 +74,24 @@ export default function CheckoutPage() {
       // Ignore — webhook + order poller can still complete the flow.
     }
 
-    dispatch({ type: 'CLEAR_CART' });
+    paidRef.current = true;
     router.push('/orders/' + reference);
+    dispatch({ type: 'CLEAR_CART' });
   }
 
-  // Render nothing while redirecting (empty cart)
-  if (state.items.length === 0) {
+  // Loading the saved cart, redirecting (empty cart) or heading to the order page
+  if (!state.hydrated || state.items.length === 0) {
     return (
-      <main className="max-w-2xl mx-auto px-4 py-8 text-center">
-        <p className="font-body text-charcoal/60">Redirecting to your cart...</p>
-      </main>
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center" role="status">
+        <p className="font-body text-charcoal/70">
+          {!state.hydrated ? 'Loading your bag…' : paidRef.current ? 'Payment received, loading your order…' : 'Your bag is empty, taking you back…'}
+        </p>
+      </div>
     );
   }
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 py-8">
       {/* Step indicator */}
       <div className="flex items-center gap-4 mb-8">
         <div className={`flex items-center gap-2 font-heading text-sm font-semibold ${step === 1 ? 'text-gold' : 'text-charcoal/50'}`}>
@@ -151,6 +157,6 @@ export default function CheckoutPage() {
           onPaymentSuccess={handlePaymentSuccess}
         />
       )}
-    </main>
+    </div>
   );
 }

@@ -18,27 +18,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Rehydrate from localStorage after mount (avoids SSR/hydration mismatch)
   useEffect(() => {
+    let items: CartState['items'] = [];
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          dispatch({ type: 'HYDRATE', payload: parsed });
-        }
+        if (Array.isArray(parsed)) items = parsed;
       }
     } catch {
       // Corrupt storage — start fresh
     }
+    // Always dispatch so `hydrated` flips even for an empty cart
+    dispatch({ type: 'HYDRATE', payload: items });
   }, []);
 
   // Persist items to localStorage on change (drawer state not persisted)
   useEffect(() => {
+    if (!state.hydrated) return; // don't overwrite storage with the empty initial state
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
     } catch {
       // Storage unavailable — ignore
     }
-  }, [state.items]);
+  }, [state.items, state.hydrated]);
 
   return (
     <CartContext.Provider value={{ state, dispatch }}>

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { useDialogFocus } from '@/lib/useDialogFocus';
 import Link from 'next/link';
 import { useCart } from '@/lib/cart/CartContext';
 import { lineKey } from '@/lib/cart/cartReducer';
@@ -9,12 +10,15 @@ import { CartLineItem } from './CartLineItem';
 export function CartDrawer() {
   const { state, dispatch } = useCart();
   const { items, isDrawerOpen: isOpen } = state;
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(panelRef, isOpen);
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
 
   // Close on Escape key
   useEffect(() => {
+    if (!isOpen) return;
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         dispatch({ type: 'CLOSE_DRAWER' });
@@ -22,7 +26,7 @@ export function CartDrawer() {
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [dispatch]);
+  }, [dispatch, isOpen]);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -46,17 +50,19 @@ export function CartDrawer() {
       <div
         onClick={() => dispatch({ type: 'CLOSE_DRAWER' })}
         aria-hidden="true"
-        className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-[60] bg-forest/50 transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       />
 
       {/* Drawer panel — slides in from the right */}
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label="Shopping cart"
-        className={`fixed right-0 top-0 h-full w-full max-w-sm bg-cream shadow-2xl flex flex-col z-50 transition-transform duration-300 ease-in-out ${
+        inert={!isOpen}
+        className={`fixed right-0 top-0 h-full w-full max-w-sm bg-cream shadow-2xl flex flex-col z-[61] transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -74,7 +80,7 @@ export function CartDrawer() {
             type="button"
             onClick={() => dispatch({ type: 'CLOSE_DRAWER' })}
             aria-label="Close cart"
-            className="text-charcoal/60 hover:text-forest text-2xl leading-none p-1 transition-colors"
+            className="w-11 h-11 -mr-2 flex items-center justify-center rounded-full text-charcoal/70 hover:text-forest text-2xl leading-none transition-colors"
           >
             ×
           </button>
