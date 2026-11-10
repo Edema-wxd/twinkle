@@ -503,7 +503,7 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
           title="Choose a cover photo"
           current={featuredImage}
           onClose={() => setLibraryOpen(false)}
-          onSelect={(url) => {
+          onSelect={([url]) => {
             setUploadError(null)
             setFeaturedImage(url)
           }}

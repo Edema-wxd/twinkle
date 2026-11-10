@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import type { MediaItem, MediaLibrary, MediaUsage } from '@/lib/media-library'
 
@@ -24,11 +25,16 @@ const USAGE_LABEL: Record<MediaUsage['kind'], string> = {
 const PAGE_SIZE = 48
 
 interface Props {
-  /** The image currently chosen, marked "Current" in the grid */
-  current: string | null
+  /** Image(s) already in place, marked "Current" in the grid */
+  current?: string | string[] | null
   onClose: () => void
-  onSelect: (url: string) => void
+  /** The chosen URLs, in the order they were picked */
+  onSelect: (urls: string[]) => void
   title?: string
+  /** Allow picking several photos (inserting into a post body) */
+  multiple?: boolean
+  /** 'cover' warns about tall photos, which crop on cards and link previews */
+  purpose?: 'cover' | 'body'
 }
 
 function formatSize(bytes: number | null): string | null {
@@ -42,13 +48,15 @@ function formatDate(ms: number | null): string | null {
   return new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose a photo' }: Props) {
+export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose a photo', multiple = false, purpose = 'cover' }: Props) {
+  const currentSet = useMemo(() => new Set(Array.isArray(current) ? current : current ? [current] : []), [current])
   const [library, setLibrary] = useState<MediaLibrary | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
   const [limit, setLimit] = useState(PAGE_SIZE)
-  const [selected, setSelected] = useState<string | null>(null)
+  // Picked URLs in order; the last one is the one the footer describes
+  const [selected, setSelected] = useState<string[]>([])
   // Natural sizes, learned as thumbnails load, to warn about tall photos
   const [dims, setDims] = useState<Record<string, { w: number; h: number }>>({})
   // Images that failed to load (deleted, or hosted somewhere the site can't show)
@@ -109,17 +117,29 @@ export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose
 
   useEffect(() => setLimit(PAGE_SIZE), [query, filter])
 
-  const selectedItem: MediaItem | undefined = selected ? library?.items.find((i) => i.url === selected) : undefined
-  const selectedDims = selected ? dims[selected] : undefined
-  const isTall = selectedDims ? selectedDims.h > selectedDims.w : false
+  const focused = selected[selected.length - 1] ?? null
+  const selectedItem: MediaItem | undefined = focused ? library?.items.find((i) => i.url === focused) : undefined
+  const selectedDims = focused ? dims[focused] : undefined
+  const isTall = purpose === 'cover' && selectedDims ? selectedDims.h > selectedDims.w : false
 
-  function confirm(url = selected) {
-    if (!url) return
-    onSelect(url)
+  function pick(url: string) {
+    if (!multiple) return setSelected([url])
+    setSelected((prev) => (prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]))
+  }
+
+  function confirm(urls = selected) {
+    if (urls.length === 0) return
+    onSelect(urls)
     onClose()
   }
 
-  return (
+  const confirmLabel = multiple
+    ? selected.length > 1
+      ? `Insert ${selected.length} photos`
+      : 'Insert photo'
+    : 'Use this photo'
+
+  return createPortal(
     <div
       className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-6"
       onMouseDown={(e) => {
@@ -201,21 +221,22 @@ export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose
             <>
               <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {visible.slice(0, limit).map((item) => {
-                  const isSelected = item.url === selected
-                  const isCurrent = item.url === current
+                  const order = selected.indexOf(item.url)
+                  const isSelected = order !== -1
+                  const isCurrent = currentSet.has(item.url)
                   const d = dims[item.url]
                   const isBroken = !!broken[item.url]
                   return (
                     <li key={item.url}>
                       <button
                         type="button"
-                        onClick={() => setSelected(item.url)}
-                        onDoubleClick={() => confirm(item.url)}
+                        onClick={() => pick(item.url)}
+                        onDoubleClick={multiple ? undefined : () => confirm([item.url])}
                         aria-pressed={isSelected}
                         title={item.name}
                         className={`group relative block w-full aspect-[4/3] rounded-lg overflow-hidden bg-stone-800 ring-2 transition ${
-                          isSelected ? 'ring-gold' : 'ring-transparent hover:ring-stone-500'
-                        } focus:outline-none focus-visible:ring-gold`}
+                          isSelected ? 'ring-[3px] ring-gold ring-offset-2 ring-offset-stone-900' : 'ring-transparent hover:ring-stone-500'
+                        } focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white`}
                       >
                         {isBroken ? (
                           <span className="absolute inset-0 flex items-center justify-center px-3 text-center text-xs text-stone-500">Preview unavailable</span>
@@ -237,13 +258,15 @@ export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose
                           />
                         )}
                         <span className="absolute top-1.5 left-1.5 flex gap-1">
-                          {isCurrent && <span className="px-1.5 py-0.5 rounded bg-forest/90 text-[10px] font-semibold text-white">Current</span>}
+                          {isCurrent && (
+                            <span className="px-1.5 py-0.5 rounded bg-forest/90 text-[10px] font-semibold text-white">{purpose === 'body' ? 'In this post' : 'Current'}</span>
+                          )}
                           {item.usedIn.length === 0 && <span className="px-1.5 py-0.5 rounded bg-stone-900/80 text-[10px] text-stone-300">Not used</span>}
-                          {d && d.h > d.w && <span className="px-1.5 py-0.5 rounded bg-stone-900/80 text-[10px] text-amber-300">Tall</span>}
+                          {purpose === 'cover' && d && d.h > d.w && <span className="px-1.5 py-0.5 rounded bg-stone-900/80 text-[10px] text-amber-300">Tall</span>}
                         </span>
                         {isSelected && (
-                          <span className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-gold text-white flex items-center justify-center text-sm" aria-hidden="true">
-                            ✓
+                          <span className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-gold text-white flex items-center justify-center text-sm font-semibold" aria-hidden="true">
+                            {multiple && selected.length > 1 ? order + 1 : '✓'}
                           </span>
                         )}
                         <span className="absolute inset-x-0 bottom-0 px-2 py-1 bg-gradient-to-t from-black/80 to-transparent text-left text-[11px] text-stone-200 truncate">
@@ -270,6 +293,9 @@ export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose
           <div className="flex-1 min-w-0 text-xs text-stone-400" aria-live="polite">
             {selectedItem ? (
               <>
+                {multiple && selected.length > 1 && (
+                  <p className="text-gold-light">{selected.length} photos selected. They’ll go in the order you picked them.</p>
+                )}
                 <p className="text-stone-200 truncate">{selectedItem.name}</p>
                 <p className="truncate">
                   {[
@@ -287,7 +313,7 @@ export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose
                 {isTall && <p className="text-amber-300">This photo is taller than it is wide, so the top and bottom will be cropped on cards and link previews.</p>}
               </>
             ) : (
-              <p>Pick a photo. Landscape photos work best for covers.</p>
+              <p>{multiple ? 'Pick one or more photos. Click a photo again to unpick it.' : 'Pick a photo. Landscape photos work best for covers.'}</p>
             )}
           </div>
           <div className="flex justify-end gap-2">
@@ -297,14 +323,15 @@ export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose
             <button
               type="button"
               onClick={() => confirm()}
-              disabled={!selected}
+              disabled={selected.length === 0}
               className="px-5 py-2 bg-gold hover:bg-gold-deep disabled:opacity-50 text-white text-sm font-semibold rounded-lg"
             >
-              Use this photo
+              {confirmLabel}
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

@@ -11,6 +11,7 @@ import TableRow from '@tiptap/extension-table-row'
 import TableHeader from '@tiptap/extension-table-header'
 import TableCell from '@tiptap/extension-table-cell'
 import { useUploadThing } from '@/lib/uploadthing'
+import { MediaLibraryDialog } from './MediaLibraryDialog'
 import {
   hasForeignImages,
   isPresentationalHtml,
@@ -54,6 +55,8 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const isArticle = variant === 'article'
   const [notice, setNotice] = useState<Notice>(null)
+  // Photo library: 'insert' adds photos at the cursor, 'replace' swaps the selected image
+  const [library, setLibrary] = useState<null | 'insert' | 'replace'>(null)
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { startUpload } = useUploadThing('blogImages', {
     onUploadError: (err) => flash({ tone: 'error', text: `Image upload failed: ${err.message}` }),
@@ -260,7 +263,7 @@ export function RichTextEditor({
               <ToolButton label="Bead divider" onClick={() => editor.chain().focus().setHorizontalRule().run()}>
                 <Icon d="M4 12h.01M12 12h.01M20 12h.01" strokeWidth={4} />
               </ToolButton>
-              <ImageButton upload={handlers.current.uploadImages} editor={editor} />
+              <ImageButton upload={handlers.current.uploadImages} editor={editor} onOpenLibrary={() => setLibrary('insert')} />
               <ToolButton
                 label="Insert table"
                 active={inTable}
@@ -307,6 +310,7 @@ export function RichTextEditor({
             >
               {editor.getAttributes('image').alt ? 'Edit description' : 'Describe image (alt text)'}
             </TableAction>
+            <TableAction onClick={() => setLibrary('replace')}>Swap photo</TableAction>
             <TableAction danger onClick={() => editor.chain().focus().deleteSelection().run()}>Remove image</TableAction>
           </div>
         )}
@@ -330,12 +334,46 @@ export function RichTextEditor({
         )}
       </div>
 
+      {library && (
+        <MediaLibraryDialog
+          purpose="body"
+          multiple={library === 'insert'}
+          title={library === 'insert' ? 'Add photos to the post' : 'Swap this photo'}
+          current={imagesIn(editor)}
+          onClose={() => setLibrary(null)}
+          onSelect={(urls) => {
+            if (library === 'replace') {
+              editor.chain().focus().updateAttributes('image', { src: urls[0] }).run()
+              return
+            }
+            editor
+              .chain()
+              .focus()
+              .insertContent(urls.map((src) => ({ type: 'image', attrs: { src, alt: '' } })))
+              .run()
+            flash({
+              tone: 'info',
+              text: `${urls.length === 1 ? 'Photo' : `${urls.length} photos`} added. Click ${urls.length === 1 ? 'it' : 'each one'}, then use "Describe image" to add alt text.`,
+            })
+          }}
+        />
+      )}
+
       <EditorContent
         editor={editor}
         className={`${canvasClasses} [&_.ProseMirror]:outline-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left [&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0 [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:opacity-40 [&_.ProseMirror_img.ProseMirror-selectednode]:ring-2 [&_.ProseMirror_img.ProseMirror-selectednode]:ring-gold [&_.ProseMirror_.selectedCell]:bg-gold/15`}
       />
     </div>
   )
+}
+
+/** Every image already in the post, so the library can mark them "In this post". */
+function imagesIn(editor: Editor): string[] {
+  const out: string[] = []
+  editor.state.doc.descendants((node) => {
+    if (node.type.name === 'image' && typeof node.attrs.src === 'string') out.push(node.attrs.src)
+  })
+  return out
 }
 
 function TableAction({ onClick, children, danger = false }: { onClick: () => void; children: ReactNode; danger?: boolean }) {
@@ -465,9 +503,35 @@ function LinkButton({ editor }: { editor: Editor }) {
   )
 }
 
-function ImageButton({ editor, upload }: { editor: Editor; upload: (files: File[]) => Promise<string[]> }) {
+function ImageButton({
+  editor,
+  upload,
+  onOpenLibrary,
+}: {
+  editor: Editor
+  upload: (files: File[]) => Promise<string[]>
+  onOpenLibrary: () => void
+}) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const wrapRef = useRef<HTMLSpanElement>(null)
   const [busy, setBusy] = useState(false)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    function onDown(e: MouseEvent) {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? [])
@@ -482,16 +546,45 @@ function ImageButton({ editor, upload }: { editor: Editor; upload: (files: File[
     }
   }
 
+  const itemClass = 'w-full text-left px-3 py-2 rounded-md text-sm text-stone-200 hover:bg-stone-700 focus-visible:outline-none focus-visible:bg-stone-700'
+
   return (
-    <>
-      <ToolButton label={busy ? 'Uploading image…' : 'Insert image'} disabled={busy} onClick={() => inputRef.current?.click()}>
+    <span ref={wrapRef} className="relative">
+      <ToolButton label={busy ? 'Uploading image…' : 'Insert image'} active={open} disabled={busy} onClick={() => setOpen((o) => !o)}>
         {busy ? (
           <span className="w-4 h-4 rounded-full border-2 border-stone-400 border-t-transparent animate-spin" aria-hidden="true" />
         ) : (
           <Icon d="M4 5h16v14H4zM4 15l4-4 4 4 3-3 5 5M15 9h.01" />
         )}
       </ToolButton>
+      {open && (
+        <div role="menu" aria-label="Insert image" className="absolute left-0 top-full mt-2 z-20 w-60 max-w-[calc(100vw-3rem)] rounded-lg bg-stone-900 ring-1 ring-stone-600 shadow-xl p-1">
+          <button
+            type="button"
+            role="menuitem"
+            autoFocus
+            className={itemClass}
+            onClick={() => {
+              setOpen(false)
+              inputRef.current?.click()
+            }}
+          >
+            Upload from your device
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className={itemClass}
+            onClick={() => {
+              setOpen(false)
+              onOpenLibrary()
+            }}
+          >
+            Choose from uploaded photos
+          </button>
+        </div>
+      )}
       <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={onFile} />
-    </>
+    </span>
   )
 }
