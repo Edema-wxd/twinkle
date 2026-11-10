@@ -7,6 +7,7 @@ import Image from 'next/image'
 import type { Editor } from '@tiptap/react'
 import { RichTextEditor } from './RichTextEditor'
 import { MarkdownImportDialog } from './MarkdownImportDialog'
+import { MediaLibraryDialog } from './MediaLibraryDialog'
 import type { MarkdownImportResult } from '@/lib/markdown-import'
 import { useUploadThing } from '@/lib/uploadthing'
 import type { BlogPost } from '@/types/db'
@@ -78,6 +79,7 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [libraryOpen, setLibraryOpen] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [productQuery, setProductQuery] = useState('')
   const [importOpen, setImportOpen] = useState(false)
@@ -496,6 +498,18 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
         </div>
       )}
 
+      {libraryOpen && (
+        <MediaLibraryDialog
+          title="Choose a cover photo"
+          current={featuredImage}
+          onClose={() => setLibraryOpen(false)}
+          onSelect={(url) => {
+            setUploadError(null)
+            setFeaturedImage(url)
+          }}
+        />
+      )}
+
       {importOpen && (
         <MarkdownImportDialog
           hasContent={!!body || !!title}
@@ -670,9 +684,12 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
                 <div className="relative w-full aspect-[16/9] rounded-lg overflow-hidden ring-1 ring-stone-600 bg-stone-800">
                   <Image src={featuredImage} alt="Cover preview" fill className="object-cover" sizes="340px" unoptimized />
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-x-4 gap-y-1">
                   <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="text-sm text-stone-300 hover:text-white transition-colors">
-                    {uploading ? 'Uploading…' : 'Replace'}
+                    {uploading ? 'Uploading…' : 'Upload new'}
+                  </button>
+                  <button type="button" onClick={() => setLibraryOpen(true)} disabled={uploading} className="text-sm text-stone-300 hover:text-white transition-colors">
+                    Choose from library
                   </button>
                   <button type="button" onClick={() => setFeaturedImage(null)} className="text-sm text-red-400 hover:text-red-300 transition-colors">
                     Remove
@@ -689,6 +706,16 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
                 <span className="text-2xl leading-none" aria-hidden="true">+</span>
                 {uploading ? 'Uploading…' : 'Upload a landscape photo'}
                 <span className="text-xs text-stone-500">Used on cards, the post header and link previews</span>
+              </button>
+            )}
+            {!featuredImage && (
+              <button
+                type="button"
+                onClick={() => setLibraryOpen(true)}
+                disabled={uploading}
+                className="mt-2 w-full px-3 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-sm text-stone-200 transition-colors disabled:opacity-60"
+              >
+                Choose from uploaded photos
               </button>
             )}
             {uploadError && <p className="mt-2 text-sm text-red-400">{uploadError}</p>}

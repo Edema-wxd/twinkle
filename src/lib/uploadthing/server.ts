@@ -2,7 +2,7 @@ import { UTApi } from 'uploadthing/server'
 
 const utapi = new UTApi()
 
-function fileKeyFromUploadthingUrl(url: string): string | null {
+export function fileKeyFromUploadthingUrl(url: string): string | null {
   // We only ever delete UploadThing-hosted files.
   // Legacy URLs (e.g. Supabase Storage) must never be touched.
   if (!url.includes('.ufs.sh') && !url.includes('utfs.io')) return null

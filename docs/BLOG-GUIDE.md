@@ -49,6 +49,7 @@ On phones, a wide table scrolls sideways inside its own box.
 ## Before you publish
 
 - Follow the **Promotion checklist** in the side panel: 300+ words, an H2, a cover photo, a 70 to 160 character teaser, a product link and image descriptions.
+- For the cover, **Choose from uploaded photos** (or **Choose from library** to swap one) reuses any photo already uploaded for a product, post or page. Search by file name, product or post title, or filter to photos **Not used yet**. A **Tall** label means the photo is portrait and will be cropped on cards and link previews.
 - After uploading an image, click it and choose **Describe image** to add alt text.
 - **Shop the look** adds up to 4 products at the end of the post.
 
