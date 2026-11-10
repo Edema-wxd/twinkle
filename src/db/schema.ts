@@ -109,6 +109,8 @@ export const orders = pgTable('orders', {
   trackingNumber: text('tracking_number'),
   promoCode: text('promo_code'),
   discountAmount: integer('discount_amount').notNull().default(0),
+  amountPaid: integer('amount_paid'), // Naira actually charged by Paystack (null on legacy orders)
+  paymentIssue: text('payment_issue'), // set when the charge didn't match server-side pricing; status = 'payment_review'
 })
 
 export const promoCodes = pgTable('promo_codes', {

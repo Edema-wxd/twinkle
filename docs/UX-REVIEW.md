@@ -12,6 +12,7 @@ deploying, or the blog, FAQ and home pages will fail to query:
 - `blog_posts`: `seo_title`, `seo_description`, `is_featured`, `featured_product_ids`
 - `faqs`: `is_featured`
 - `blog_posts.previous_slugs` (added in the blog review below)
+- `orders.amount_paid`, `orders.payment_issue` (payment verification, below)
 
 Also set `ADMIN_EMAILS` (comma-separated) in production. See the security note below.
 
@@ -124,6 +125,19 @@ This was tested in a real browser against a throwaway in-memory Postgres. The te
 - No image captions (the sanitizer already allows `figure`/`figcaption`).
 - `/blog` loads every post body to work out reading time. Store a word count column once there are 100+ posts.
 - ~~`middleware.ts` never runs~~ **Fixed:** it is now at `src/middleware.ts`. The setup path is exempted, there's no login redirect loop on stale cookies, lowercasing applies to pages only (not files or APIs), and login returns you to `?next=`.
+
+## Payment amount verification (fixed)
+- **[P1] The browser decided what customers paid.** The webhook and the verify route built orders from the subtotal, shipping and unit prices in the Paystack metadata, which the browser writes, and never checked the amount Paystack charged. A tampered checkout could buy ₦30,000 of beads for ₦100.
+- **Now:** `src/lib/payments/paidOrder.ts` re-prices every paid order on the server, then compares the result with the amount Paystack actually charged (in NGN). It uses:
+  - the product's variant and pack-size tier
+  - shipping from `quoteShipping()`
+  - the promo code, re-validated
+- **Recording:** orders are always saved with the server's numbers. If the charge is short, a pack size or product doesn't exist, the quantity is out of range, or the promo is invalid, the order is saved as **`payment_review`** with a plain-English `payment_issue`. The admin email is marked "CHECK PAYMENT before shipping", the order page shows a "don't ship yet" banner, and there's a "Needs review" tab. The customer sees "we need to double-check a detail" and gets no automatic confirmation. Setting the order to **paid** sends that confirmation.
+- **Also fixed:**
+  - The webhook ignored promo discounts and never counted promo use.
+  - The verify route could set a shipped order back to `paid`.
+  - The webhook and verify route racing could fail with a duplicate insert. Recording is now idempotent, with `onConflictDoNothing`.
+- **Tested:** signed webhook charges covering honest payments, tampered prices, shipping, promo codes, pack size and quantity, an unknown product, overpayment, concurrent duplicates, a replay after shipping, a bad signature, and clearing a flagged order.
 
 ## Still open (not changed, needs a decision or a follow-up)
 
