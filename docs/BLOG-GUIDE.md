@@ -52,6 +52,8 @@ On phones, a wide table scrolls sideways inside its own box.
 - For the cover, **Choose from uploaded photos** (or **Choose from library** to swap one) reuses any photo already uploaded for a product, post or page. Search by file name, product or post title, or filter to photos **Not used yet**. A **Tall** label means the photo is portrait and will be cropped on cards and link previews.
 - To add photos inside the post, click the image button in the toolbar and choose **Upload from your device** or **Choose from uploaded photos**. From the library you can pick several at once. They go in at the cursor, in the order you picked them. Photos already in the post are marked **In this post**.
 - To change a photo in the post, click it and choose **Swap photo**. Its description (alt text) is kept.
+- Products have the same library: under **Product images**, choose **Choose from uploaded photos**. Product photos show as squares, so very wide or tall photos are labelled **Wide** or **Tall**.
+- Removing a photo from a product, post or page only deletes the file once nothing else on the site uses it, so sharing photos is safe.
 - After uploading an image, click it and choose **Describe image** to add alt text.
 - **Shop the look** adds up to 4 products at the end of the post.
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { and, eq, like, ne, sql } from 'drizzle-orm'
+import { and, eq, ne, sql } from 'drizzle-orm'
 import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { blogPosts } from '@/db'
@@ -122,7 +122,7 @@ export async function PUT(
     }
     if (orphans.size > 0) {
       try {
-        await deleteUploadthingFilesByUrls(await unusedElsewhere([...orphans], id))
+        await deleteUploadthingFilesByUrls([...orphans])
       } catch (err) {
         console.error('UploadThing cleanup failed (blog images):', err)
       }
@@ -165,7 +165,7 @@ export async function DELETE(
     const urls = [...(before?.featuredImage ? [before.featuredImage] : []), ...bodyImageUrls(before?.body)]
     if (urls.length > 0) {
       try {
-        await deleteUploadthingFilesByUrls(await unusedElsewhere(urls, id))
+        await deleteUploadthingFilesByUrls(urls)
       } catch (err) {
         console.error('UploadThing cleanup failed (blog delete):', err)
       }
@@ -177,18 +177,4 @@ export async function DELETE(
     console.error('Failed to delete blog post:', err)
     return NextResponse.json({ error: 'Failed to delete blog post' }, { status: 500 })
   }
-}
-
-/** Keep only URLs no other post references (as cover or inside its body). */
-async function unusedElsewhere(urls: string[], exceptId: string): Promise<string[]> {
-  const out: string[] = []
-  for (const url of urls) {
-    const [other] = await db
-      .select({ id: blogPosts.id })
-      .from(blogPosts)
-      .where(and(ne(blogPosts.id, exceptId), sql`(${blogPosts.featuredImage} = ${url} OR ${like(blogPosts.body, `%${url}%`)})`))
-      .limit(1)
-    if (!other) out.push(url)
-  }
-  return out
 }

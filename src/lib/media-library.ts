@@ -73,7 +73,7 @@ function idFor(url: string): string {
 async function usedImages(): Promise<{ url: string; usage: MediaUsage }[]> {
   const [posts, prods, pages] = await Promise.all([
     db.select({ id: blogPosts.id, title: blogPosts.title, featuredImage: blogPosts.featuredImage, body: blogPosts.body }).from(blogPosts),
-    db.select({ id: products.id, name: products.name, images: products.images }).from(products),
+    db.select({ id: products.id, name: products.name, image: products.image, images: products.images }).from(products),
     db.select({ id: aboutSections.id, title: aboutSections.title, imageUrl: aboutSections.imageUrl }).from(aboutSections),
   ])
 
@@ -84,7 +84,9 @@ async function usedImages(): Promise<{ url: string; usage: MediaUsage }[]> {
     for (const src of new Set(imgSrcs(p.body ?? ''))) out.push({ url: src, usage: { kind: 'post', label: p.title, href } })
   }
   for (const p of prods) {
-    for (const url of p.images ?? []) out.push({ url, usage: { kind: 'product', label: p.name, href: `/admin/products/${p.id}` } })
+    for (const url of new Set([p.image, ...(p.images ?? [])])) {
+      out.push({ url, usage: { kind: 'product', label: p.name, href: `/admin/products/${p.id}` } })
+    }
   }
   for (const s of pages) {
     if (s.imageUrl) out.push({ url: s.imageUrl, usage: { kind: 'page', label: s.title, href: '/admin/pages' } })

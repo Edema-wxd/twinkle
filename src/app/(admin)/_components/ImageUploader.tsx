@@ -18,6 +18,9 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useUploadThing } from '@/lib/uploadthing'
+import { MediaLibraryDialog } from './MediaLibraryDialog'
+
+const MAX_IMAGES = 5
 
 interface ImageItem {
   id: string
@@ -93,6 +96,7 @@ export function ImageUploader(props: ImageUploaderProps) {
   const [images, setImages] = useState<ImageItem[]>(() => initialImages.map((url) => ({ id: crypto.randomUUID(), url })))
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [libraryOpen, setLibraryOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { startUpload } = useUploadThing('productImages', {
     onClientUploadComplete: (res) => {
@@ -118,14 +122,14 @@ export function ImageUploader(props: ImageUploaderProps) {
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return
 
-    if (images.length >= 5) {
+    if (images.length >= MAX_IMAGES) {
       setError('Maximum 5 images reached')
       return
     }
 
     setUploading(true)
     try {
-      const filesToUpload = Array.from(files).slice(0, 5 - images.length)
+      const filesToUpload = Array.from(files).slice(0, MAX_IMAGES - images.length)
       setError(null)
       await startUpload(filesToUpload)
     } finally {
@@ -153,6 +157,15 @@ export function ImageUploader(props: ImageUploaderProps) {
     })
   }
 
+  function addFromLibrary(urls: string[]) {
+    setError(null)
+    setImages((prev) => {
+      const have = new Set(prev.map((i) => i.url))
+      const fresh = urls.filter((u) => !have.has(u)).slice(0, MAX_IMAGES - prev.length)
+      return [...prev, ...fresh.map((url) => ({ id: crypto.randomUUID(), url }))]
+    })
+  }
+
   function handleRemove(id: string) {
     setImages((prev) => prev.filter((i) => i.id !== id))
   }
@@ -162,14 +175,14 @@ export function ImageUploader(props: ImageUploaderProps) {
       {/* Drop zone */}
       <div
         className={`relative flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed transition-colors ${
-          images.length >= 5
+          images.length >= MAX_IMAGES
             ? 'border-stone-700 bg-stone-800/40 cursor-not-allowed'
             : 'border-stone-600 bg-stone-800 cursor-pointer hover:border-gold/60 hover:bg-stone-700/60'
         }`}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         onClick={() => {
-          if (images.length < 5 && !uploading) {
+          if (images.length < MAX_IMAGES && !uploading) {
             fileInputRef.current?.click()
           }
         }}
@@ -209,11 +222,11 @@ export function ImageUploader(props: ImageUploaderProps) {
         </svg>
 
         <span className="text-sm text-stone-400">
-          {images.length >= 5
+          {images.length >= MAX_IMAGES
             ? 'Maximum 5 images reached'
             : 'Drag images here or click to upload'}
         </span>
-        <span className="text-xs text-stone-500">{images.length}/5 images</span>
+        <span className="text-xs text-stone-500">{images.length}/{MAX_IMAGES} images</span>
 
         <input
           ref={fileInputRef}
@@ -224,6 +237,29 @@ export function ImageUploader(props: ImageUploaderProps) {
           onChange={(e) => handleFiles(e.target.files)}
         />
       </div>
+
+      {images.length < MAX_IMAGES && (
+        <button
+          type="button"
+          onClick={() => setLibraryOpen(true)}
+          disabled={uploading}
+          className="w-full px-3 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-sm text-stone-200 transition-colors disabled:opacity-60"
+        >
+          Choose from uploaded photos
+        </button>
+      )}
+
+      {libraryOpen && (
+        <MediaLibraryDialog
+          title="Add product photos"
+          purpose="product"
+          multiple
+          max={MAX_IMAGES - images.length}
+          current={images.map((i) => i.url)}
+          onClose={() => setLibraryOpen(false)}
+          onSelect={addFromLibrary}
+        />
+      )}
 
       {/* Error */}
       {error && (

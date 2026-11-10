@@ -33,8 +33,36 @@ interface Props {
   title?: string
   /** Allow picking several photos (inserting into a post body) */
   multiple?: boolean
-  /** 'cover' warns about tall photos, which crop on cards and link previews */
-  purpose?: 'cover' | 'body'
+  /**
+   * What the photo is for, which decides the crop warning:
+   * 'cover' (landscape cards + link previews) warns about tall photos,
+   * 'product' (square tiles) warns about photos far from square, 'body' never warns
+   */
+  purpose?: 'cover' | 'body' | 'product'
+  /** Multiple mode: the most photos that can be picked (e.g. free product image slots) */
+  max?: number
+}
+
+const CURRENT_LABEL: Record<NonNullable<Props['purpose']>, string> = {
+  cover: 'Current',
+  body: 'In this post',
+  product: 'Already added',
+}
+
+/** Crop warning for a photo of this size, used for both the tile badge and the footer note. */
+function cropWarning(purpose: NonNullable<Props['purpose']>, d: { w: number; h: number } | undefined): { badge: string; text: string } | null {
+  if (!d) return null
+  const ratio = d.w / d.h
+  if (purpose === 'cover' && ratio < 1) {
+    return { badge: 'Tall', text: 'This photo is taller than it is wide, so the top and bottom will be cropped on cards and link previews.' }
+  }
+  if (purpose === 'product' && (ratio > 1.3 || ratio < 0.77)) {
+    return {
+      badge: ratio > 1 ? 'Wide' : 'Tall',
+      text: `Product photos are shown square, so the ${ratio > 1 ? 'sides' : 'top and bottom'} of this photo will be cropped.`,
+    }
+  }
+  return null
 }
 
 function formatSize(bytes: number | null): string | null {
@@ -48,7 +76,15 @@ function formatDate(ms: number | null): string | null {
   return new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose a photo', multiple = false, purpose = 'cover' }: Props) {
+export function MediaLibraryDialog({
+  current,
+  onClose,
+  onSelect,
+  title = 'Choose a photo',
+  multiple = false,
+  purpose = 'cover',
+  max = Infinity,
+}: Props) {
   const currentSet = useMemo(() => new Set(Array.isArray(current) ? current : current ? [current] : []), [current])
   const [library, setLibrary] = useState<MediaLibrary | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -120,11 +156,15 @@ export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose
   const focused = selected[selected.length - 1] ?? null
   const selectedItem: MediaItem | undefined = focused ? library?.items.find((i) => i.url === focused) : undefined
   const selectedDims = focused ? dims[focused] : undefined
-  const isTall = purpose === 'cover' && selectedDims ? selectedDims.h > selectedDims.w : false
+  const warning = cropWarning(purpose, selectedDims)
+  // Products can't have the same photo twice, so photos already on it can't be picked again
+  const lockCurrent = purpose === 'product'
+  const full = multiple && selected.length >= max
 
   function pick(url: string) {
+    if (lockCurrent && currentSet.has(url)) return
     if (!multiple) return setSelected([url])
-    setSelected((prev) => (prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]))
+    setSelected((prev) => (prev.includes(url) ? prev.filter((u) => u !== url) : prev.length >= max ? prev : [...prev, url]))
   }
 
   function confirm(urls = selected) {
@@ -133,11 +173,8 @@ export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose
     onClose()
   }
 
-  const confirmLabel = multiple
-    ? selected.length > 1
-      ? `Insert ${selected.length} photos`
-      : 'Insert photo'
-    : 'Use this photo'
+  const verb = purpose === 'product' ? 'Add' : 'Insert'
+  const confirmLabel = multiple ? (selected.length > 1 ? `${verb} ${selected.length} photos` : `${verb} photo`) : 'Use this photo'
 
   return createPortal(
     <div
@@ -224,7 +261,8 @@ export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose
                   const order = selected.indexOf(item.url)
                   const isSelected = order !== -1
                   const isCurrent = currentSet.has(item.url)
-                  const d = dims[item.url]
+                  const locked = (lockCurrent && isCurrent) || (full && !isSelected)
+                  const tileWarning = cropWarning(purpose, dims[item.url])
                   const isBroken = !!broken[item.url]
                   return (
                     <li key={item.url}>
@@ -233,9 +271,14 @@ export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose
                         onClick={() => pick(item.url)}
                         onDoubleClick={multiple ? undefined : () => confirm([item.url])}
                         aria-pressed={isSelected}
+                        aria-disabled={locked || undefined}
                         title={item.name}
                         className={`group relative block w-full aspect-[4/3] rounded-lg overflow-hidden bg-stone-800 ring-2 transition ${
-                          isSelected ? 'ring-[3px] ring-gold ring-offset-2 ring-offset-stone-900' : 'ring-transparent hover:ring-stone-500'
+                          isSelected
+                            ? 'ring-[3px] ring-gold ring-offset-2 ring-offset-stone-900'
+                            : locked
+                              ? 'ring-transparent opacity-40 cursor-not-allowed'
+                              : 'ring-transparent hover:ring-stone-500'
                         } focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white`}
                       >
                         {isBroken ? (
@@ -259,10 +302,10 @@ export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose
                         )}
                         <span className="absolute top-1.5 left-1.5 flex gap-1">
                           {isCurrent && (
-                            <span className="px-1.5 py-0.5 rounded bg-forest/90 text-[10px] font-semibold text-white">{purpose === 'body' ? 'In this post' : 'Current'}</span>
+                            <span className="px-1.5 py-0.5 rounded bg-forest/90 text-[10px] font-semibold text-white">{CURRENT_LABEL[purpose]}</span>
                           )}
                           {item.usedIn.length === 0 && <span className="px-1.5 py-0.5 rounded bg-stone-900/80 text-[10px] text-stone-300">Not used</span>}
-                          {purpose === 'cover' && d && d.h > d.w && <span className="px-1.5 py-0.5 rounded bg-stone-900/80 text-[10px] text-amber-300">Tall</span>}
+                          {tileWarning && <span className="px-1.5 py-0.5 rounded bg-stone-900/80 text-[10px] text-amber-300">{tileWarning.badge}</span>}
                         </span>
                         {isSelected && (
                           <span className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-gold text-white flex items-center justify-center text-sm font-semibold" aria-hidden="true">
@@ -310,10 +353,17 @@ export function MediaLibraryDialog({ current, onClose, onSelect, title = 'Choose
                     .join(' · ')}
                 </p>
                 {broken[selectedItem.url] && <p className="text-amber-300">This photo can’t be previewed, so it may not show on the site either. Pick another if you can.</p>}
-                {isTall && <p className="text-amber-300">This photo is taller than it is wide, so the top and bottom will be cropped on cards and link previews.</p>}
+                {warning && <p className="text-amber-300">{warning.text}</p>}
+                {full && Number.isFinite(max) && <p className="text-stone-300">That’s the most you can add here. Unpick one to choose a different photo.</p>}
               </>
             ) : (
-              <p>{multiple ? 'Pick one or more photos. Click a photo again to unpick it.' : 'Pick a photo. Landscape photos work best for covers.'}</p>
+              <p>
+                {!multiple
+                  ? 'Pick a photo. Landscape photos work best for covers.'
+                  : Number.isFinite(max)
+                    ? `Pick up to ${max} photo${max === 1 ? '' : 's'}. Click a photo again to unpick it.`
+                    : 'Pick one or more photos. Click a photo again to unpick it.'}
+              </p>
             )}
           </div>
           <div className="flex justify-end gap-2">
