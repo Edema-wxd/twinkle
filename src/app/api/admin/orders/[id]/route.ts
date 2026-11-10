@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { orders, orderItems } from '@/db'
@@ -115,7 +115,9 @@ export async function PATCH(
   if (emailEvent) {
     const claimId = await tryClaimStatusEmail(id, emailEvent).catch(() => null)
     if (claimId) {
-      sendCustomerEmail({
+      // after(): runs once the response is sent but keeps the function alive until
+      // the email is out. A bare un-awaited promise can be frozen mid-send on Vercel.
+      after(() => sendCustomerEmail({
         to: existing.customerEmail,
         customerName: existing.customerName,
         orderReference: existing.paystackReference,
@@ -131,7 +133,7 @@ export async function PATCH(
           error: String(err).slice(0, 500),
         })
         await releaseStatusEmailClaim(claimId).catch(() => null)
-      })
+      }))
     }
   }
 

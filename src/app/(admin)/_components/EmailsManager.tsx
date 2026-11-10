@@ -13,6 +13,135 @@ type EmailLog = {
   error: string | null
   sentAt: string | null
   createdAt: string
+  deliveryStatus?: string | null
+  deliveryDetail?: string | null
+}
+
+type EmailHealth = {
+  apiKey: boolean
+  from: string | null
+  replyTo: string
+  adminRecipient: string
+  webhookSecret: boolean
+  domain: { name: string | null; status: string; detail?: string }
+  last7Days: { sent: number; failed: number; problems: number; delivered: number }
+}
+
+const PROBLEM_STATUSES = ['bounced', 'complained', 'failed', 'suppressed']
+
+const DELIVERY_BADGE: Record<string, { label: string; cls: string }> = {
+  delivered: { label: 'Delivered', cls: 'bg-green-900/60 text-green-300' },
+  opened: { label: 'Opened', cls: 'bg-emerald-900/60 text-emerald-300' },
+  clicked: { label: 'Clicked', cls: 'bg-emerald-900/60 text-emerald-300' },
+  delayed: { label: 'Delayed', cls: 'bg-amber-900/60 text-amber-200' },
+  bounced: { label: 'Bounced', cls: 'bg-red-900/60 text-red-300' },
+  complained: { label: 'Marked as spam', cls: 'bg-red-900/60 text-red-300' },
+  failed: { label: 'Failed', cls: 'bg-red-900/60 text-red-300' },
+  suppressed: { label: 'Suppressed', cls: 'bg-red-900/60 text-red-300' },
+}
+
+/** Is email wired up? Config, Resend domain status, test send. */
+function SetupPanel() {
+  const [health, setHealth] = useState<EmailHealth | null>(null)
+  const [loadError, setLoadError] = useState(false)
+  const [testTo, setTestTo] = useState('')
+  const [testState, setTestState] = useState<{ kind: 'idle' | 'sending' | 'ok' | 'error'; message?: string }>({ kind: 'idle' })
+
+  useEffect(() => {
+    fetch('/api/admin/emails/health')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then(setHealth)
+      .catch(() => setLoadError(true))
+  }, [])
+
+  async function sendTest() {
+    setTestState({ kind: 'sending' })
+    try {
+      const res = await fetch('/api/admin/emails/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: testTo.trim() || undefined }),
+      })
+      const data = await res.json().catch(() => ({}))
+      setTestState(res.ok ? { kind: 'ok', message: `Sent to ${data.to}. Check the inbox (and spam).` } : { kind: 'error', message: data.error ?? 'Send failed' })
+    } catch {
+      setTestState({ kind: 'error', message: 'Network error' })
+    }
+  }
+
+  if (loadError) return null
+  if (!health) return <div className="h-24 rounded-xl bg-stone-900 ring-1 ring-stone-800 animate-pulse" />
+
+  const domainOk = health.domain.status === 'verified'
+  const domainText: Record<string, string> = {
+    verified: 'verified in Resend',
+    pending: 'waiting for DNS verification in Resend',
+    not_started: 'added but DNS not verified yet',
+    partially_verified: 'partly verified (check DNS records in Resend)',
+    partially_failed: 'some DNS records failing (check Resend)',
+    failed: 'DNS verification failed (check Resend)',
+    not_added: 'not added to Resend. Emails will be rejected',
+    no_api_key: 'cannot check without an API key',
+    no_from: 'RESEND_FROM is missing',
+    unknown: "couldn't be checked (the API key may be send-only)",
+  }
+  const rows: { ok: boolean | null; label: string; value: string }[] = [
+    { ok: health.apiKey, label: 'Resend API key', value: health.apiKey ? 'Set' : 'Missing: set RESEND_API_KEY in Vercel' },
+    { ok: !!health.from, label: 'Sends from', value: health.from ?? 'Missing: set RESEND_FROM' },
+    { ok: domainOk ? true : health.domain.status === 'unknown' ? null : false, label: 'Sending domain', value: `${health.domain.name ?? '—'}: ${domainText[health.domain.status] ?? health.domain.status}` },
+    { ok: true, label: 'Customer replies go to', value: health.replyTo },
+    { ok: true, label: 'New-order alerts go to', value: health.adminRecipient },
+    { ok: health.webhookSecret ? true : null, label: 'Delivery tracking', value: health.webhookSecret ? 'On (Resend webhook connected)' : 'Off: add a Resend webhook to /api/webhooks/resend and set RESEND_WEBHOOK_SECRET' },
+  ]
+  const allGood = health.apiKey && !!health.from && domainOk
+
+  return (
+    <section className={`rounded-xl p-5 ring-1 ${allGood ? 'bg-stone-900 ring-stone-800' : 'bg-amber-950/40 ring-amber-800'}`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-heading font-semibold text-white">Email setup {allGood ? '✓' : ''}</h2>
+          <p className="text-xs text-stone-400 mt-0.5">
+            Last 7 days: {health.last7Days.sent} sent
+            {health.webhookSecret && <> · {health.last7Days.delivered} delivered</>}
+            {health.last7Days.failed > 0 && <span className="text-red-300"> · {health.last7Days.failed} failed</span>}
+            {health.last7Days.problems > 0 && <span className="text-red-300"> · {health.last7Days.problems} bounced or spam</span>}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="email"
+            value={testTo}
+            onChange={(e) => setTestTo(e.target.value)}
+            placeholder={health.adminRecipient}
+            aria-label="Send test email to"
+            className="w-56 bg-stone-800 border border-stone-600 rounded-lg px-3 py-1.5 text-white text-sm placeholder:text-stone-500 focus:outline-none focus:border-gold"
+          />
+          <button
+            type="button"
+            onClick={sendTest}
+            disabled={testState.kind === 'sending'}
+            className="px-3 py-1.5 rounded-lg bg-gold hover:bg-gold-deep text-white text-sm font-semibold disabled:opacity-50"
+          >
+            {testState.kind === 'sending' ? 'Sending…' : 'Send test email'}
+          </button>
+        </div>
+      </div>
+      {testState.message && (
+        <p role="status" className={`mt-2 text-xs ${testState.kind === 'ok' ? 'text-green-300' : 'text-red-300'}`}>{testState.message}</p>
+      )}
+      <dl className="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+        {rows.map((r) => (
+          <div key={r.label} className="flex gap-2 text-xs">
+            <span aria-hidden="true" className={r.ok === true ? 'text-green-400' : r.ok === false ? 'text-red-400' : 'text-amber-300'}>
+              {r.ok === true ? '●' : r.ok === false ? '●' : '○'}
+            </span>
+            <dt className="text-stone-400 shrink-0">{r.label}:</dt>
+            <dd className="text-stone-200 break-all">{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )
 }
 
 type EmailTemplate = {
@@ -28,6 +157,8 @@ type EmailTemplate = {
 type Tab = 'log' | 'compose' | 'templates'
 
 const TEMPLATE_NAMES: Record<string, string> = {
+  admin_new_order: 'New order alert (to you)',
+  test: 'Test email',
   confirmed: 'Order Confirmed',
   processing: 'Order Processing',
   shipped: 'Order Shipped',
@@ -46,7 +177,7 @@ function formatDate(iso: string) {
 
 function LogTab({ logs: initial }: { logs: EmailLog[] }) {
   const [logs, setLogs] = useState<EmailLog[]>(initial)
-  const [filter, setFilter] = useState<'all' | 'sent' | 'failed'>('all')
+  const [filter, setFilter] = useState<'all' | 'sent' | 'failed' | 'problems'>('all')
   const [isPending, startTransition] = useTransition()
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
@@ -79,11 +210,15 @@ function LogTab({ logs: initial }: { logs: EmailLog[] }) {
     })
   }
 
-  const filtered = filter === 'all' ? logs : logs.filter((l) => l.status === filter)
+  const isProblem = (l: EmailLog) => l.status === 'failed' || PROBLEM_STATUSES.includes(l.deliveryStatus ?? '')
+  const filtered =
+    filter === 'all' ? logs : filter === 'problems' ? logs.filter(isProblem) : logs.filter((l) => l.status === filter)
   const failedCount = logs.filter((l) => l.status === 'failed').length
+  const problemCount = logs.filter(isProblem).length
 
   return (
     <div className="space-y-4">
+      <SetupPanel />
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg text-sm font-body shadow-lg ${
           toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
@@ -93,7 +228,7 @@ function LogTab({ logs: initial }: { logs: EmailLog[] }) {
       )}
 
       <div className="flex items-center gap-3 flex-wrap">
-        {(['all', 'sent', 'failed'] as const).map((f) => (
+        {(['all', 'sent', 'failed', 'problems'] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -103,7 +238,13 @@ function LogTab({ logs: initial }: { logs: EmailLog[] }) {
                 : 'bg-stone-800 text-stone-400 hover:text-white'
             }`}
           >
-            {f === 'all' ? `All (${logs.length})` : f === 'sent' ? `Sent (${logs.length - failedCount})` : `Failed (${failedCount})`}
+            {f === 'all'
+              ? `All (${logs.length})`
+              : f === 'sent'
+                ? `Sent (${logs.length - failedCount})`
+                : f === 'failed'
+                  ? `Failed (${failedCount})`
+                  : `Needs attention (${problemCount})`}
           </button>
         ))}
         <button
@@ -153,16 +294,28 @@ function LogTab({ logs: initial }: { logs: EmailLog[] }) {
                       : <span className="text-stone-500 italic">Custom</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
-                      log.status === 'sent'
-                        ? 'bg-green-900/60 text-green-400'
-                        : 'bg-red-900/60 text-red-400'
-                    }`}>
-                      {log.status}
-                    </span>
+                    {log.status === 'sent' && log.deliveryStatus && DELIVERY_BADGE[log.deliveryStatus] ? (
+                      <span
+                        title={log.deliveryDetail ?? undefined}
+                        className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${DELIVERY_BADGE[log.deliveryStatus].cls}`}
+                      >
+                        {DELIVERY_BADGE[log.deliveryStatus].label}
+                      </span>
+                    ) : (
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                        log.status === 'sent'
+                          ? 'bg-stone-700 text-stone-200'
+                          : 'bg-red-900/60 text-red-400'
+                      }`}>
+                        {log.status === 'sent' ? 'Sent' : 'Failed'}
+                      </span>
+                    )}
+                    {log.deliveryDetail && PROBLEM_STATUSES.includes(log.deliveryStatus ?? '') && (
+                      <div className="text-[11px] text-red-300 mt-1 max-w-[200px] truncate" title={log.deliveryDetail}>{log.deliveryDetail}</div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
-                    {log.status === 'failed' && (
+                    {(log.status === 'failed' || PROBLEM_STATUSES.includes(log.deliveryStatus ?? '')) && (
                       <button
                         onClick={() => handleResend(log.id)}
                         disabled={isPending}
@@ -316,6 +469,7 @@ function ComposeTab() {
 
 function PreviewModal({
   templateKey,
+  subject,
   bannerColor,
   bannerLabel,
   body,
@@ -323,6 +477,7 @@ function PreviewModal({
   onClose,
 }: {
   templateKey: string
+  subject?: string
   bannerColor: string
   bannerLabel: string
   body: string
@@ -330,16 +485,18 @@ function PreviewModal({
   onClose: () => void
 }) {
   const [html, setHtml] = useState<string | null>(null)
+  const [renderedSubject, setRenderedSubject] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/email-templates/preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ templateKey, bannerColor, bannerLabel, body }),
+      body: JSON.stringify({ templateKey, subject, bannerColor, bannerLabel, body }),
     })
       .then((r) => r.json())
-      .then((d: { html?: string; error?: string }) => {
+      .then((d: { html?: string; subject?: string; error?: string }) => {
+        if (d.subject) setRenderedSubject(d.subject)
         if (d.html) setHtml(d.html)
         else setError(d.error ?? 'Failed to load preview')
       })
@@ -354,7 +511,8 @@ function PreviewModal({
         <div className="flex items-center justify-between px-5 py-4 border-b border-stone-700">
           <div>
             <p className="font-heading font-semibold text-white text-sm">{name} — Preview</p>
-            <p className="text-xs text-stone-500 mt-0.5">Sample data — not a real order</p>
+            <p className="text-xs text-stone-500 mt-0.5">Sample data, exactly as customers will see it</p>
+            {renderedSubject && <p className="text-xs text-stone-300 mt-1">Subject: {renderedSubject}</p>}
           </div>
           <button
             onClick={onClose}
@@ -463,6 +621,7 @@ function TemplatesTab({ templates: initial }: { templates: EmailTemplate[] }) {
       {previewing && (
         <PreviewModal
           templateKey={previewing.key}
+          subject={previewing.subject}
           bannerColor={previewing.bannerColor}
           bannerLabel={previewing.bannerLabel}
           body={previewing.body}
@@ -472,7 +631,11 @@ function TemplatesTab({ templates: initial }: { templates: EmailTemplate[] }) {
       )}
 
       <p className="text-stone-400 text-sm font-body">
-        Edit the content of each customer email. Use <code className="text-gold bg-stone-800 px-1 rounded text-xs">{'{ref}'}</code> in the subject as a placeholder for the order reference.
+        Edit the content of each customer email. In the subject, banner and message you can use{' '}
+        <code className="text-gold bg-stone-800 px-1 rounded text-xs">{'{name}'}</code> (first name),{' '}
+        <code className="text-gold bg-stone-800 px-1 rounded text-xs">{'{ref}'}</code> (order reference),{' '}
+        <code className="text-gold bg-stone-800 px-1 rounded text-xs">{'{total}'}</code> and{' '}
+        <code className="text-gold bg-stone-800 px-1 rounded text-xs">{'{tracking}'}</code>. Leave a blank line in the message to start a new paragraph.
       </p>
 
       {/* Edit panel */}
@@ -501,7 +664,7 @@ function TemplatesTab({ templates: initial }: { templates: EmailTemplate[] }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="md:col-span-2">
               <label className="block text-xs font-heading text-stone-400 mb-1">
-                Subject <span className="text-stone-600">({'{ref}'} = order reference)</span>
+                Subject <span className="text-stone-600">({'{name}'}, {'{ref}'}, {'{total}'} work here)</span>
               </label>
               <input
                 type="text"

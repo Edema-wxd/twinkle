@@ -20,6 +20,8 @@ export default async function AdminEmailsPage() {
         error: emailLogs.error,
         sentAt: emailLogs.sentAt,
         createdAt: emailLogs.createdAt,
+        deliveryStatus: emailLogs.deliveryStatus,
+        deliveryDetail: emailLogs.deliveryDetail,
       })
       .from(emailLogs)
       .orderBy(desc(emailLogs.createdAt))

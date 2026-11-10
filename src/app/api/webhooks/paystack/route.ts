@@ -139,6 +139,7 @@ async function handleChargeSuccess(data: PaystackChargeData) {
         itemCount,
         amountPaidNaira: recorded.amountPaidNaira,
         paymentIssue: recorded.paymentIssue,
+        orderId,
       },
     })
     await markOrderNotificationSent({ id: notif.id })

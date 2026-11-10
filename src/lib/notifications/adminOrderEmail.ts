@@ -1,5 +1,11 @@
-import { Resend } from 'resend'
+import { sendEmail } from '@/lib/email/client'
+import { escapeHtml } from '@/lib/email/orderTemplate'
 
+/**
+ * "New order" email to the shop. Reply-To is the customer, so Unoma can answer
+ * them straight from her inbox. Logged like every other send; the idempotency
+ * key stops a webhook retry from emailing her twice about the same order.
+ */
 export async function sendAdminOrderEmail(input: {
   to: string
   order: {
@@ -13,27 +19,28 @@ export async function sendAdminOrderEmail(input: {
     amountPaidNaira?: number | null
     /** Set when the charge didn't match server-side pricing (order status 'payment_review') */
     paymentIssue?: string | null
+    orderId?: string | null
   }
 }): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
-    throw new Error('Missing RESEND_API_KEY environment variable')
-  }
+  const o = input.order
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com').replace(/\/$/, '')
+  const adminUrl = o.orderId ? `${siteUrl}/admin/orders/${o.orderId}` : `${siteUrl}/admin/orders`
+  const formattedTotal = `₦${o.totalNaira.toLocaleString('en-NG')}`
+  const paid = typeof o.amountPaidNaira === 'number' ? `₦${o.amountPaidNaira.toLocaleString('en-NG')}` : null
+  const issue = o.paymentIssue
 
-  const from = process.env.RESEND_FROM
-  if (!from) {
-    throw new Error('Missing RESEND_FROM environment variable')
-  }
+  const subject = issue ? `CHECK PAYMENT before shipping: ${o.reference}` : `New order ${formattedTotal}: ${o.customerName} (${o.deliveryState})`
 
-  const resend = new Resend(apiKey)
-
-  const formattedTotal = `₦${input.order.totalNaira.toLocaleString('en-NG')}`
-
-  const issue = input.order.paymentIssue
-  const subject = issue
-    ? `CHECK PAYMENT before shipping: ${input.order.reference}`
-    : `New order: ${input.order.reference}`
-  const paid = typeof input.order.amountPaidNaira === 'number' ? `₦${input.order.amountPaidNaira.toLocaleString('en-NG')}` : null
+  const rows: [string, string][] = [
+    ['Customer', o.customerName],
+    ['Email', o.customerEmail],
+    ['Phone', o.customerPhone],
+    ['Delivery state', o.deliveryState],
+    ['Items', String(o.itemCount)],
+    ['Order total', formattedTotal],
+    ...(paid ? ([['Amount paid', paid]] as [string, string][]) : []),
+    ['Reference', o.reference],
+  ]
 
   const text = [
     subject,
@@ -47,65 +54,40 @@ export async function sendAdminOrderEmail(input: {
           '',
         ]
       : []),
-    `Customer name: ${input.order.customerName}`,
-    `Customer email: ${input.order.customerEmail}`,
-    `Customer phone: ${input.order.customerPhone}`,
-    `Delivery state: ${input.order.deliveryState}`,
-    `Items: ${input.order.itemCount}`,
-    `Total: ${formattedTotal}`,
-    ...(paid ? [`Amount paid: ${paid}`] : []),
+    ...rows.map(([k, v]) => `${k}: ${v}`),
+    '',
+    `Open the order: ${adminUrl}`,
+    'Reply to this email to answer the customer directly.',
   ].join('\n')
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;">
-      <h2 style="margin: 0 0 12px;">${escapeHtml(subject)}</h2>
-      ${
-        issue
-          ? `<div style="margin: 0 0 16px; padding: 12px 14px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; color: #78350f;">
-               <strong>Payment doesn't match the order. Don't ship yet.</strong><br/>
-               The order is on hold (payment review) and the customer has not been sent a confirmation.<br/><br/>
-               ${escapeHtml(issue)}
-             </div>`
-          : ''
-      }
-      <table style="border-collapse: collapse;">
-        <tr><td style="padding: 4px 12px 4px 0;"><strong>Customer name</strong></td><td style="padding: 4px 0;">${escapeHtml(
-          input.order.customerName
-        )}</td></tr>
-        <tr><td style="padding: 4px 12px 4px 0;"><strong>Customer email</strong></td><td style="padding: 4px 0;">${escapeHtml(
-          input.order.customerEmail
-        )}</td></tr>
-        <tr><td style="padding: 4px 12px 4px 0;"><strong>Delivery state</strong></td><td style="padding: 4px 0;">${escapeHtml(
-          input.order.deliveryState
-        )}</td></tr>
-        <tr><td style="padding: 4px 12px 4px 0;"><strong>Items</strong></td><td style="padding: 4px 0;">${input.order.itemCount}</td></tr>
-        <tr><td style="padding: 4px 12px 4px 0;"><strong>Total</strong></td><td style="padding: 4px 0;">${escapeHtml(
-          formattedTotal
-        )}</td></tr>
-        ${paid ? `<tr><td style="padding: 4px 12px 4px 0;"><strong>Amount paid</strong></td><td style="padding: 4px 0;">${escapeHtml(paid)}</td></tr>` : ''}
-      </table>
-    </div>
-  `
+  const html = `<div style="font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial;max-width:560px;">
+  <h2 style="margin:0 0 12px;color:#1A3C34;">${escapeHtml(subject)}</h2>
+  ${
+    issue
+      ? `<div style="margin:0 0 16px;padding:12px 14px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;color:#78350f;">
+          <strong>Payment doesn't match the order. Don't ship yet.</strong><br/>
+          The order is on hold (payment review) and the customer has not been sent a confirmation.<br/><br/>
+          ${escapeHtml(issue)}
+        </div>`
+      : ''
+  }
+  <table style="border-collapse:collapse;font-size:14px;">
+    ${rows.map(([k, v]) => `<tr><td style="padding:4px 16px 4px 0;color:#57534e;"><strong>${escapeHtml(k)}</strong></td><td style="padding:4px 0;">${escapeHtml(v)}</td></tr>`).join('')}
+  </table>
+  <p style="margin:20px 0 0;"><a href="${adminUrl}" style="display:inline-block;background:#1A3C34;color:#E8E0D0;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">Open the order</a></p>
+  <p style="margin:12px 0 0;font-size:12px;color:#78716c;">Reply to this email to answer ${escapeHtml(o.customerName)} directly.</p>
+</div>`
 
-  const result = await resend.emails.send({
-    from,
+  const result = await sendEmail({
     to: input.to,
     subject,
-    text,
     html,
+    text,
+    category: 'admin',
+    templateKey: 'admin_new_order',
+    orderId: o.orderId ?? null,
+    replyTo: o.customerEmail,
+    idempotencyKey: `admin-order:${o.reference}`,
   })
-
-  if (result.error) {
-    throw new Error(result.error.message ?? 'Resend error')
-  }
+  if (!result.ok) throw new Error(result.error)
 }
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
-}
-

@@ -154,6 +154,18 @@ This was tested in a real browser against a throwaway in-memory Postgres. The te
   - **Admin:** a Stock column in the product editor, and stock per size in the products list. Saving only writes counts the admin changed, so a form left open can't undo an order's decrement.
   - **Not automatic:** refunded or cancelled orders don't return stock. Adjust the count by hand.
 
+## Email and Resend wiring (fixed)
+- **[P1]** Status emails from the admin (processing, shipped, delivered) were started without awaiting them, so Vercel could freeze them mid-send. They now run in `after()`.
+- **[P1]** No idempotency, so a Paystack retry could email twice. Automatic sends now carry idempotency keys.
+- **[P2]** "Reply to this email" went to the unmonitored sending address. There's now a reply-to (`EMAIL_REPLY_TO`), and the new-order alert replies to the customer.
+- **[P2]** The email log insert wasn't awaited, so logs could be lost on serverless. The new-order alert wasn't logged at all.
+- **[P2]** The template preview had its own copy of the HTML and had drifted from real sends (escaping, layout). Both now use `src/lib/email/orderTemplate.ts`.
+- **[P2]** Template text wasn't escaped and line breaks were lost. `{ref}` only replaced once. Now `{name}`, `{ref}`, `{total}` and `{tracking}` all work, and blank lines make paragraphs.
+- **[P2]** There was no delivery feedback. A signed `/api/webhooks/resend` now records delivered, opened, clicked, delayed, bounced, complained and failed events. Problems are never overwritten by a later "opened".
+- **[P3]** The footer said 2025, and emails were off-brand. They now use the dynamic year and the forest and gold brand, and link to the order page.
+- **New:** an admin Email setup panel (key, sender, Resend domain verification, reply-to, alert recipient, tracking on or off), a **Send test email** button, delivery badges and a **Needs attention** filter.
+- **Not built:** the newsletter signup only stores subscribers. Nothing emails them yet, and they aren't synced to a Resend audience.
+
 ## Still open (not changed, needs a decision or a follow-up)
 
 1. ~~**[P1] Shipping prices disagree across the site.**~~ **Fixed:** `src/lib/checkout/shippingInfo.ts` is now the single source of truth. Checkout, `/shipping` (now a full zone table), the home and shipping meta descriptions, `/llms.txt` and the order confirmation all read it. The no-op "Lagos flat rate" admin fields were removed, and the dead `getShippingCost()` (₦6,000 / ₦9,500) was deleted.

@@ -102,3 +102,24 @@ To switch between Paystack test and live keys (the most common environment-speci
 - `PAYSTACK_SECRET_KEY` — use your Paystack **test** secret key locally and your **live** secret key in production.
 
 For the Paystack webhook to be reachable during local development, use a tunnelling tool such as `ngrok` or the Paystack CLI and point the webhook URL to your local server. <!-- VERIFY: Paystack webhook configuration URL in the Paystack Dashboard -->
+
+
+## Email (Resend)
+
+Every email goes through `src/lib/email/client.ts`. That includes order confirmations and status updates, the new-order alert, review reminders, admin compose, test sends and re-sends.
+
+| Variable | Required | What it does |
+|---|---|---|
+| `RESEND_API_KEY` | Yes | Resend API key. A full-access key lets the admin's **Email setup** panel check the domain. A send-only key works but can't check it. |
+| `RESEND_FROM` | Yes | Sender, e.g. `Twinkle Locs <orders@twinklelocs.com>`. Its domain must be **verified in Resend**, or every send is rejected. |
+| `EMAIL_REPLY_TO` | No | Where customer replies go. Defaults to `hello@twinklelocs.com`. The new-order alert replies to the customer instead. |
+| `RESEND_WEBHOOK_SECRET` | No (recommended) | Turns on delivery tracking. In Resend → Webhooks, add `https://<site>/api/webhooks/resend` (all `email.*` events) and paste its signing secret. The Emails log then shows Delivered, Opened, Bounced and Marked as spam. |
+
+What the client guarantees:
+- **Logging:** each send is logged in `email_logs` (awaited) with Resend's message id.
+- **No duplicates:** automatic sends carry an idempotency key, so a Paystack webhook retry never emails anyone twice. The admin's **Resend** button deliberately skips the key.
+- **Retries:** brief Resend errors (429/5xx) are retried twice.
+- **Tags:** emails are tagged `category` and `template` in Resend for filtering.
+- **Reliable status emails:** emails triggered by admin status changes run in `after()`, so Vercel doesn't freeze them mid-send.
+
+Admin → **Emails** shows the setup check, a **Send test email** button, delivery status per email, and a **Needs attention** filter for failures, bounces and spam complaints. The new-order alert goes to the `email` setting in Admin → Settings, or the support address if that's empty.

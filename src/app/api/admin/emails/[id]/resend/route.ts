@@ -4,7 +4,7 @@ import { db } from '@/db'
 import { emailLogs, orders, orderItems } from '@/db'
 import { eq } from 'drizzle-orm'
 import { sendCustomerEmail, type CustomerEmailEvent, type OrderEmailItem } from '@/lib/notifications/customerEmail'
-import { Resend } from 'resend'
+import { sendEmail } from '@/lib/email/client'
 
 export async function POST(
   _req: NextRequest,
@@ -73,6 +73,7 @@ export async function POST(
         trackingNumber: order.trackingNumber,
         items: emailItems,
         orderId: order.id,
+        force: true, // the admin asked for it again: bypass the duplicate guard
       })
       return NextResponse.json({ sent: true })
     } catch (err) {
@@ -88,49 +89,14 @@ export async function POST(
     return NextResponse.json({ error: 'No email body stored — cannot resend' }, { status: 422 })
   }
 
-  const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.RESEND_FROM
-  if (!apiKey || !from) {
-    return NextResponse.json({ error: 'Email service not configured' }, { status: 500 })
-  }
-
-  const resend = new Resend(apiKey)
-
-  let resendMessageId: string | null = null
-  let logStatus: 'sent' | 'failed' = 'sent'
-  let logError: string | null = null
-
-  try {
-    const result = await resend.emails.send({
-      from,
-      to: log.to,
-      subject: log.subject,
-      html: log.htmlBody ?? '',
-      text: log.textBody ?? '',
-    })
-    if (result.error) throw new Error(result.error.message ?? 'Resend error')
-    resendMessageId = result.data?.id ?? null
-  } catch (err) {
-    logStatus = 'failed'
-    logError = err instanceof Error ? err.message : 'Unknown error'
-  }
-
-  await db.insert(emailLogs).values({
+  const result = await sendEmail({
     to: log.to,
     subject: log.subject,
-    templateKey: null,
-    orderId: null,
-    resendMessageId,
-    status: logStatus,
-    error: logError,
-    htmlBody: log.htmlBody,
-    textBody: log.textBody,
-    sentAt: logStatus === 'sent' ? new Date() : null,
-  }).catch(console.error)
-
-  if (logStatus === 'failed') {
-    return NextResponse.json({ error: logError }, { status: 502 })
-  }
-
-  return NextResponse.json({ sent: true, resendMessageId })
+    html: log.htmlBody ?? '',
+    text: log.textBody ?? '',
+    category: 'custom',
+    templateKey: log.templateKey,
+  })
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: 502 })
+  return NextResponse.json({ sent: true, resendMessageId: result.id })
 }

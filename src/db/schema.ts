@@ -285,6 +285,10 @@ export const emailLogs = pgTable('email_logs', {
   htmlBody: text('html_body'),
   textBody: text('text_body'),
   sentAt: timestamp('sent_at', { withTimezone: true }),
+  // From Resend's webhook (/api/webhooks/resend): what happened after Resend accepted it
+  deliveryStatus: text('delivery_status'), // 'delivered' | 'delayed' | 'bounced' | 'complained' | 'opened' | 'clicked' | 'failed' | 'suppressed'
+  deliveryDetail: text('delivery_detail'), // e.g. bounce reason
+  deliveryUpdatedAt: timestamp('delivery_updated_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

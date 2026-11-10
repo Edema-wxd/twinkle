@@ -3,7 +3,7 @@ import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { emailLogs } from '@/db'
 import { desc } from 'drizzle-orm'
-import { Resend } from 'resend'
+import { sendEmail } from '@/lib/email/client'
 
 async function requireAdmin() {
   const session = await getAdminSession()
@@ -27,6 +27,8 @@ export async function GET() {
       error: emailLogs.error,
       sentAt: emailLogs.sentAt,
       createdAt: emailLogs.createdAt,
+      deliveryStatus: emailLogs.deliveryStatus,
+      deliveryDetail: emailLogs.deliveryDetail,
     })
     .from(emailLogs)
     .orderBy(desc(emailLogs.createdAt))
@@ -69,49 +71,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'htmlBody or textBody is required' }, { status: 400 })
   }
 
-  const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.RESEND_FROM
-  if (!apiKey || !from) {
-    return NextResponse.json({ error: 'Email service not configured' }, { status: 500 })
-  }
-
-  const resend = new Resend(apiKey)
-
-  let resendMessageId: string | null = null
-  let logStatus: 'sent' | 'failed' = 'sent'
-  let logError: string | null = null
-
-  try {
-    const result = await resend.emails.send({
-      from,
-      to: recipients,
-      subject: subject.trim(),
-      html: html ?? '',
-      text: text ?? '',
-    })
-    if (result.error) throw new Error(result.error.message ?? 'Resend error')
-    resendMessageId = result.data?.id ?? null
-  } catch (err) {
-    logStatus = 'failed'
-    logError = err instanceof Error ? err.message : 'Unknown error'
-  }
-
-  const [inserted] = await db.insert(emailLogs).values({
+  const result = await sendEmail({
     to: recipients,
     subject: subject.trim(),
-    templateKey: null,
-    orderId: null,
-    resendMessageId,
-    status: logStatus,
-    error: logError,
-    htmlBody: html ?? null,
-    textBody: text ?? null,
-    sentAt: logStatus === 'sent' ? new Date() : null,
-  }).returning({ id: emailLogs.id })
+    html: html ?? `<pre style="font-family:inherit;white-space:pre-wrap">${(text ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')}</pre>`,
+    text: text ?? (html ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+    category: 'custom',
+  })
 
-  if (logStatus === 'failed') {
-    return NextResponse.json({ error: logError, logId: inserted?.id }, { status: 502 })
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error, logId: result.logId }, { status: 502 })
   }
-
-  return NextResponse.json({ sent: true, logId: inserted?.id, resendMessageId }, { status: 201 })
+  return NextResponse.json({ sent: true, logId: result.logId, resendMessageId: result.id }, { status: 201 })
 }
