@@ -11,15 +11,38 @@ import type { Testimonial } from '@/components/home/TestimonialsSection'
 
 export const metadata: Metadata = {
   title: {
-    absolute: 'Twinkle Locs | Nigerian Loc Beads & Accessories',
+    absolute: 'Loc Beads Nigeria - Gold, Silver & Crystal | Twinkle Locs',
   },
-  description: 'Handcrafted loc bead accessories designed for the modern loc wearer. Shop premium Nigerian loc beads — gold, silver, crystal styles.',
+  description: 'Buy handcrafted loc beads online in Nigeria. Gold, silver, crystal, and onyx styles from NGN 15,000. Ships Lagos in 1-2 days, nationwide in 3-5 days.',
   openGraph: {
-    title: 'Twinkle Locs | Nigerian Loc Beads & Accessories',
-    description: 'Handcrafted loc bead accessories designed for the modern loc wearer.',
+    title: 'Loc Beads Nigeria - Gold, Silver & Crystal | Twinkle Locs',
+    description: 'Buy handcrafted loc beads online in Nigeria. Gold, silver, crystal, and onyx styles from NGN 15,000. Ships Lagos in 1-2 days, nationwide in 3-5 days.',
     images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Twinkle Locs – Nigerian Loc Beads' }],
     type: 'website',
   },
+}
+
+const storeJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Store',
+  name: 'Twinkle Locs',
+  description:
+    'Handcrafted loc bead accessories made in Nigeria. Gold, silver, crystal, and onyx loc beads in multiple sizes for loc wearers.',
+  url: 'https://twinklelocs.com',
+  logo: 'https://twinklelocs.com/images/Logo.png',
+  image: 'https://twinklelocs.com/og-image.jpg',
+  telephone: '+2349118888010',
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Lagos',
+    addressCountry: 'NG',
+  },
+  priceRange: 'NGN 3,500 - NGN 103,000',
+  currenciesAccepted: 'NGN',
+  paymentAccepted: 'Bank Transfer, Card, WhatsApp Order',
+  areaServed: [{ '@type': 'Country', name: 'Nigeria' }],
+  founder: { '@type': 'Person', name: 'Unoma' },
+  sameAs: ['https://www.instagram.com/twinklelocs', 'https://wa.me/2349118888010'],
 }
 
 export default async function HomePage() {
@@ -63,6 +86,12 @@ export default async function HomePage() {
 
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(storeJsonLd).replace(/</g, '\\u003c'),
+        }}
+      />
       <HeroSection />
       <FeaturedProductsSection products={featuredProducts} />
       <BrandStorySection />

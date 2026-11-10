@@ -14,6 +14,21 @@ interface ProductDetailPageProps {
   params: Promise<{ slug: string }>
 }
 
+// Hand-written SEO copy for key product pages, keyed by slug.
+// Falls back to the product name / DB description for everything else.
+const PRODUCT_SEO: Record<string, { title: string; description?: string }> = {
+  'gold-twinkles': {
+    title: 'Gold Loc Beads - Packs of 50-200 | Twinkle Locs',
+    description:
+      'Gold-toned loc beads, handcrafted in Nigeria. Fade-resistant finish. Packs of 50, 100, 150, or 200. Sizes 2mm, 4mm, 6mm. From NGN 15,500.',
+  },
+  'silver-twinkles': {
+    title: 'Silver Loc Beads - Packs of 50-200 | Twinkle Locs',
+    description:
+      'Silver-toned loc beads, handcrafted in Nigeria. Packs of 50, 100, 150, or 200. Sizes 2mm, 4mm, 6mm. Order online or via WhatsApp.',
+  },
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -36,14 +51,15 @@ export async function generateMetadata({
 
   if (!row) return {}
 
-  const description = (row.seoDescription ?? row.description).slice(0, 155)
+  const seo = PRODUCT_SEO[row.slug]
+  const description = seo?.description ?? (row.seoDescription ?? row.description).slice(0, 155)
   const ogImage = (row.images && row.images.length > 0 ? row.images[0] : null) ?? row.image
 
   return {
-    title: row.name,
+    title: seo ? { absolute: seo.title } : row.name,
     description,
     openGraph: {
-      title: row.name,
+      title: seo?.title ?? row.name,
       description,
       images: ogImage ? [{ url: ogImage }] : [{ url: '/og-image.jpg', width: 1200, height: 630 }],
       type: 'website',
@@ -101,20 +117,36 @@ export default async function ProductDetailPage({
   // Build JSON-LD structured data
   const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com'
 
+  const absoluteUrl = (src: string) => (src.startsWith('http') ? src : `${BASE}${src}`)
+  const offerCount = product.variants.reduce(
+    (n, v) => n + (v.price_tiers?.length || 1),
+    0,
+  )
+
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
     description: product.description,
-    image: product.images && product.images.length > 0 ? product.images[0] : product.image,
+    image: (product.images && product.images.length > 0 ? product.images : [product.image]).map(absoluteUrl),
     brand: {
       '@type': 'Brand',
       name: 'Twinkle Locs',
     },
+    ...(product.material !== 'Tools' && {
+      material: product.material,
+      category: 'Loc Accessories > Loc Beads',
+    }),
+    countryOfOrigin: {
+      '@type': 'Country',
+      name: 'Nigeria',
+    },
     offers: {
-      '@type': 'Offer',
+      '@type': 'AggregateOffer',
       priceCurrency: 'NGN',
-      price: product.price_min,
+      lowPrice: product.price_min,
+      highPrice: product.price_max,
+      offerCount: Math.max(offerCount, 1),
       availability: product.variants.some((v) => v.in_stock)
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',

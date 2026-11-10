@@ -5,11 +5,11 @@ import { Product, ProductMaterial, ProductVariant } from '@/lib/types/product'
 import { CatalogClient } from '@/components/catalog/CatalogClient'
 
 export const metadata: Metadata = {
-  title: 'Shop Loc Beads',
-  description: 'Browse our full collection of Nigerian loc beads — gold, silver, crystal, and onyx styles in multiple sizes. Filter by material and sort by price.',
+  title: { absolute: 'Buy Loc Beads Online in Nigeria | Twinkle Locs' },
+  description: 'Shop the full Twinkle Locs collection. Loc beads in gold, silver, crystal, and onyx. Packs of 50 to 200 beads, sizes 2mm to 6mm. Order online or via WhatsApp.',
   openGraph: {
-    title: 'Shop Loc Beads | Twinkle Locs',
-    description: 'Browse Nigerian Twinkles locs beads in gold, silver, crystal, and onyx. Multiple sizes available.',
+    title: 'Buy Loc Beads Online in Nigeria | Twinkle Locs',
+    description: 'Shop the full Twinkle Locs collection. Loc beads in gold, silver, crystal, and onyx. Packs of 50 to 200 beads, sizes 2mm to 6mm. Order online or via WhatsApp.',
     images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     type: 'website',
   },

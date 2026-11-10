@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com'
   ),
   title: {
-    default: 'Twinkle Locs | Nigerian Loc Beads & Accessories',
+    default: 'Loc Beads Nigeria - Gold, Silver & Crystal | Twinkle Locs',
     template: '%s | Twinkle Locs',
   },
   description: 'Premium loc bead accessories for your loc journey. Shop handcrafted Nigerian loc beads, gold, silver, crystal styles.',

@@ -4,11 +4,11 @@ import { inArray } from 'drizzle-orm'
 import { BUSINESS } from '@/lib/config/business'
 
 export const metadata: Metadata = {
-  title: 'Shipping Information',
-  description: 'Shipping rates and delivery timelines for Twinkle Locs orders — domestic Nigerian delivery and international shipping enquiries.',
+  title: { absolute: 'Shipping Rates Nigeria - Lagos & Nationwide | Twinkle Locs' },
+  description: 'Twinkle Locs ships across Nigeria. Lagos: NGN 6,000, 1-2 business days. Other states: NGN 9,500, 3-5 days. International shipping available on request.',
   openGraph: {
-    title: 'Shipping Information | Twinkle Locs',
-    description: 'Domestic Nigerian shipping rates and international enquiry process.',
+    title: 'Shipping Rates Nigeria - Lagos & Nationwide | Twinkle Locs',
+    description: 'Twinkle Locs ships across Nigeria. Lagos: NGN 6,000, 1-2 business days. Other states: NGN 9,500, 3-5 days. International shipping available on request.',
     images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     type: 'website',
   },

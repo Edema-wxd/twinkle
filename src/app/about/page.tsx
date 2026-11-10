@@ -6,10 +6,10 @@ import { AboutStickyNav } from '@/components/about/AboutStickyNav'
 import { AboutSection as AboutSectionType } from '@/types/db'
 
 export const metadata: Metadata = {
-  title: 'About Us',
+  title: { absolute: 'About Twinkle Locs - Handcrafted Loc Beads from Nigeria' },
   description: 'Learn about Twinkle Locs — our founder story, brand mission, and why we create premium Nigerian loc bead accessories.',
   openGraph: {
-    title: 'About Us | Twinkle Locs',
+    title: 'About Twinkle Locs - Handcrafted Loc Beads from Nigeria',
     description: 'The story behind Twinkle Locs — handcrafted Nigerian loc bead accessories.',
     images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     type: 'website',

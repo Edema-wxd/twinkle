@@ -5,11 +5,11 @@ import { FaqAccordion } from '@/components/faq/FaqAccordion'
 import { Faq } from '@/types/db'
 
 export const metadata: Metadata = {
-  title: 'FAQs',
-  description: 'Answers to common questions about Twinkle Locs loc beads — materials, sizing, shipping timelines, care instructions, and how to place an order.',
+  title: { absolute: 'Loc Bead FAQs - Sizes, Care & How to Apply | Twinkle Locs' },
+  description: 'Answers about Twinkle Locs beads: what sizes fit your locs, how to apply them, care instructions, shipping times across Nigeria, and how to order.',
   openGraph: {
-    title: 'FAQs | Twinkle Locs',
-    description: 'Common questions about loc beads, sizing, shipping, and care.',
+    title: 'Loc Bead FAQs - Sizes, Care & How to Apply | Twinkle Locs',
+    description: 'Answers about Twinkle Locs beads: what sizes fit your locs, how to apply them, care instructions, shipping times across Nigeria, and how to order.',
     images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     type: 'website',
   },

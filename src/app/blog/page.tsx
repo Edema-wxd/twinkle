@@ -7,11 +7,11 @@ import { BlogPostCard } from '@/components/blog/BlogPostCard'
 import { BlogCategoryFilter } from '@/components/blog/BlogCategoryFilter'
 
 export const metadata: Metadata = {
-  title: 'Blog',
-  description: 'Tips, guides, and inspiration for your loc journey from the Twinkle Locs team — styling ideas, bead care, and loc maintenance advice.',
+  title: { absolute: 'Loc Care Tips & Styling Guides | Twinkle Locs Blog' },
+  description: 'Loc styling tips, bead care guides, and accessory inspiration from Twinkle Locs. Learn how to style your locs with beads, maintain them, and express yourself.',
   openGraph: {
-    title: 'Blog | Twinkle Locs',
-    description: 'Loc styling tips, bead care guides, and inspiration from Twinkle Locs.',
+    title: 'Loc Care Tips & Styling Guides | Twinkle Locs Blog',
+    description: 'Loc styling tips, bead care guides, and accessory inspiration from Twinkle Locs. Learn how to style your locs with beads, maintain them, and express yourself.',
     images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     type: 'website',
   },
