@@ -123,7 +123,7 @@ This was tested in a real browser against a throwaway in-memory Postgres. The te
 - No scheduled publishing, revision history or "stage changes on a live post".
 - No image captions (the sanitizer already allows `figure`/`figcaption`).
 - `/blog` loads every post body to work out reading time. Store a word count column once there are 100+ posts.
-- **`middleware.ts` never runs.** It sits at the repo root, and with a `src/` layout Next only loads `src/middleware.ts`. As a result the lowercase-URL redirect is dead (`/BLOG` gives 404). Moving it would activate the cookie guard too, and that would block the setup page at `/admin/finedining` (the middleware only exempts `/admin/setup`). Fix the path list before moving it.
+- ~~`middleware.ts` never runs~~ **Fixed:** it is now at `src/middleware.ts`. The setup path is exempted, there's no login redirect loop on stale cookies, lowercasing applies to pages only (not files or APIs), and login returns you to `?next=`.
 
 ## Still open (not changed, needs a decision or a follow-up)
 

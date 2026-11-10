@@ -66,7 +66,7 @@ graph TD
 | `Database` | `src/types/supabase.ts` | Manually maintained TypeScript type map of all Supabase tables (`products`, `reviews`, `orders`, `order_items`, `settings`, `about_sections`, `faqs`, `blog_posts`, `abandoned_orders`, `newsletter_subscribers`) |
 | `Product` / `ProductVariant` / `PriceTier` | `src/lib/types/product.ts` | Domain types for the tiered-price product model; `PriceTier` pairs a pack size (`qty`) with a Naira price |
 | `BUSINESS` | `src/lib/config/business.ts` | Single source of truth for WhatsApp number, Instagram handle, and support email |
-| `middleware` | `middleware.ts` | Runs on every non-static request: lowercases URLs for SEO, refreshes the Supabase session, and guards `/admin/*` routes |
+| `middleware` | `src/middleware.ts` | Runs on every non-static request: 308-redirects uppercase page URLs to lowercase (SEO), and sends `/admin/*` requests without a session cookie to `/admin/login?next=…` |
 
 ---
 
@@ -74,7 +74,7 @@ graph TD
 
 ```
 twinkle/
-├── middleware.ts           # Edge middleware: URL normalisation, session refresh, admin guard
+├── src/middleware.ts       # Edge middleware: URL normalisation, admin cookie guard (must be under src/)
 ├── next.config.ts          # Next.js config — remote image patterns (Supabase Storage)
 ├── supabase/
 │   └── migrations/         # SQL migration files applied via Supabase CLI or Dashboard

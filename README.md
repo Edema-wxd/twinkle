@@ -36,7 +36,7 @@ npm run dev
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-The admin dashboard is at `/admin` — first-run setup at `/admin/setup`, then log in at `/admin/login`.
+The admin dashboard is at `/admin` — first-run setup at `/admin/finedining`, then log in at `/admin/login`.
 
 ## Environment Variables
 
@@ -75,7 +75,7 @@ The admin dashboard is at `/admin` — first-run setup at `/admin/setup`, then l
 | `/shipping` | Shipping information |
 | `/admin` | Admin dashboard (auth-protected) |
 | `/admin/login` | Admin login |
-| `/admin/setup` | First-run admin account creation |
+| `/admin/finedining` | First-run admin account creation (closed once an admin exists) |
 
 ## Tech Stack
 

@@ -47,9 +47,9 @@ drizzle/             # Generated migration SQL files
 ## Auth
 
 - **Library:** better-auth
-- **Middleware** (`middleware.ts`) does a fast cookie-presence check at the Edge — it is NOT the authoritative session check
+- **Middleware** (`src/middleware.ts`, must stay under `src/`) does a fast cookie-presence check at the Edge — it is NOT the authoritative session check
 - **Authoritative check:** `auth.api.getSession()` called in protected layouts and every API route
-- **First run:** create admin at `/admin/setup`; subsequent logins at `/admin/login`
+- **First run:** create admin at `/admin/finedining` (only works while no admin exists, or for emails in `ADMIN_EMAILS`); subsequent logins at `/admin/login`
 
 ## Database workflow
 
