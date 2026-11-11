@@ -169,7 +169,7 @@ This was tested in a real browser against a throwaway in-memory Postgres. The te
 ## Still open (not changed, needs a decision or a follow-up)
 
 1. ~~**[P1] Shipping prices disagree across the site.**~~ **Fixed:** `src/lib/checkout/shippingInfo.ts` is now the single source of truth. Checkout, `/shipping` (now a full zone table), the home and shipping meta descriptions, `/llms.txt` and the order confirmation all read it. The no-op "Lagos flat rate" admin fields were removed, and the dead `getShippingCost()` (₦6,000 / ₦9,500) was deleted.
-2. **[P1] `/catalog` and `/catalog/[slug]` have no error handling around their DB queries.** A DB outage shows Next's default error screen, and the production build fails if the DB can't be reached. Add `try/catch` plus branded `error.tsx` and `loading.tsx`.
+2. ~~**[P1] `/catalog` and `/catalog/[slug]` have no error handling around their DB queries.**~~ **Fixed:** branded error pages (`src/app/error.tsx`, a shop-specific `src/app/catalog/error.tsx` with Try again and Order on WhatsApp, an admin one that keeps the sidebar, and `global-error.tsx`), plus loading skeletons for the shop and product pages. Queries still throw rather than return empty lists on purpose: product pages render on every visit, so they show the error page, and the static `/catalog` keeps serving its last good version when a refresh fails. A degraded page is never cached. The build still fails if the database is unreachable at build time, which is intended: Vercel then keeps the current live site instead of publishing an empty shop. The blog says "Stories didn't load" during an outage instead of "coming soon".
 3. **[P2] Checkout form.**
    - Inputs are text-sm, so iOS zooms in on focus. They should be 16px.
    - There are no `autocomplete` attributes.
@@ -194,4 +194,4 @@ This was tested in a real browser against a throwaway in-memory Postgres. The te
    - There's no Abandoned Orders nav entry.
    - `CartDrawer` is mounted on admin pages.
 8. **[P3]** Copy mentions "onyx" but there's no Onyx category. The WhatsApp greens differ between buttons. There is no returns or privacy page in the footer.
-9. **[P3]** Images inserted inside blog posts aren't deleted from UploadThing when the post is deleted (cover images are).
+9. ~~**[P3]** Images inserted inside blog posts aren't deleted from UploadThing when the post is deleted.~~ **Fixed:** deleting a post removes its cover and body images, and files are only deleted once nothing else on the site uses them.

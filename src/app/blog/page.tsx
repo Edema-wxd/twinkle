@@ -29,6 +29,8 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   const { category } = await searchParams
 
   let all: (BlogCardPost & { is_featured: boolean })[] = []
+  // True when the database didn't answer, so the page doesn't claim there are no stories
+  let loadFailed = false
   try {
     const rows = await db
       .select()
@@ -38,6 +40,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     all = rows.map((r) => ({ ...toBlogCard(r), is_featured: r.isFeatured }))
   } catch (err) {
     console.error('[BlogPage] failed to load posts:', err)
+    loadFailed = true
   }
 
   const tags = [...new Set(all.map((p) => p.tag).filter((t): t is string => Boolean(t)))].sort()
@@ -120,13 +123,22 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           ) : (
             !hero && (
               <div className="mt-10 rounded-3xl border border-dashed border-forest/20 px-6 py-16 text-center">
-                <p className="font-display text-4xl text-forest">{activeTag ? 'Nothing here yet' : 'First stories coming soon'}</p>
-                <p className="mx-auto mt-3 max-w-md font-body text-charcoal/70">
-                  {activeTag
-                    ? 'We haven’t written in this category yet.'
-                    : 'Join the list below and we’ll send the first guide straight to you.'}
+                <p className="font-display text-4xl text-forest">
+                  {loadFailed ? 'Stories didn’t load' : activeTag ? 'Nothing here yet' : 'First stories coming soon'}
                 </p>
-                {activeTag && (
+                <p className="mx-auto mt-3 max-w-md font-body text-charcoal/70">
+                  {loadFailed
+                    ? 'We couldn’t reach our stories just now. Please refresh the page in a moment.'
+                    : activeTag
+                      ? 'We haven’t written in this category yet.'
+                      : 'Join the list below and we’ll send the first guide straight to you.'}
+                </p>
+                {loadFailed && (
+                  <Link href="/blog" className="mt-6 inline-flex min-h-11 items-center rounded-full bg-forest px-6 font-heading text-sm font-semibold text-cream hover:bg-forest/90">
+                    Try again
+                  </Link>
+                )}
+                {!loadFailed && activeTag && (
                   <Link href="/blog" className="mt-6 inline-flex min-h-11 items-center rounded-full bg-forest px-6 font-heading text-sm font-semibold text-cream hover:bg-forest/90">
                     See all stories
                   </Link>
