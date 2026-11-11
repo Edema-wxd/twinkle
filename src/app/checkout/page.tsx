@@ -6,15 +6,13 @@ import { useCart } from '@/lib/cart/CartContext';
 import { CheckoutForm } from '@/components/checkout/CheckoutForm';
 import type { CustomerDetails } from '@/components/checkout/CheckoutForm';
 import { OrderReview } from '@/components/checkout/OrderReview';
-import { BUSINESS } from '@/lib/config/business';
-import Link from 'next/link';
+import { CheckoutBagSummary } from '@/components/checkout/CheckoutBagSummary';
 
 export default function CheckoutPage() {
   const { state, dispatch } = useCart();
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails | null>(null);
-  const [isInternational, setIsInternational] = useState(false);
 
   // Set once payment succeeds so clearing the cart doesn't bounce the customer to /cart
   const paidRef = useRef(false);
@@ -28,33 +26,28 @@ export default function CheckoutPage() {
 
   function handleFormSubmit(details: CustomerDetails) {
     setCustomerDetails(details);
-    if (details.deliveryType === 'international') {
-      setIsInternational(true);
-    } else {
-      setIsInternational(false);
-      setStep(2);
-      // Fire-and-forget: save customer details as an abandoned order so we can
-      // follow up if they don't complete payment.
-      const subtotal = state.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-      fetch('/api/checkout/save-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerName: `${details.firstName} ${details.lastName}`.trim(),
-          customerEmail: details.email,
-          customerPhone: details.phone,
-          deliveryAddress: details.deliveryAddress,
-          deliveryState: details.state,
-          deliveryLGA: details.lga,
-          cartItems: state.items.map(({ productId, productName, variantId, variantName, tierQty, threadColour, unitPrice, quantity, isTool }) => ({
-            productId, productName, variantId, variantName, tierQty, threadColour, unitPrice, quantity, isTool,
-          })),
-          subtotal,
-        }),
-      }).catch(() => {
-        // Silently ignore — this is best-effort, never block the user
-      });
-    }
+    setStep(2);
+    // Fire-and-forget: save customer details as an abandoned order so we can
+    // follow up if they don't complete payment.
+    const subtotal = state.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    fetch('/api/checkout/save-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerName: `${details.firstName} ${details.lastName}`.trim(),
+        customerEmail: details.email,
+        customerPhone: details.phone,
+        deliveryAddress: details.deliveryAddress,
+        deliveryState: details.state,
+        deliveryLGA: details.lga,
+        cartItems: state.items.map(({ productId, productName, variantId, variantName, tierQty, threadColour, unitPrice, quantity, isTool }) => ({
+          productId, productName, variantId, variantName, tierQty, threadColour, unitPrice, quantity, isTool,
+        })),
+        subtotal,
+      }),
+    }).catch(() => {
+      // Silently ignore — this is best-effort, never block the user
+    });
   }
 
   async function handlePaymentSuccess(reference: string) {
@@ -109,43 +102,12 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* Step 1: Customer details form */}
-      {step === 1 && !isInternational && (
-        <CheckoutForm onSubmit={handleFormSubmit} defaultValues={customerDetails ?? undefined} />
-      )}
-
-      {/* International path: WhatsApp CTA */}
-      {step === 1 && isInternational && (
-        <div className="max-w-lg mx-auto">
-          <h2 className="font-display text-2xl text-forest mb-6">International Shipping</h2>
-          <div className="bg-stone-50 rounded-xl p-6 font-body text-sm text-charcoal mb-6">
-            <p className="mb-4">
-              For international orders, please contact us on WhatsApp to get a shipping quote.
-            </p>
-            <a
-              href={BUSINESS.whatsapp.url("Hi, I'd like a shipping quote for my Twinkle Locs order")}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-[#25D366] text-white font-heading font-semibold py-3 px-6 rounded-lg hover:bg-[#1da851] transition-colors"
-            >
-              Contact us on WhatsApp
-            </a>
-          </div>
-          <div className="flex gap-4">
-            <button
-              onClick={() => { setIsInternational(false); setStep(1); }}
-              className="font-heading text-sm text-charcoal/60 hover:text-forest underline"
-            >
-              Back to details
-            </button>
-            <Link
-              href="/cart"
-              className="font-heading text-sm text-charcoal/60 hover:text-forest underline"
-            >
-              Back to cart
-            </Link>
-          </div>
-        </div>
+      {/* Step 1: what's in the bag, then customer details */}
+      {step === 1 && (
+        <>
+          <CheckoutBagSummary items={state.items} />
+          <CheckoutForm onSubmit={handleFormSubmit} defaultValues={customerDetails ?? undefined} />
+        </>
       )}
 
       {/* Step 2: Order review + pay */}

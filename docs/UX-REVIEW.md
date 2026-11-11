@@ -170,13 +170,12 @@ This was tested in a real browser against a throwaway in-memory Postgres. The te
 
 1. ~~**[P1] Shipping prices disagree across the site.**~~ **Fixed:** `src/lib/checkout/shippingInfo.ts` is now the single source of truth. Checkout, `/shipping` (now a full zone table), the home and shipping meta descriptions, `/llms.txt` and the order confirmation all read it. The no-op "Lagos flat rate" admin fields were removed, and the dead `getShippingCost()` (₦6,000 / ₦9,500) was deleted.
 2. ~~**[P1] `/catalog` and `/catalog/[slug]` have no error handling around their DB queries.**~~ **Fixed:** branded error pages (`src/app/error.tsx`, a shop-specific `src/app/catalog/error.tsx` with Try again and Order on WhatsApp, an admin one that keeps the sidebar, and `global-error.tsx`), plus loading skeletons for the shop and product pages. Queries still throw rather than return empty lists on purpose: product pages render on every visit, so they show the error page, and the static `/catalog` keeps serving its last good version when a refresh fails. A degraded page is never cached. The build still fails if the database is unreachable at build time, which is intended: Vercel then keeps the current live site instead of publishing an empty shop. The blog says "Stories didn't load" during an outage instead of "coming soon".
-3. **[P2] Checkout form.**
-   - Inputs are text-sm, so iOS zooms in on focus. They should be 16px.
-   - There are no `autocomplete` attributes.
-   - Errors aren't linked to their fields with `aria-describedby`/`aria-invalid`.
-   - Step 1 has no order summary.
-   - "We primarily deliver within Lagos" contradicts the nationwide promise.
-   - The international branch in `checkout/page.tsx` can never run.
+3. ~~**[P2] Checkout form.**~~ **Fixed:**
+   - Inputs are 16px (no iOS zoom) and at least 48px tall.
+   - Autofill attributes on every field (`given-name`, `email`, `tel`, `street-address`, `address-level1/2`).
+   - Errors are linked with `aria-invalid`/`aria-describedby`, a count appears at the top, focus goes to the first problem, and each message clears as it's fixed. Email and phone checks are stricter (a real email shape, 10 to 14 digits).
+   - Step 1 has a collapsible "Your bag" summary with the subtotal.
+   - The "primarily deliver within Lagos" copy was already gone. The dead international branch in `checkout/page.tsx` was removed; "Outside Nigeria" shows the WhatsApp quote inside the form.
 4. **[P2] Order confirmation.**
    - It always says "Payment successful", even while still checking.
    - It shows the raw order status.

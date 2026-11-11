@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { NIGERIAN_STATES } from '@/lib/checkout/shipping';
 import { LAGOS_ZONES } from '@/lib/checkout/shippingZones';
 import { BUSINESS } from '@/lib/config/business';
@@ -31,6 +31,57 @@ interface FormErrors {
   lga?: string;
 }
 
+const inputClass =
+  // text-base (16px) so iOS Safari doesn't zoom in when a field is focused
+  'w-full min-h-12 border rounded-lg px-3 py-2 font-body text-base text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold'
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+type FieldName = keyof FormErrors
+
+/** Order matters: on a failed submit, focus goes to the first field with a problem. */
+const FIELD_ORDER: FieldName[] = ['firstName', 'lastName', 'email', 'phone', 'deliveryAddress', 'state', 'lga']
+
+/** Label + control + error, with the error linked to the control for screen readers. */
+function Field({
+  id,
+  label,
+  error,
+  hint,
+  children,
+}: {
+  id: FieldName
+  label: string
+  error?: string
+  hint?: string
+  children: (a11y: { id: string; 'aria-invalid': boolean; 'aria-describedby'?: string; className: string }) => React.ReactNode
+}) {
+  const describedBy = [hint ? `${id}-hint` : null, error ? `${id}-error` : null].filter(Boolean).join(' ') || undefined
+  return (
+    <div className="mb-4">
+      <label className="block font-body text-sm text-charcoal mb-1" htmlFor={id}>
+        {label}
+      </label>
+      {children({
+        id,
+        'aria-invalid': !!error,
+        'aria-describedby': describedBy,
+        className: `${inputClass} ${error ? 'border-red-500' : 'border-charcoal/20'}`,
+      })}
+      {hint && !error && (
+        <p id={`${id}-hint`} className="font-body text-xs text-charcoal/60 mt-1">
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p id={`${id}-error`} className="font-body text-sm text-red-700 mt-1">
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
   const [deliveryType, setDeliveryType] = useState<'nigeria' | 'international'>(defaultValues?.deliveryType ?? 'nigeria');
   const [firstName, setFirstName] = useState(defaultValues?.firstName ?? '');
@@ -41,50 +92,60 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
   const [state, setState] = useState(defaultValues?.state ?? '');
   const [lga, setLga] = useState(defaultValues?.lga ?? '');
   const [errors, setErrors] = useState<FormErrors>({});
+  const formRef = useRef<HTMLFormElement>(null);
+
+  /** Update a field and clear its error, so the message goes away as soon as it's fixed. */
+  function change<T>(field: FieldName, set: (v: T) => void) {
+    return (v: T) => {
+      set(v);
+      if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+    };
+  }
 
   function handleStateChange(newState: string) {
-    setState(newState);
+    change('state', setState)(newState);
     setLga('');
+    if (errors.lga) setErrors((prev) => ({ ...prev, lga: undefined }));
   }
 
   function validate(): FormErrors {
     const errs: FormErrors = {};
-    if (!firstName.trim()) errs.firstName = 'First name is required';
-    if (!lastName.trim()) errs.lastName = 'Last name is required';
+    if (!firstName.trim()) errs.firstName = 'Enter your first name';
+    if (!lastName.trim()) errs.lastName = 'Enter your last name';
     if (!email.trim()) {
-      errs.email = 'Email is required';
-    } else if (!email.includes('@')) {
-      errs.email = 'Please enter a valid email address';
+      errs.email = 'Enter your email address, so we can send your receipt';
+    } else if (!EMAIL_RE.test(email.trim())) {
+      errs.email = 'Enter an email address like name@example.com';
     }
+    const digits = phone.replace(/\D/g, '');
     if (!phone.trim()) {
-      errs.phone = 'Phone number is required';
-    } else if (phone.trim().length < 7) {
-      errs.phone = 'Phone number must be at least 7 characters';
+      errs.phone = 'Enter a phone number for the delivery rider';
+    } else if (digits.length < 10 || digits.length > 14) {
+      errs.phone = 'Enter your full phone number, like 0803 123 4567';
     }
-    if (!deliveryAddress.trim()) errs.deliveryAddress = 'Delivery address is required';
-    if (!state) errs.state = 'Please select a state';
-    if (state === 'Lagos' && !lga) errs.lga = 'Please select your delivery area';
+    if (!deliveryAddress.trim()) errs.deliveryAddress = 'Enter the address we should deliver to';
+    if (!state) errs.state = 'Choose your state';
+    if (state === 'Lagos' && !lga) errs.lga = 'Choose your area in Lagos';
     return errs;
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (deliveryType === 'international') {
-      onSubmit({ firstName, lastName, email, phone, deliveryAddress, state, deliveryType: 'international' });
-      return;
-    }
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
+      // Take the customer straight to the first thing to fix
+      const first = FIELD_ORDER.find((f) => errs[f]);
+      if (first) formRef.current?.querySelector<HTMLElement>(`#${first}`)?.focus();
       return;
     }
     setErrors({});
     onSubmit({
-      firstName,
-      lastName,
-      email,
-      phone,
-      deliveryAddress,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      deliveryAddress: deliveryAddress.trim(),
       state,
       lga: state === 'Lagos' ? lga : undefined,
       deliveryType: 'nigeria',
@@ -92,186 +153,141 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
   }
 
   const isOutsideLagos = state !== '' && state !== 'Lagos';
+  const errorCount = Object.values(errors).filter(Boolean).length;
 
   return (
     <div className="max-w-lg mx-auto">
       <h2 className="font-display text-2xl text-forest mb-6">Delivery details</h2>
 
       {/* Nigeria / International toggle */}
-      <div className="flex gap-4 mb-6">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="radio"
-            name="deliveryType"
-            value="nigeria"
-            checked={deliveryType === 'nigeria'}
-            onChange={() => setDeliveryType('nigeria')}
-            className="accent-gold"
-          />
-          <span className="font-body text-sm text-charcoal">Nigeria</span>
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="radio"
-            name="deliveryType"
-            value="international"
-            checked={deliveryType === 'international'}
-            onChange={() => setDeliveryType('international')}
-            className="accent-gold"
-          />
-          <span className="font-body text-sm text-charcoal">International</span>
-        </label>
-      </div>
+      <fieldset className="mb-6">
+        <legend className="sr-only">Where should we deliver?</legend>
+        <div className="flex gap-2">
+          {(['nigeria', 'international'] as const).map((type) => (
+            <label
+              key={type}
+              className={`flex min-h-11 items-center gap-2 rounded-lg border px-4 cursor-pointer font-body text-sm text-charcoal transition-colors ${
+                deliveryType === type ? 'border-gold bg-gold/10' : 'border-charcoal/20 hover:border-charcoal/40'
+              }`}
+            >
+              <input
+                type="radio"
+                name="deliveryType"
+                value={type}
+                checked={deliveryType === type}
+                onChange={() => setDeliveryType(type)}
+                className="accent-gold"
+              />
+              {type === 'nigeria' ? 'Nigeria' : 'Outside Nigeria'}
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       {deliveryType === 'international' ? (
-        /* International delivery message */
-        <div className="bg-stone-50 rounded-xl p-6 font-body text-sm text-charcoal">
+        <div className="bg-white rounded-xl ring-1 ring-charcoal/10 p-6 font-body text-sm text-charcoal">
           <p className="mb-4">
-            For international orders, please contact us on WhatsApp to get a shipping quote.
+            We ship worldwide, with a shipping quote for your country. Message us on WhatsApp with your bag and address and we&apos;ll
+            send you the total.
           </p>
           <a
             href={BUSINESS.whatsapp.url("Hi, I'd like a shipping quote for my Twinkle Locs order")}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-[#25D366] text-white font-heading font-semibold py-3 px-6 rounded-lg hover:bg-[#1da851] transition-colors"
+            className="inline-flex min-h-12 items-center gap-2 bg-[#25D366] text-white font-heading font-semibold px-6 rounded-lg hover:bg-[#1da851] transition-colors"
           >
-            Contact us on WhatsApp
+            Get a quote on WhatsApp
           </a>
         </div>
       ) : (
-        /* Nigeria delivery form */
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block font-body text-sm text-charcoal mb-1" htmlFor="firstName">
-                First Name
-              </label>
-              <input
-                id="firstName"
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal focus:outline-none focus:border-gold"
-              />
-              {errors.firstName && (
-                <p className="font-body text-xs text-red-600 mt-1">{errors.firstName}</p>
+        <form ref={formRef} onSubmit={handleSubmit} noValidate aria-describedby={errorCount > 0 ? 'checkout-errors' : undefined}>
+          {errorCount > 0 && (
+            <p id="checkout-errors" role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 font-body text-sm text-red-800">
+              {errorCount === 1 ? 'One detail needs fixing below.' : `${errorCount} details need fixing below.`}
+            </p>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 sm:gap-4">
+            <Field id="firstName" label="First name" error={errors.firstName}>
+              {(a) => (
+                <input {...a} name="firstName" type="text" autoComplete="given-name" value={firstName} onChange={(e) => change('firstName', setFirstName)(e.target.value)} />
               )}
-            </div>
-            <div>
-              <label className="block font-body text-sm text-charcoal mb-1" htmlFor="lastName">
-                Last Name
-              </label>
-              <input
-                id="lastName"
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal focus:outline-none focus:border-gold"
-              />
-              {errors.lastName && (
-                <p className="font-body text-xs text-red-600 mt-1">{errors.lastName}</p>
+            </Field>
+            <Field id="lastName" label="Last name" error={errors.lastName}>
+              {(a) => (
+                <input {...a} name="lastName" type="text" autoComplete="family-name" value={lastName} onChange={(e) => change('lastName', setLastName)(e.target.value)} />
               )}
-            </div>
+            </Field>
           </div>
 
-          <div className="mb-4">
-            <label className="block font-body text-sm text-charcoal mb-1" htmlFor="email">
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal focus:outline-none focus:border-gold"
-            />
-            {errors.email && (
-              <p className="font-body text-xs text-red-600 mt-1">{errors.email}</p>
+          <Field id="email" label="Email address" error={errors.email} hint="We’ll send your receipt and delivery updates here.">
+            {(a) => (
+              <input
+                {...a}
+                name="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={email}
+                onChange={(e) => change('email', setEmail)(e.target.value)}
+              />
             )}
-          </div>
+          </Field>
 
-          <div className="mb-4">
-            <label className="block font-body text-sm text-charcoal mb-1" htmlFor="phone">
-              Phone Number
-            </label>
-            <input
-              id="phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal focus:outline-none focus:border-gold"
-            />
-            {errors.phone && (
-              <p className="font-body text-xs text-red-600 mt-1">{errors.phone}</p>
+          <Field id="phone" label="Phone number" error={errors.phone} hint="For the delivery rider. WhatsApp works best.">
+            {(a) => (
+              <input {...a} name="phone" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => change('phone', setPhone)(e.target.value)} />
             )}
-          </div>
+          </Field>
 
-          <div className="mb-4">
-            <label className="block font-body text-sm text-charcoal mb-1" htmlFor="deliveryAddress">
-              Delivery Address
-            </label>
-            <textarea
-              id="deliveryAddress"
-              rows={2}
-              value={deliveryAddress}
-              onChange={(e) => setDeliveryAddress(e.target.value)}
-              placeholder="Street address, city"
-              className="w-full border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal focus:outline-none focus:border-gold resize-none"
-            />
-            {errors.deliveryAddress && (
-              <p className="font-body text-xs text-red-600 mt-1">{errors.deliveryAddress}</p>
+          <Field id="deliveryAddress" label="Delivery address" error={errors.deliveryAddress}>
+            {(a) => (
+              <textarea
+                {...a}
+                name="deliveryAddress"
+                rows={2}
+                autoComplete="street-address"
+                placeholder="House number, street, area"
+                className={`${a.className} resize-none`}
+                value={deliveryAddress}
+                onChange={(e) => change('deliveryAddress', setDeliveryAddress)(e.target.value)}
+              />
             )}
-          </div>
+          </Field>
 
-          <div className="mb-4">
-            <label className="block font-body text-sm text-charcoal mb-1" htmlFor="state">
-              State
-            </label>
-            <select
-              id="state"
-              value={state}
-              onChange={(e) => handleStateChange(e.target.value)}
-              className="w-full border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal focus:outline-none focus:border-gold bg-white"
-            >
-              <option value="">Select state</option>
-              {NIGERIAN_STATES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-            {errors.state && (
-              <p className="font-body text-xs text-red-600 mt-1">{errors.state}</p>
+          <Field id="state" label="State" error={errors.state}>
+            {(a) => (
+              <select {...a} name="state" autoComplete="address-level1" value={state} onChange={(e) => handleStateChange(e.target.value)}>
+                <option value="">Select state</option>
+                {NIGERIAN_STATES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
             )}
-          </div>
+          </Field>
 
           {/* Lagos area dropdown */}
           {state === 'Lagos' && (
-            <div className="mb-4">
-              <label className="block font-body text-sm text-charcoal mb-1" htmlFor="lga">
-                Delivery Area
-              </label>
-              <select
-                id="lga"
-                value={lga}
-                onChange={(e) => setLga(e.target.value)}
-                className="w-full border border-charcoal/20 rounded-lg px-3 py-2 font-body text-sm text-charcoal focus:outline-none focus:border-gold bg-white"
-              >
-                <option value="">Select your area</option>
-                {LAGOS_ZONES.map((zone) => (
-                  <optgroup key={zone.id} label={`Zone ${zone.id} — ${zone.name} (${zone.deliveryTime})`}>
-                    {zone.areas.map((area) => (
-                      <option key={area} value={area}>
-                        {area}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-              {errors.lga && (
-                <p className="font-body text-xs text-red-600 mt-1">{errors.lga}</p>
+            <Field id="lga" label="Area in Lagos" error={errors.lga} hint="Sets your delivery fee and time.">
+              {(a) => (
+                <select {...a} name="lga" autoComplete="address-level2" value={lga} onChange={(e) => change('lga', setLga)(e.target.value)}>
+                  <option value="">Select your area</option>
+                  {LAGOS_ZONES.map((zone) => (
+                    <optgroup key={zone.id} label={`Zone ${zone.id}: ${zone.name} (${zone.deliveryTime})`}>
+                      {zone.areas.map((area) => (
+                        <option key={area} value={area}>
+                          {area}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
               )}
-            </div>
+            </Field>
           )}
 
           {/* Outside Lagos notice */}
@@ -285,9 +301,9 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
 
           <button
             type="submit"
-            className="bg-gold text-forest font-heading font-semibold py-3 px-8 rounded-lg hover:bg-forest hover:text-cream transition-colors w-full mt-6"
+            className="bg-gold text-forest font-heading font-semibold min-h-12 px-8 rounded-lg hover:bg-forest hover:text-cream transition-colors w-full mt-6"
           >
-            Review Order
+            Review order
           </button>
         </form>
       )}
