@@ -10,8 +10,9 @@ export function StorefrontChrome({ children }: { children: React.ReactNode }) {
   if (pathname.startsWith('/admin')) {
     return <>{children}</>
   }
-  // The floating button would cover the Pay button on mobile checkout
-  const showWhatsApp = !pathname.startsWith('/checkout')
+  // The floating button would cover the main buttons on phones here: Pay (checkout),
+  // Checkout (cart), and the order page, which has its own WhatsApp buttons
+  const showWhatsApp = !['/checkout', '/cart', '/orders/'].some((p) => pathname.startsWith(p))
   return (
     <>
       <a

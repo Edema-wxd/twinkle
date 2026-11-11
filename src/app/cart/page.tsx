@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCart } from '@/lib/cart/CartContext';
+import { BUSINESS } from '@/lib/config/business';
 import { CartLineItem, lineKey } from '@/components/cart/CartLineItem';
 import { UndoRemoveBar } from '@/components/cart/UndoRemoveBar';
 import { useRemoveWithUndo } from '@/lib/cart/useRemoveWithUndo';
@@ -115,6 +116,18 @@ export default function CartPage() {
               >
                 Continue Shopping
               </Link>
+              {/* Replaces the floating WhatsApp button, which is hidden on this page */}
+              <p className="mt-4 text-center font-body text-xs text-charcoal/60">
+                Questions?{' '}
+                <a
+                  href={BUSINESS.whatsapp.url("Hi, I have a question about the beads in my cart")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-forest underline underline-offset-2 hover:text-gold-deep"
+                >
+                  Chat with us on WhatsApp
+                </a>
+              </p>
             </div>
           </div>
         </div>
