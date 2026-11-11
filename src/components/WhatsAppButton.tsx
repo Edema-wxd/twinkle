@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { BUSINESS } from '@/lib/config/business'
 
 /**
@@ -11,6 +12,10 @@ import { BUSINESS } from '@/lib/config/business'
  */
 export function WhatsAppButton() {
   const [footerVisible, setFooterVisible] = useState(false)
+  // Product pages on phones have a sticky Add to cart bar and an "Ask us on
+  // WhatsApp" link under the buy button, so the floating button would only
+  // cover the buy controls there
+  const onProductPage = /^\/catalog\/[^/]+/.test(usePathname() ?? '')
 
   useEffect(() => {
     const footer = document.querySelector('[data-site-footer]')
@@ -31,7 +36,7 @@ export function WhatsAppButton() {
       style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
       className={`fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-full bg-[#25D366] shadow-lg transition-[transform,opacity] duration-300 hover:scale-110 active:scale-95 motion-reduce:transition-none ${
         footerVisible ? 'pointer-events-none translate-y-6 opacity-0' : 'opacity-100'
-      }`}
+      } ${onProductPage ? 'max-md:hidden' : ''}`}
     >
       {/* WhatsApp SVG logo */}
       <svg viewBox="0 0 24 24" className="h-6 w-6 md:h-7 md:w-7 fill-white" aria-hidden="true">

@@ -8,7 +8,7 @@ import { Product, ProductMaterial, ProductVariant } from '@/lib/types/product'
 import { Review } from '@/lib/types/review'
 import { ProductDetailClient } from '@/components/product/ProductDetailClient'
 import { ProductReviews } from '@/components/product/ProductReviews'
-import { UpsellBlock } from '@/components/product/UpsellBlock'
+import { summariseRatings } from '@/components/product/StarRating'
 import { RelatedProducts } from '@/components/product/RelatedProducts'
 import { productDescriptionHtml, productDescriptionText } from '@/lib/product-description'
 
@@ -263,10 +263,12 @@ export default async function ProductDetailPage({
       </nav>
 
       {/* Main content grid — ProductDetailClient renders two children: gallery + info */}
-      <div className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-2 gap-12">
+      <div className="max-w-6xl mx-auto px-4 py-6 md:py-12 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
         <ProductDetailClient
           product={product}
           descriptionHtml={productDescriptionHtml(product.description)}
+          rating={summariseRatings(reviews.map((r) => r.rating))}
+          addOn={shearsProduct}
         />
       </div>
 
@@ -277,13 +279,6 @@ export default async function ProductDetailPage({
 
       {/* Related products */}
       <RelatedProducts products={relatedProducts} />
-
-      {/* Upsell block — only for non-Tools products */}
-      {shearsProduct && (
-        <section className="max-w-6xl mx-auto px-4 pb-16">
-          <UpsellBlock shears={shearsProduct} />
-        </section>
-      )}
     </div>
   )
 }

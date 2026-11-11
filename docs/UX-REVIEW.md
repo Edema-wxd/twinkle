@@ -181,10 +181,12 @@ This was tested in a real browser against a throwaway in-memory Postgres. The te
    - The headline, icon and a progress tracker (Confirmed, Preparing, On its way, Delivered) follow the order's status. The tracking number shows once shipped, and promo discounts get their own line.
    - Delivery estimates come from the shipping settings. "Pack of 1" is hidden for tools.
    - **[P1, found while fixing]** The page sent the whole Paystack record to the browser (card bank and last 4 digits, IP address) plus the customer's email and phone. `src/lib/orders/publicOrder.ts` now sends only what the page shows, with a test guarding it, and the page is `noindex`.
-5. **[P2] Product page.**
-   - The long description sits above the pickers, so the CTA falls below the fold on mobile.
-   - Reviews have no summary, no accessible star text, and no link to write one.
-   - The shears upsell sits far from the CTA.
+5. ~~**[P2] Product page.**~~ **Fixed:**
+   - Size, pack, thread colour and Add to cart now come straight after the price; the description moved below them ("About these beads"). On an iPhone 13 the Add to cart button moved from 1,634px to 1,008px down the page, and on desktop the whole buying flow fits on the first screen.
+   - Phones get a slim sticky bar (price + "Add to cart", or "Choose colour", which jumps to the picker) while the buying block is off screen. It hides near the footer and when sold out.
+   - A star summary under the title links to the reviews, which now open with an average, a 5-to-1 breakdown, stars screen readers read as "Rated 4.5 out of 5", and a note that buyers get a review link by email after delivery (reviews are tied to orders).
+   - The shears upsell is a one-tap "Complete the kit · Add" row under Add to cart, replacing the card at the bottom of the page.
+   - The floating WhatsApp button is hidden on product pages on phones (it covered the buy controls); "Ask us on WhatsApp" sits under Add to cart.
 6. ~~**[P2] Cart line items** show the unit price instead of the line total, and pressing "−" at 1 removes the item with no undo.~~ **Fixed:** lines show their total (plus "each" when the quantity is more than 1), "−" is disabled at 1, and Remove shows "Removed … Undo", which puts the item back in place (also from an empty cart and in the drawer). "Pack of 1" is hidden for tools.
 7. **[P2] Admin.**
    - Deleting a testimonial has no confirmation and ignores failures.
