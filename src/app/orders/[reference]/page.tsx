@@ -1,74 +1,23 @@
-import { db } from '@/db'
-import { orders } from '@/db'
-import { eq } from 'drizzle-orm'
-import { deliveryEstimateForOrder, getShippingInfo } from '@/lib/checkout/shippingInfo'
-import { Order, OrderItem, Json } from '@/types/db'
+import type { Metadata } from 'next'
+import { getPublicOrder } from '@/lib/orders/publicOrder'
 import { OrderConfirmationView } from './OrderConfirmationView'
 import { OrderPoller } from './OrderPoller'
 
-type FullOrder = Order & { order_items: OrderItem[]; delivery_estimate?: string };
-
-async function fetchOrderByReference(
-  reference: string
-): Promise<FullOrder | null> {
-  const result = await db.query.orders.findFirst({
-    where: eq(orders.paystackReference, reference),
-    with: { orderItems: true },
-  })
-
-  if (!result) return null
-
-  // Map camelCase Drizzle result to snake_case shape expected by OrderConfirmationView
-  const order: FullOrder = {
-    id: result.id,
-    created_at: result.createdAt.toISOString(),
-    paystack_reference: result.paystackReference,
-    paystack_payload: result.paystackPayload as Json,
-    status: result.status,
-    customer_name: result.customerName,
-    customer_email: result.customerEmail,
-    customer_phone: result.customerPhone,
-    customer_ip: result.customerIp ?? null,
-    delivery_address: result.deliveryAddress,
-    delivery_state: result.deliveryState,
-    delivery_estimate: deliveryEstimateForOrder(await getShippingInfo(), result.deliveryState, result.paystackPayload),
-    shipping_cost: result.shippingCost,
-    subtotal: result.subtotal,
-    total: result.total,
-    tracking_number: result.trackingNumber ?? null,
-    order_items: result.orderItems.map((item) => ({
-      id: item.id,
-      order_id: item.orderId,
-      created_at: item.createdAt.toISOString(),
-      product_id: item.productId,
-      product_name: item.productName,
-      variant_id: item.variantId,
-      variant_name: item.variantName,
-      tier_qty: item.tierQty,
-      thread_colour: item.threadColour ?? null,
-      unit_price: item.unitPrice,
-      quantity: item.quantity,
-      line_total: item.lineTotal,
-    })),
-  }
-
-  return order
-}
+// Personal order details: never index, never cache between customers
+export const metadata: Metadata = { title: 'Your order', robots: { index: false, follow: false } }
+export const dynamic = 'force-dynamic'
 
 interface PageProps {
-  params: Promise<{ reference: string }>;
+  params: Promise<{ reference: string }>
 }
 
 export default async function OrderConfirmationPage({ params }: PageProps) {
-  const { reference } = await params;
+  const { reference } = await params
+  const order = await getPublicOrder(reference)
 
-  const order = await fetchOrderByReference(reference);
+  // Webhook already recorded it: render straight away (no client polling needed)
+  if (order) return <OrderConfirmationView order={order} />
 
-  if (order) {
-    // Webhook arrived before page load — render confirmation immediately (no client JS needed)
-    return <OrderConfirmationView order={order} />;
-  }
-
-  // Webhook still in flight — render client poller
-  return <OrderPoller reference={reference} />;
+  // Payment still being confirmed: poll until the order appears
+  return <OrderPoller reference={reference} />
 }
