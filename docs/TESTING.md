@@ -1,81 +1,48 @@
-<!-- generated-by: gsd-doc-writer -->
 # Testing
 
 ## Test framework and setup
 
-No test framework is currently installed in this project. The `package.json` contains no testing dependencies and no `test` script. The sections below document what is recommended for this Next.js 15 / TypeScript codebase and how to add it.
+The suite runs on [Vitest](https://vitest.dev/) with [Testing Library](https://testing-library.com/docs/react-testing-library/intro/) for components. It is already installed and configured:
 
-**Recommended stack:**
+- `vitest.config.ts`: the `@` alias, the React plugin, and `environment: 'node'` by default. Component tests opt into a browser-like DOM with a `// @vitest-environment jsdom` comment on their first line.
+- `src/__tests__/setup.ts`: loads `@testing-library/jest-dom` matchers.
+- Tests live in `src/__tests__/` (mirroring `src/`), plus a few next to their code in `src/lib/__tests__/`.
 
-| Layer | Tool | Purpose |
-|-------|------|---------|
-| Unit / integration | [Vitest](https://vitest.dev/) | Fast, TypeScript-native, compatible with Next.js |
-| Component | [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/) | User-centric React component tests |
-| End-to-end | [Playwright](https://playwright.dev/) | Full browser tests of storefront flows |
+Tests never touch a real database or external service. Mock `@/db` with `vi.mock` before importing the code under test (see `src/__tests__/lib/payments/priceOrder.test.ts` for a fake `db.select()` chain), and stub `fetch` for components (see `src/__tests__/components/checkout/OrderReview.test.tsx`, which answers each API route separately).
 
-**Install Vitest and React Testing Library:**
-
-```bash
-npm install --save-dev vitest @vitejs/plugin-react @testing-library/react @testing-library/user-event jsdom
-```
-
-**Add a `vitest.config.ts` at the project root:**
-
-```ts
-import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
-
-export default defineConfig({
-  plugins: [react()],
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./tests/setup.ts'],
-  },
-  resolve: {
-    alias: { '@': resolve(__dirname, 'src') },
-  },
-});
-```
-
-**Add a setup file at `tests/setup.ts`:**
-
-```ts
-import '@testing-library/jest-dom';
-```
-
-**Add test scripts to `package.json`:**
-
-```json
-{
-  "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
-  }
-}
-```
+**Install note:** with npm 10, adding Vitest can crash npm (`Cannot read properties of null (reading 'edgesOut')`) while it resolves Vitest's optional `jsdom` peer. Installing from the lockfile (`npm ci` / `npm install`) is unaffected. If you need to add or upgrade test packages, use `npx npm@11 install -D <package>`.
 
 ---
 
 ## Running tests
 
-Once the framework is installed, use the following commands:
-
 ```bash
-# Run the full test suite once
+# Run the full suite once (what to run before pushing)
+npm run test:run
+
+# Watch mode: re-runs affected tests as you edit
 npm test
 
-# Run in watch mode (re-runs on file change)
-npm run test:watch
+# One file
+npx vitest run src/__tests__/lib/payments/priceOrder.test.ts
 
-# Run a single test file
-npx vitest run src/lib/cart/cartReducer.test.ts
-
-# Run with coverage report
+# Coverage report (text in the terminal, HTML in coverage/)
 npm run test:coverage
 ```
+
+## What is covered
+
+| Area | Tests |
+|---|---|
+| Payment verification | `lib/payments/priceOrder.test.ts`: server re-pricing ignores browser prices, fake pack sizes, removed products, bad quantities, every promo type, expired and used-up codes, malformed Paystack metadata |
+| Stock | `lib/stock.test.ts`: sell-out threshold, manual "out of stock", stock shared across thread colours, "Only N left" labels |
+| Shipping | `lib/checkout/shippingInfo.test.ts`, `shippingZones.test.ts`, `api/checkout/shipping-cost.test.ts`: zone pricing, admin overrides, defaults when the DB is down, never undercharging a Lagos order with no area |
+| Checkout review | `components/checkout/OrderReview.test.tsx`: Pay stays disabled until delivery and stock check out, sold-out and low-stock lines, price changes, promo codes |
+| Cart | `lib/cart/cartReducer.test.ts` |
+| Promo codes | `api/admin/promo-codes.test.ts`, `api/checkout/validate-promo.test.ts` |
+| Other | product descriptions, Paystack subscription forwarding |
+
+Not covered by unit tests: `recordPaidOrder()` (needs a real Postgres for its atomic stock and duplicate-order guarantees), email sending, and the admin UI. Those were checked end to end against an in-memory Postgres while being built.
 
 ---
 
@@ -164,28 +131,14 @@ No shared helpers exist yet. As the test suite grows, place reusable fixtures an
 
 ## Coverage requirements
 
-No coverage threshold is currently configured. When adding Vitest coverage, install the provider and set thresholds in `vitest.config.ts`:
-
-```bash
-npm install --save-dev @vitest/coverage-v8
-```
+`npm run test:coverage` reports coverage for `src/lib/**` and `src/app/api/**` (the v8 provider is installed and configured in `vitest.config.ts`). No minimum is enforced yet. To enforce one, add thresholds to the `coverage` block:
 
 ```ts
-// vitest.config.ts
-test: {
-  coverage: {
-    provider: 'v8',
-    thresholds: {
-      lines: 70,
-      branches: 70,
-      functions: 70,
-      statements: 70,
-    },
-  },
+coverage: {
+  provider: 'v8',
+  thresholds: { lines: 70, branches: 70, functions: 70, statements: 70 },
 }
 ```
-
-No coverage threshold is enforced at present.
 
 ---
 
@@ -210,10 +163,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
       - run: npm ci
-      - run: npm test
+      - run: npm run test:run
 ```
 
 Once this file exists, the `test` job will run on every push and pull request to `main`.
