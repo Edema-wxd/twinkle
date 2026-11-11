@@ -53,6 +53,7 @@ On phones, a wide table scrolls sideways inside its own box.
 - To add photos inside the post, click the image button in the toolbar and choose **Upload from your device** or **Choose from uploaded photos**. From the library you can pick several at once. They go in at the cursor, in the order you picked them. Photos already in the post are marked **In this post**.
 - To change a photo in the post, click it and choose **Swap photo**. Its description (alt text) is kept.
 - Products have the same library: under **Product images**, choose **Choose from uploaded photos**. Product photos show as squares, so very wide or tall photos are labelled **Wide** or **Tall**.
+- The About page has it too: each section has **Choose from uploaded photos** under its image. Those images show as a wide strip, so square or tall photos are labelled **Square** or **Tall** (only their top part shows). Remember to press **Save all sections**.
 - Removing a photo from a product, post or page only deletes the file once nothing else on the site uses it, so sharing photos is safe.
 - After uploading an image, click it and choose **Describe image** to add alt text.
 - **Shop the look** adds up to 4 products at the end of the post.

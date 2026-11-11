@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import Image from 'next/image'
 import { RichTextEditor } from './RichTextEditor'
 import { useUploadThing } from '@/lib/uploadthing'
+import { MediaLibraryDialog } from './MediaLibraryDialog'
 import type { AboutSection } from '@/types/db'
 
 interface AboutPagesFormProps {
@@ -35,6 +36,8 @@ export function AboutPagesForm({ sections }: AboutPagesFormProps) {
   )
   const [uploading, setUploading] = useState<Record<string, boolean>>({})
   const [activeUploadSectionId, setActiveUploadSectionId] = useState<string | null>(null)
+  // Section whose image is being chosen from the photo library
+  const [librarySectionId, setLibrarySectionId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [isPending, startTransition] = useTransition()
   const { startUpload } = useUploadThing('contentImages', {
@@ -249,12 +252,31 @@ export function AboutPagesForm({ sections }: AboutPagesFormProps) {
                       />
                     </label>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setLibrarySectionId(section.id)}
+                    disabled={uploading[section.id]}
+                    className="w-full px-3 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-sm text-stone-200 transition-colors disabled:opacity-60"
+                  >
+                    Choose from uploaded photos
+                  </button>
+                  <p className="text-xs text-stone-500">Shown as a wide strip above the text. Wide landscape photos work best.</p>
                 </div>
               </div>
             )}
           </div>
         )
       })}
+
+      {librarySectionId && (
+        <MediaLibraryDialog
+          title={`Choose a photo for ${sectionStates.find((s) => s.id === librarySectionId)?.title ?? 'this section'}`}
+          purpose="page"
+          current={sectionStates.find((s) => s.id === librarySectionId)?.image_url ?? null}
+          onClose={() => setLibrarySectionId(null)}
+          onSelect={([url]) => updateSection(librarySectionId, { image_url: url })}
+        />
+      )}
 
       {/* Save button */}
       <div className="pt-2">

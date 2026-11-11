@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import type { MediaItem, MediaLibrary, MediaUsage } from '@/lib/media-library'
 
-type Filter = 'all' | 'unused' | 'cover' | 'post' | 'product'
+type Filter = 'all' | 'unused' | 'cover' | 'post' | 'product' | 'page'
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: 'all', label: 'All photos' },
@@ -13,6 +13,7 @@ const FILTERS: { value: Filter; label: string }[] = [
   { value: 'cover', label: 'Blog covers' },
   { value: 'post', label: 'Inside posts' },
   { value: 'product', label: 'Products' },
+  { value: 'page', label: 'About page' },
 ]
 
 const USAGE_LABEL: Record<MediaUsage['kind'], string> = {
@@ -36,9 +37,10 @@ interface Props {
   /**
    * What the photo is for, which decides the crop warning:
    * 'cover' (landscape cards + link previews) warns about tall photos,
-   * 'product' (square tiles) warns about photos far from square, 'body' never warns
+   * 'product' (square tiles) warns about photos far from square,
+   * 'page' (About page: a wide strip, top-anchored) warns about square and tall photos, 'body' never warns
    */
-  purpose?: 'cover' | 'body' | 'product'
+  purpose?: 'cover' | 'body' | 'product' | 'page'
   /** Multiple mode: the most photos that can be picked (e.g. free product image slots) */
   max?: number
 }
@@ -47,6 +49,7 @@ const CURRENT_LABEL: Record<NonNullable<Props['purpose']>, string> = {
   cover: 'Current',
   body: 'In this post',
   product: 'Already added',
+  page: 'Current',
 }
 
 /** Crop warning for a photo of this size, used for both the tile badge and the footer note. */
@@ -55,6 +58,12 @@ function cropWarning(purpose: NonNullable<Props['purpose']>, d: { w: number; h: 
   const ratio = d.w / d.h
   if (purpose === 'cover' && ratio < 1) {
     return { badge: 'Tall', text: 'This photo is taller than it is wide, so the top and bottom will be cropped on cards and link previews.' }
+  }
+  if (purpose === 'page' && ratio < 1.5) {
+    return {
+      badge: ratio < 1 ? 'Tall' : 'Square',
+      text: 'The About page shows images as a wide strip, so only the top part of this photo will show. Wide landscape photos work best.',
+    }
   }
   if (purpose === 'product' && (ratio > 1.3 || ratio < 0.77)) {
     return {
@@ -138,6 +147,7 @@ export function MediaLibraryDialog({
       cover: items.filter((i) => i.usedIn.some((u) => u.kind === 'cover')).length,
       post: items.filter((i) => i.usedIn.some((u) => u.kind === 'post')).length,
       product: items.filter((i) => i.usedIn.some((u) => u.kind === 'product')).length,
+      page: items.filter((i) => i.usedIn.some((u) => u.kind === 'page')).length,
     } satisfies Record<Filter, number>
   }, [library])
 
@@ -214,7 +224,7 @@ export function MediaLibraryDialog({
             className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-stone-100 placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
           />
           <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1" role="group" aria-label="Filter photos">
-            {FILTERS.map((f) => (
+            {FILTERS.filter((f) => f.value !== 'page' || counts.page > 0).map((f) => (
               <button
                 key={f.value}
                 type="button"
@@ -359,7 +369,7 @@ export function MediaLibraryDialog({
             ) : (
               <p>
                 {!multiple
-                  ? 'Pick a photo. Landscape photos work best for covers.'
+                  ? `Pick a photo. ${purpose === 'page' ? 'Wide landscape photos work best here.' : 'Landscape photos work best for covers.'}`
                   : Number.isFinite(max)
                     ? `Pick up to ${max} photo${max === 1 ? '' : 's'}. Click a photo again to unpick it.`
                     : 'Pick one or more photos. Click a photo again to unpick it.'}
