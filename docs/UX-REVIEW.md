@@ -176,16 +176,16 @@ This was tested in a real browser against a throwaway in-memory Postgres. The te
    - Errors are linked with `aria-invalid`/`aria-describedby`, a count appears at the top, focus goes to the first problem, and each message clears as it's fixed. Email and phone checks are stricter (a real email shape, 10 to 14 digits).
    - Step 1 has a collapsible "Your bag" summary with the subtotal.
    - The "primarily deliver within Lagos" copy was already gone. The dead international branch in `checkout/page.tsx` was removed; "Outside Nigeria" shows the WhatsApp quote inside the form.
-4. **[P2] Order confirmation.**
-   - It always says "Payment successful", even while still checking.
-   - It shows the raw order status.
-   - Its delivery times are hardcoded.
-   - The poller has no `role="status"`.
+4. ~~**[P2] Order confirmation.**~~ **Fixed:**
+   - The waiting screen says "Confirming your payment…" (announced to screen readers), keeps checking for 5 minutes instead of giving up after 30 seconds, and never claims success before the order exists.
+   - The headline, icon and a progress tracker (Confirmed, Preparing, On its way, Delivered) follow the order's status. The tracking number shows once shipped, and promo discounts get their own line.
+   - Delivery estimates come from the shipping settings. "Pack of 1" is hidden for tools.
+   - **[P1, found while fixing]** The page sent the whole Paystack record to the browser (card bank and last 4 digits, IP address) plus the customer's email and phone. `src/lib/orders/publicOrder.ts` now sends only what the page shows, with a test guarding it, and the page is `noindex`.
 5. **[P2] Product page.**
    - The long description sits above the pickers, so the CTA falls below the fold on mobile.
    - Reviews have no summary, no accessible star text, and no link to write one.
    - The shears upsell sits far from the CTA.
-6. **[P2] Cart line items** show the unit price instead of the line total, and pressing "−" at 1 removes the item with no undo.
+6. ~~**[P2] Cart line items** show the unit price instead of the line total, and pressing "−" at 1 removes the item with no undo.~~ **Fixed:** lines show their total (plus "each" when the quantity is more than 1), "−" is disabled at 1, and Remove shows "Removed … Undo", which puts the item back in place (also from an empty cart and in the drawer). "Pack of 1" is hidden for tools.
 7. **[P2] Admin.**
    - Deleting a testimonial has no confirmation and ignores failures.
    - Dashboard "today/week" uses server UTC, not Africa/Lagos.

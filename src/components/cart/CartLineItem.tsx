@@ -22,7 +22,7 @@ export function CartLineItem({ item, lineKey: key, onUpdateQty, onRemove }: Cart
       {/* Thumbnail */}
       <Image
         src={item.imageUrl}
-        alt={item.productName}
+        alt=""
         width={64}
         height={64}
         className="w-16 h-16 object-contain rounded-md bg-stone-100 flex-shrink-0"
@@ -34,7 +34,8 @@ export function CartLineItem({ item, lineKey: key, onUpdateQty, onRemove }: Cart
           {item.productName}
         </p>
         <p className="font-body text-xs text-charcoal/60 mt-0.5">
-          {item.variantName} · Pack of {item.tierQty}
+          {item.variantName}
+          {item.tierQty > 1 && <> · Pack of {item.tierQty}</>}
         </p>
         {!item.isTool && threadColour && (
           <p className="font-body text-xs text-charcoal/60 flex items-center gap-1.5 mt-0.5">
@@ -46,29 +47,38 @@ export function CartLineItem({ item, lineKey: key, onUpdateQty, onRemove }: Cart
             {threadColour.label}
           </p>
         )}
-        <p className="font-heading text-sm font-semibold text-gold mt-1">
-          ₦{item.unitPrice.toLocaleString()}
+        {/* Line total, with the unit price when there's more than one */}
+        <p className="font-heading text-sm font-semibold text-forest mt-1">
+          ₦{(item.unitPrice * item.quantity).toLocaleString('en-NG')}
         </p>
+        {item.quantity > 1 && (
+          <p className="font-body text-xs text-charcoal/60">₦{item.unitPrice.toLocaleString('en-NG')} each</p>
+        )}
       </div>
 
       {/* Right: quantity controls + remove */}
       <div className="flex flex-col items-end gap-2 ml-3 flex-shrink-0">
         <div className="flex items-center gap-1">
+          {/* At 1, "−" is disabled: taking the item out is the Remove button's job (and it can be undone) */}
           <button
             type="button"
             onClick={() => onUpdateQty(key, item.quantity - 1)}
-            aria-label="Decrease quantity"
-            className="w-10 h-10 rounded-lg border border-charcoal/20 text-charcoal text-base font-body flex items-center justify-center hover:border-gold transition-colors"
+            aria-label={`Decrease quantity of ${item.productName}`}
+            disabled={item.quantity <= 1}
+            className={`w-10 h-10 rounded-lg border border-charcoal/20 text-charcoal text-base font-body flex items-center justify-center hover:border-gold transition-colors ${
+              item.quantity <= 1 ? 'opacity-40 cursor-not-allowed' : ''
+            }`}
           >
             −
           </button>
           <span aria-live="polite" className="w-7 text-center font-body text-sm text-charcoal tabular-nums">
+            <span className="sr-only">Quantity </span>
             {item.quantity}
           </span>
           <button
             type="button"
             onClick={() => onUpdateQty(key, item.quantity + 1)}
-            aria-label="Increase quantity"
+            aria-label={`Increase quantity of ${item.productName}`}
             disabled={item.quantity >= 10}
             className={`w-10 h-10 rounded-lg border border-charcoal/20 text-charcoal text-base font-body flex items-center justify-center hover:border-gold transition-colors ${
               item.quantity >= 10 ? 'opacity-40 cursor-not-allowed' : ''

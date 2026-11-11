@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useCart } from '@/lib/cart/CartContext';
 import { lineKey } from '@/lib/cart/cartReducer';
 import { CartLineItem } from './CartLineItem';
+import { UndoRemoveBar } from './UndoRemoveBar';
+import { useRemoveWithUndo } from '@/lib/cart/useRemoveWithUndo';
 
 export function CartDrawer() {
   const { state, dispatch } = useCart();
@@ -40,9 +42,8 @@ export function CartDrawer() {
     dispatch({ type: 'UPDATE_QTY', payload: { key, qty } });
   }
 
-  function handleRemove(key: string) {
-    dispatch({ type: 'REMOVE_ITEM', payload: { key } });
-  }
+  // Remove with a few seconds to undo
+  const { removed, remove: handleRemove, undo, dismiss } = useRemoveWithUndo();
 
   return (
     <>
@@ -91,6 +92,9 @@ export function CartDrawer() {
           {items.length === 0 ? (
             /* Empty state */
             <div className="flex flex-col items-center justify-center h-full py-16 text-center">
+              <div className="w-full">
+                <UndoRemoveBar item={removed} onUndo={undo} onDismiss={dismiss} />
+              </div>
               {/* Simple bag illustration */}
               <svg
                 viewBox="0 0 64 64"
@@ -119,6 +123,7 @@ export function CartDrawer() {
           ) : (
             /* Line items */
             <div className="py-2">
+            <UndoRemoveBar item={removed} onUndo={undo} onDismiss={dismiss} />
               {items.map((item) => {
                 const key = lineKey(item);
                 return (

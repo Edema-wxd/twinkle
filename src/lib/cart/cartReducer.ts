@@ -59,6 +59,21 @@ export function cartReducer(state: CartState, action: CartAction): CartState {
       };
     }
 
+    case 'RESTORE_ITEM': {
+      const { item, index } = action.payload;
+      const key = lineKey(item);
+      // Re-added in the meantime: merge rather than create a duplicate line
+      if (state.items.some((i) => lineKey(i) === key)) {
+        return {
+          ...state,
+          items: state.items.map((i) => (lineKey(i) === key ? { ...i, quantity: Math.min(i.quantity + item.quantity, 10) } : i)),
+        };
+      }
+      const items = [...state.items];
+      items.splice(Math.max(0, Math.min(index, items.length)), 0, item);
+      return { ...state, items };
+    }
+
     case 'REPRICE':
       return {
         ...state,

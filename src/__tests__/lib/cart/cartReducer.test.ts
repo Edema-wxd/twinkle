@@ -224,3 +224,33 @@ describe('cartReducer — HYDRATE', () => {
     expect(state.items).toHaveLength(0)
   })
 })
+
+describe('RESTORE_ITEM (undo a removal)', () => {
+  const a = { ...makeItem(), productId: 'a' }
+  const b = { ...makeItem(), productId: 'b' }
+  const c = { ...makeItem(), productId: 'c' }
+
+  it('puts the item back where it was', () => {
+    const state = cartReducer({ items: [a, c], isDrawerOpen: false, hydrated: true }, { type: 'RESTORE_ITEM', payload: { item: b, index: 1 } })
+    expect(state.items.map((i) => i.productId)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('goes at the end if the bag has shrunk since', () => {
+    const state = cartReducer({ items: [], isDrawerOpen: false, hydrated: true }, { type: 'RESTORE_ITEM', payload: { item: b, index: 3 } })
+    expect(state.items.map((i) => i.productId)).toEqual(['b'])
+  })
+
+  it('merges into the same line if it was re-added meanwhile (max 10)', () => {
+    const state = cartReducer(
+      { items: [{ ...b, quantity: 9 }], isDrawerOpen: false, hydrated: true },
+      { type: 'RESTORE_ITEM', payload: { item: { ...b, quantity: 3 }, index: 0 } },
+    )
+    expect(state.items).toHaveLength(1)
+    expect(state.items[0].quantity).toBe(10)
+  })
+
+  it('does not open the cart drawer', () => {
+    const state = cartReducer({ items: [], isDrawerOpen: false, hydrated: true }, { type: 'RESTORE_ITEM', payload: { item: b, index: 0 } })
+    expect(state.isDrawerOpen).toBe(false)
+  })
+})

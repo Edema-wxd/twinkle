@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useCart } from '@/lib/cart/CartContext';
 import { CartLineItem, lineKey } from '@/components/cart/CartLineItem';
+import { UndoRemoveBar } from '@/components/cart/UndoRemoveBar';
+import { useRemoveWithUndo } from '@/lib/cart/useRemoveWithUndo';
 
 export default function CartPage() {
   const { state, dispatch } = useCart();
@@ -17,9 +19,8 @@ export default function CartPage() {
     dispatch({ type: 'UPDATE_QTY', payload: { key, qty } });
   }
 
-  function handleRemove(key: string) {
-    dispatch({ type: 'REMOVE_ITEM', payload: { key } });
-  }
+  // Remove with a few seconds to undo
+  const { removed, remove: handleRemove, undo, dismiss } = useRemoveWithUndo();
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -34,6 +35,10 @@ export default function CartPage() {
       ) : items.length === 0 ? (
         /* Empty state */
         <div className="flex flex-col items-center justify-center py-20 text-center">
+          {/* Removing the last item lands here, so it can still be undone */}
+          <div className="w-full max-w-md">
+            <UndoRemoveBar item={removed} onUndo={undo} onDismiss={dismiss} />
+          </div>
           <p className="font-body text-charcoal/60 text-lg mb-6">
             Your cart is empty.
           </p>
@@ -49,6 +54,7 @@ export default function CartPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Left column — line items */}
           <div className="md:col-span-2">
+            <UndoRemoveBar item={removed} onUndo={undo} onDismiss={dismiss} />
             {items.map((item) => {
               const key = lineKey(item);
               return (
