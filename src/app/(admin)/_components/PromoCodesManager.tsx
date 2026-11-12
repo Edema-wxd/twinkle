@@ -32,7 +32,7 @@ function formatValue(code: PromoCode) {
 
 function formatExpiry(expiresAt: string | null) {
   if (!expiresAt) return 'Never'
-  return new Date(expiresAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(expiresAt).toLocaleDateString('en-NG', { timeZone: 'Africa/Lagos', day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export function PromoCodesManager({ initialCodes }: PromoCodesManagerProps) {

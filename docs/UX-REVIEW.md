@@ -188,11 +188,11 @@ This was tested in a real browser against a throwaway in-memory Postgres. The te
    - The shears upsell is a one-tap "Complete the kit · Add" row under Add to cart, replacing the card at the bottom of the page.
    - The floating WhatsApp button is hidden on product pages on phones (it covered the buy controls); "Ask us on WhatsApp" sits under Add to cart.
 6. ~~**[P2] Cart line items** show the unit price instead of the line total, and pressing "−" at 1 removes the item with no undo.~~ **Fixed:** lines show their total (plus "each" when the quantity is more than 1), "−" is disabled at 1, and Remove shows "Removed … Undo", which puts the item back in place (also from an empty cart and in the drawer). "Pack of 1" is hidden for tools.
-7. **[P2] Admin.**
-   - Deleting a testimonial has no confirmation and ignores failures.
-   - Dashboard "today/week" uses server UTC, not Africa/Lagos.
-   - `alert()` is used in orders and products.
-   - There's no Abandoned Orders nav entry.
-   - `CartDrawer` is mounted on admin pages.
+7. ~~**[P2] Admin.**~~ **Fixed:**
+   - Deleting a testimonial asks "Delete for good?" first, and only removes it once the server confirms. Add, edit, delete and loading failures now show a red message instead of failing silently.
+   - The dashboard's Today / This week (from Monday) / This month use Lagos time (`src/lib/time/lagos.ts`, tested). Before, an order at 00:30 Lagos time counted as the previous day. Dates across the admin, blog and reviews are also shown in Lagos time.
+   - No more `alert()`: order status errors show under the dropdown (which resets) with a "Saved" note on success, and product show/hide errors show a banner above the list.
+   - Abandoned checkouts have their own page in the sidebar (Abandoned Orders); the Orders page shows a "N abandoned checkouts · View" card.
+   - The shopping cart drawer is no longer mounted on admin pages.
 8. **[P3]** Copy mentions "onyx" but there's no Onyx category. The WhatsApp greens differ between buttons. There is no returns or privacy page in the footer.
 9. ~~**[P3]** Images inserted inside blog posts aren't deleted from UploadThing when the post is deleted.~~ **Fixed:** deleting a post removes its cover and body images, and files are only deleted once nothing else on the site uses them.

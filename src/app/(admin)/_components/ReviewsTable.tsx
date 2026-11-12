@@ -166,7 +166,7 @@ export function ReviewsTable({ reviews: initial }: ReviewsTableProps) {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-stone-500 align-top">
-                    {new Date(review.created_at).toLocaleDateString('en-GB', {
+                    {new Date(review.created_at).toLocaleDateString('en-GB', { timeZone: 'Africa/Lagos',
                       day: 'numeric', month: 'short', year: 'numeric',
                     })}
                   </td>
@@ -203,7 +203,7 @@ export function ReviewsTable({ reviews: initial }: ReviewsTableProps) {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-stone-500 align-top whitespace-nowrap">
-                    {new Date(review.created_at).toLocaleDateString('en-GB', {
+                    {new Date(review.created_at).toLocaleDateString('en-GB', { timeZone: 'Africa/Lagos',
                       day: 'numeric', month: 'short', year: 'numeric',
                     })}
                   </td>

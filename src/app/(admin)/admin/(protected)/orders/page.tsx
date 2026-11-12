@@ -1,10 +1,10 @@
 import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
+import Link from 'next/link'
 import { orders, abandonedOrders as abandonedOrdersTable } from '@/db'
-import { desc } from 'drizzle-orm'
-import { Order, AbandonedOrder } from '@/types/db'
+import { count, desc, eq } from 'drizzle-orm'
+import { Order } from '@/types/db'
 import { OrdersTable } from '../../../_components/OrdersTable'
-import { AbandonedOrdersTable } from '../../../_components/AbandonedOrdersTable'
 import { RecoverOrderForm } from '../../../_components/RecoverOrderForm'
 
 // Belt-and-braces auth check — layout.tsx also checks, but individual pages
@@ -12,7 +12,7 @@ import { RecoverOrderForm } from '../../../_components/RecoverOrderForm'
 export default async function AdminOrdersPage() {
   await requireAdminSession()
 
-  const [ordersRows, abandonedRows] = await Promise.all([
+  const [ordersRows, unrecoveredCount] = await Promise.all([
     db
       .select({
         id: orders.id,
@@ -26,21 +26,13 @@ export default async function AdminOrdersPage() {
       .from(orders)
       .orderBy(desc(orders.createdAt))
       .catch((e) => { console.error('Failed to fetch orders:', e); return [] }),
+    // Just the count here; the list has its own page (Abandoned Orders in the sidebar)
     db
-      .select({
-        id: abandonedOrdersTable.id,
-        createdAt: abandonedOrdersTable.createdAt,
-        customerName: abandonedOrdersTable.customerName,
-        customerEmail: abandonedOrdersTable.customerEmail,
-        customerPhone: abandonedOrdersTable.customerPhone,
-        total: abandonedOrdersTable.total,
-        recovered: abandonedOrdersTable.recovered,
-        recoveredAt: abandonedOrdersTable.recoveredAt,
-      })
+      .select({ n: count() })
       .from(abandonedOrdersTable)
-      .orderBy(desc(abandonedOrdersTable.createdAt))
-      .limit(100)
-      .catch((e) => { console.error('Failed to fetch abandoned orders:', e); return [] }),
+      .where(eq(abandonedOrdersTable.recovered, false))
+      .then((r) => r[0]?.n ?? 0)
+      .catch((e) => { console.error('Failed to count abandoned orders:', e); return 0 }),
   ])
 
   const ordersList: Order[] = ordersRows.map((r) => ({
@@ -61,24 +53,6 @@ export default async function AdminOrdersPage() {
     tracking_number: r.trackingNumber ?? null,
   }))
 
-  const abandonedList: AbandonedOrder[] = abandonedRows.map((r) => ({
-    id: r.id,
-    created_at: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
-    customer_name: r.customerName,
-    customer_email: r.customerEmail,
-    customer_phone: r.customerPhone,
-    delivery_address: '',
-    delivery_state: '',
-    shipping_cost: 0,
-    subtotal: 0,
-    total: Number(r.total),
-    cart_items: null,
-    recovered: r.recovered,
-    recovered_at: r.recoveredAt instanceof Date ? r.recoveredAt.toISOString() : (r.recoveredAt ?? null),
-  }))
-
-  const unrecoveredCount = abandonedList.filter((o) => !o.recovered).length
-
   return (
     <div className="p-6 lg:p-8 space-y-10">
       <div>
@@ -93,15 +67,20 @@ export default async function AdminOrdersPage() {
       <RecoverOrderForm />
       <OrdersTable orders={ordersList} />
 
-      <div>
-        <h2 className="font-heading text-xl font-bold text-white mb-1">
-          Abandoned Checkouts
-        </h2>
-        <p className="text-stone-400 text-sm mb-4">
-          {unrecoveredCount} unrecovered &mdash; customers who filled in their details but didn&apos;t complete payment
-        </p>
-        <AbandonedOrdersTable abandonedOrders={abandonedList} />
-      </div>
+      {unrecoveredCount > 0 && (
+        <Link
+          href="/admin/abandoned-orders"
+          className="flex items-center justify-between gap-4 rounded-xl border border-stone-700 bg-stone-800/50 px-5 py-4 hover:border-gold/60 transition-colors"
+        >
+          <span>
+            <span className="block font-heading font-semibold text-white">
+              {unrecoveredCount} abandoned {unrecoveredCount === 1 ? 'checkout' : 'checkouts'}
+            </span>
+            <span className="block text-sm text-stone-400">Customers who filled in their details but didn&apos;t pay. Worth a follow-up.</span>
+          </span>
+          <span className="shrink-0 text-sm text-gold-light">View →</span>
+        </Link>
+      )}
     </div>
   )
 }

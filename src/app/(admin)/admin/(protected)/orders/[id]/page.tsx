@@ -30,7 +30,7 @@ function formatNaira(amount: number): string {
 }
 
 function formatDate(isoString: string): string {
-  return new Date(isoString).toLocaleDateString('en-NG', {
+  return new Date(isoString).toLocaleDateString('en-NG', { timeZone: 'Africa/Lagos',
     day: 'numeric',
     month: 'long',
     year: 'numeric',

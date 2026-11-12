@@ -24,7 +24,7 @@ function formatNaira(amount: number): string {
 }
 
 function formatDate(isoString: string): string {
-  return new Date(isoString).toLocaleDateString('en-NG', {
+  return new Date(isoString).toLocaleDateString('en-NG', { timeZone: 'Africa/Lagos',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -85,10 +85,10 @@ export default async function AbandonedOrderDetailPage({ params }: PageProps) {
       <div className="flex flex-col sm:flex-row sm:items-start gap-4">
         <div className="flex-1">
           <Link
-            href="/admin/orders"
+            href="/admin/abandoned-orders"
             className="text-stone-400 hover:text-white text-sm transition-colors mb-2 inline-flex items-center gap-1"
           >
-            <span aria-hidden>&#8592;</span> Back to Orders
+            <span aria-hidden>&#8592;</span> Back to abandoned checkouts
           </Link>
           <h1 className="font-heading text-2xl font-bold text-white">
             Abandoned Checkout

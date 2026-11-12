@@ -55,7 +55,7 @@ export function ProductReviews({ reviews }: ProductReviewsProps) {
                 <div className="mt-2">
                   <span className="font-heading font-semibold text-forest">{review.author_name}</span>
                   <span className="font-body text-sm text-charcoal/60 ml-2">
-                    {new Date(review.created_at).toLocaleDateString('en-NG', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    {new Date(review.created_at).toLocaleDateString('en-NG', { timeZone: 'Africa/Lagos', year: 'numeric', month: 'long', day: 'numeric' })}
                   </span>
                 </div>
                 <p className="font-body text-charcoal/80 mt-3 leading-relaxed">{review.body}</p>

@@ -167,7 +167,7 @@ const TEMPLATE_NAMES: Record<string, string> = {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString('en-NG', {
+  return new Date(iso).toLocaleString('en-NG', { timeZone: 'Africa/Lagos',
     day: 'numeric', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   })
@@ -790,7 +790,7 @@ function TemplatesTab({ templates: initial }: { templates: EmailTemplate[] }) {
               </p>
               <p className="text-xs text-stone-400 font-body line-clamp-3 leading-relaxed">{t.body}</p>
               <p className="text-xs text-stone-700 mt-3">
-                Updated {new Date(t.updatedAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                Updated {new Date(t.updatedAt).toLocaleDateString('en-NG', { timeZone: 'Africa/Lagos', day: 'numeric', month: 'short', year: 'numeric' })}
               </p>
             </div>
           </div>

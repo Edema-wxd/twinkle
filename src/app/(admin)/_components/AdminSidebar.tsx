@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: '/admin', label: 'Dashboard', exact: true },
   { href: '/admin/products', label: 'Products', exact: false },
   { href: '/admin/orders', label: 'Orders', exact: false },
+  { href: '/admin/abandoned-orders', label: 'Abandoned Orders', exact: false },
   { href: '/admin/reviews', label: 'Reviews', exact: false },
   { href: '/admin/promo-codes', label: 'Promo Codes', exact: false },
   { href: '/admin/emails', label: 'Emails', exact: false },

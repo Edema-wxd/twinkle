@@ -3,6 +3,7 @@ import { db } from '@/db'
 import { orders, blogPosts, faqs } from '@/db'
 import { desc, sql } from 'drizzle-orm'
 import Link from 'next/link'
+import { periodStarts } from '@/lib/time/lagos'
 import { Order } from '@/types/db'
 import StatsPanel from '../../_components/StatsPanel'
 import RecentOrdersTable from '../../_components/RecentOrdersTable'
@@ -80,15 +81,9 @@ export default async function AdminDashboardPage() {
     ? Math.floor((Date.now() - content.lastPublished.getTime()) / 86_400_000)
     : null
 
-  // Compute date range boundaries (start of day in local time)
-  const now = new Date()
-  const today = new Date(now)
-  today.setHours(0, 0, 0, 0)
-
-  const weekStart = new Date(today)
-  weekStart.setDate(today.getDate() - today.getDay()) // Sunday of current week
-
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+  // Today / this week (from Monday) / this month, in Lagos time: the server
+  // runs in UTC, which would count orders placed after midnight on the wrong day
+  const { today, week: weekStart, month: monthStart } = periodStarts()
 
   // Helper to compute stats for a date range
   function computeStats(startDate: Date) {

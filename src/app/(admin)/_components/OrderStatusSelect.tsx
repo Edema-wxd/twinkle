@@ -5,6 +5,8 @@ import { useState } from 'react'
 const STATUS_OPTIONS = ['payment_review', 'paid', 'processing', 'shipped', 'delivered'] as const
 type OrderStatus = (typeof STATUS_OPTIONS)[number]
 
+const labelFor = (s: string) => (s === 'payment_review' ? 'needs review' : s)
+
 const STATUS_COLOURS: Record<OrderStatus, string> = {
   payment_review: 'text-amber-300',
   paid: 'text-gold/80',
@@ -28,10 +30,15 @@ export function OrderStatusSelect({
   const [saving, setSaving] = useState(false)
   const [pendingShip, setPendingShip] = useState(false)
   const [trackingInput, setTrackingInput] = useState(currentTrackingNumber ?? '')
+  // Shown next to the select instead of a browser pop-up
+  const [error, setError] = useState<string | null>(null)
+  const [justSaved, setJustSaved] = useState(false)
 
   async function saveStatus(newStatus: string, trackingNumber?: string) {
     const previous = status
     setSaving(true)
+    setError(null)
+    setJustSaved(false)
 
     try {
       const res = await fetch(`/api/admin/orders/${orderId}`, {
@@ -45,14 +52,16 @@ export function OrderStatusSelect({
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        alert(`Failed to update status: ${body.error ?? res.statusText}`)
+        setError(`Couldn’t change the status: ${body.error ?? res.statusText}. It’s still “${labelFor(previous)}”.`)
         setStatus(previous)
         return
       }
 
       setStatus(newStatus)
-    } catch (err) {
-      alert(`Network error: ${err instanceof Error ? err.message : String(err)}`)
+      setJustSaved(true)
+      setTimeout(() => setJustSaved(false), 2500)
+    } catch {
+      setError(`Couldn’t reach the server, so the status is still “${labelFor(previous)}”. Check your connection and try again.`)
       setStatus(previous)
     } finally {
       setSaving(false)
@@ -86,11 +95,14 @@ export function OrderStatusSelect({
           value={pendingShip ? 'shipped' : status}
           onChange={(e) => handleSelectChange(e.target.value)}
           disabled={saving}
+          aria-label="Order status"
+          aria-invalid={!!error || undefined}
+          aria-describedby={error ? `status-error-${orderId}` : undefined}
           className={`bg-stone-800 border border-stone-600 rounded px-2 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-gold disabled:opacity-50 disabled:cursor-not-allowed ${colourClass}`}
         >
           {STATUS_OPTIONS.map((s) => (
             <option key={s} value={s} className={STATUS_COLOURS[s]}>
-              {s === 'payment_review' ? 'needs review' : s}
+              {labelFor(s)}
             </option>
           ))}
         </select>
@@ -118,6 +130,17 @@ export function OrderStatusSelect({
           </svg>
         )}
       </div>
+
+      {justSaved && !saving && (
+        <span role="status" className="text-xs text-green-300">
+          Saved
+        </span>
+      )}
+      {error && (
+        <p id={`status-error-${orderId}`} role="alert" className="max-w-xs text-xs text-red-300">
+          {error}
+        </p>
+      )}
 
       {pendingShip && (
         <div className="flex flex-wrap items-center gap-2">

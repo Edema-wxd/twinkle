@@ -487,7 +487,7 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
       {backup && (
         <div role="alert" className="mb-6 flex flex-wrap items-center gap-3 rounded-xl bg-amber-950/70 ring-1 ring-amber-700 px-4 py-3">
           <p className="flex-1 text-sm text-amber-100">
-            This browser has unsaved changes from {new Date(backup.savedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}.
+            This browser has unsaved changes from {new Date(backup.savedAt).toLocaleString('en-GB', { timeZone: 'Africa/Lagos', dateStyle: 'medium', timeStyle: 'short' })}.
           </p>
           <button type="button" onClick={restoreBackup} className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-stone-950 text-sm font-semibold rounded-lg">
             Restore them

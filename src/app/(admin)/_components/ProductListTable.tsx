@@ -44,6 +44,8 @@ export function ProductListTable({ products }: ProductListTableProps) {
     Object.fromEntries(products.map((p) => [p.id, p.is_active]))
   )
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  // Shown above the table instead of a browser pop-up
+  const [error, setError] = useState<string | null>(null)
 
   const filteredProducts = useMemo(() => {
     let result = [...products]
@@ -62,6 +64,8 @@ export function ProductListTable({ products }: ProductListTableProps) {
 
   async function handleToggleActive(productId: string) {
     setLoadingId(productId)
+    setError(null)
+    const name = products.find((p) => p.id === productId)?.name ?? 'this product'
     try {
       const res = await fetch(
         `/api/admin/products/${productId}/toggle-active`,
@@ -70,16 +74,15 @@ export function ProductListTable({ products }: ProductListTableProps) {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        alert(
-          `Failed to update product: ${body.error ?? res.statusText}`
-        )
+        setError(`Couldn’t show or hide ${name}: ${body.error ?? res.statusText}. Nothing was changed.`)
         return
       }
 
       const { is_active } = await res.json()
       setActiveState((prev) => ({ ...prev, [productId]: is_active }))
     } catch (err) {
-      alert(`Network error: ${err instanceof Error ? err.message : String(err)}`)
+      console.error('[products] toggle failed', err)
+      setError(`Couldn’t reach the server, so ${name} wasn’t changed. Check your connection and try again.`)
     } finally {
       setLoadingId(null)
     }
@@ -123,6 +126,15 @@ export function ProductListTable({ products }: ProductListTableProps) {
           + New product
         </Link>
       </div>
+
+      {error && (
+        <div role="alert" className="flex items-start justify-between gap-3 rounded-lg border border-red-800 bg-red-950/60 px-4 py-3 text-sm text-red-200">
+          <span>{error}</span>
+          <button type="button" onClick={() => setError(null)} aria-label="Dismiss" className="shrink-0 px-1 text-red-300 hover:text-white">
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Count */}
       <p className="text-stone-400 text-sm">

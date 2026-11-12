@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useCallback, useState, useEffect, useTransition } from 'react'
 
 interface TestimonialRow {
   id: string
@@ -90,65 +90,117 @@ export default function AdminTestimonialsPage() {
   const [editing, setEditing] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [isPending, startTransition] = useTransition()
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ tone: 'ok' | 'error'; msg: string } | null>(null)
+  // Row waiting for "Yes, delete" (deleting is permanent, so it takes two clicks)
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState(false)
 
-  function showToast(msg: string) {
-    setToast(msg)
-    setTimeout(() => setToast(null), 3000)
+  function showToast(msg: string, tone: 'ok' | 'error' = 'ok') {
+    setToast({ tone, msg })
+    setTimeout(() => setToast(null), tone === 'error' ? 6000 : 3000)
   }
 
-  useEffect(() => {
+  async function errorText(res: Response, fallback: string) {
+    const body = (await res.json().catch(() => null)) as { error?: string } | null
+    return body?.error ?? fallback
+  }
+
+  const load = useCallback(() => {
+    setLoadError(false)
     fetch('/api/admin/testimonials')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(String(r.status))
+        return r.json()
+      })
       .then(setRows)
-      .catch(console.error)
+      .catch(() => setLoadError(true))
   }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
 
   function handleAdd(data: Omit<TestimonialRow, 'id'>) {
     startTransition(async () => {
-      const res = await fetch('/api/admin/testimonials', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: data.name, quote: data.quote, display_order: data.displayOrder }),
-      })
-      if (res.ok) {
-        const row = await res.json()
-        setRows((prev) => [...prev, row].sort((a, b) => a.displayOrder - b.displayOrder))
-        setAdding(false)
-        showToast('Testimonial added')
+      try {
+        const res = await fetch('/api/admin/testimonials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: data.name, quote: data.quote, display_order: data.displayOrder }),
+        })
+        if (res.ok) {
+          const row = await res.json()
+          setRows((prev) => [...prev, row].sort((a, b) => a.displayOrder - b.displayOrder))
+          setAdding(false)
+          showToast('Testimonial added')
+        } else {
+          showToast(await errorText(res, 'Couldn’t add the testimonial. Please try again.'), 'error')
+        }
+      } catch {
+        showToast('Couldn’t reach the server. Check your connection and try again.', 'error')
       }
     })
   }
 
   function handleEdit(id: string, data: Omit<TestimonialRow, 'id'>) {
     startTransition(async () => {
-      const res = await fetch(`/api/admin/testimonials/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: data.name, quote: data.quote, display_order: data.displayOrder, is_active: data.isActive }),
-      })
-      if (res.ok) {
-        const updated = await res.json()
-        setRows((prev) => prev.map((r) => r.id === id ? updated : r).sort((a, b) => a.displayOrder - b.displayOrder))
-        setEditing(null)
-        showToast('Saved')
+      try {
+        const res = await fetch(`/api/admin/testimonials/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: data.name, quote: data.quote, display_order: data.displayOrder, is_active: data.isActive }),
+        })
+        if (res.ok) {
+          const updated = await res.json()
+          setRows((prev) => prev.map((r) => r.id === id ? updated : r).sort((a, b) => a.displayOrder - b.displayOrder))
+          setEditing(null)
+          showToast('Saved')
+        } else {
+          showToast(await errorText(res, 'Couldn’t save your changes. Please try again.'), 'error')
+        }
+      } catch {
+        showToast('Couldn’t reach the server. Check your connection and try again.', 'error')
       }
     })
   }
 
   function handleDelete(id: string) {
+    setConfirmingDelete(null)
     startTransition(async () => {
-      await fetch(`/api/admin/testimonials/${id}`, { method: 'DELETE' })
-      setRows((prev) => prev.filter((r) => r.id !== id))
-      showToast('Deleted')
+      try {
+        const res = await fetch(`/api/admin/testimonials/${id}`, { method: 'DELETE' })
+        if (!res.ok) {
+          showToast(await errorText(res, 'Couldn’t delete it. Please try again.'), 'error')
+          return
+        }
+        // Only remove it from the list once the server has actually deleted it
+        setRows((prev) => prev.filter((r) => r.id !== id))
+        showToast('Deleted')
+      } catch {
+        showToast('Couldn’t reach the server. Check your connection and try again.', 'error')
+      }
     })
   }
 
   return (
     <div className="p-6 max-w-3xl">
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg text-sm font-medium shadow-lg bg-emerald-900/90 text-emerald-300 ring-1 ring-emerald-600/40">
-          {toast}
+        <div
+          role={toast.tone === 'error' ? 'alert' : 'status'}
+          className={`fixed bottom-6 right-6 z-50 max-w-sm px-4 py-3 rounded-lg text-sm font-medium shadow-lg ring-1 ${
+            toast.tone === 'error' ? 'bg-red-950/95 text-red-200 ring-red-700/50' : 'bg-emerald-900/90 text-emerald-300 ring-emerald-600/40'
+          }`}
+        >
+          {toast.msg}
+        </div>
+      )}
+
+      {loadError && (
+        <div role="alert" className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-red-800 bg-red-950/60 px-4 py-3 text-sm text-red-200">
+          Couldn’t load testimonials.
+          <button type="button" onClick={load} className="rounded-md px-3 py-1 text-red-100 underline hover:text-white">
+            Try again
+          </button>
         </div>
       )}
 
@@ -174,7 +226,7 @@ export default function AdminTestimonialsPage() {
       )}
 
       <div className="space-y-3">
-        {rows.length === 0 && !adding && (
+        {rows.length === 0 && !adding && !loadError && (
           <p className="text-stone-500 text-sm">No testimonials yet.</p>
         )}
         {rows.map((row) =>
@@ -199,13 +251,34 @@ export default function AdminTestimonialsPage() {
                 >
                   Edit
                 </button>
-                <button
-                  onClick={() => handleDelete(row.id)}
-                  disabled={isPending}
-                  className="px-3 py-1.5 text-xs text-red-400 hover:text-red-300 border border-red-900/40 hover:border-red-700 rounded-lg transition-colors"
-                >
-                  Delete
-                </button>
+                {confirmingDelete === row.id ? (
+                  <span className="flex items-center gap-2" role="group" aria-label={`Confirm deleting ${row.name}'s testimonial`}>
+                    <span className="text-xs text-stone-300">Delete for good?</span>
+                    <button
+                      onClick={() => handleDelete(row.id)}
+                      disabled={isPending}
+                      autoFocus
+                      className="px-3 py-1.5 text-xs font-medium text-white bg-red-700 hover:bg-red-600 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      Yes, delete
+                    </button>
+                    <button
+                      onClick={() => setConfirmingDelete(null)}
+                      className="px-3 py-1.5 text-xs text-stone-300 hover:text-white border border-stone-600 rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => setConfirmingDelete(row.id)}
+                    disabled={isPending}
+                    aria-label={`Delete ${row.name}'s testimonial`}
+                    className="px-3 py-1.5 text-xs text-red-400 hover:text-red-300 border border-red-900/40 hover:border-red-700 rounded-lg transition-colors"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           )

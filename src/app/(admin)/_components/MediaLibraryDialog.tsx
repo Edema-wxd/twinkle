@@ -82,7 +82,7 @@ function formatSize(bytes: number | null): string | null {
 
 function formatDate(ms: number | null): string | null {
   if (!ms) return null
-  return new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(ms).toLocaleDateString('en-GB', { timeZone: 'Africa/Lagos', day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export function MediaLibraryDialog({
