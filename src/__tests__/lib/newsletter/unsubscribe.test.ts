@@ -49,3 +49,15 @@ describe('sendNewsletterEmail', () => {
     expect(arg.headers?.['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click')
   })
 })
+
+describe('sendNewsletterEmail with a rendered newsletter', () => {
+  it('fills the template slot with this subscriber’s own link instead of appending a second footer', async () => {
+    vi.mocked(sendEmail).mockClear()
+    await sendNewsletterEmail({ to: 'ada@example.com', subject: 'S', html: '<html><body><a href="%%UNSUBSCRIBE_URL%%">Unsubscribe</a></body></html>', text: 'Unsubscribe: %%UNSUBSCRIBE_URL%%' })
+    const arg = vi.mocked(sendEmail).mock.calls[0][0]
+    expect(arg.html).not.toContain('%%UNSUBSCRIBE_URL%%')
+    expect(arg.html).toMatch(/href="https:\/\/twinklelocs\.com\/unsubscribe\?e=ada%40example\.com&amp;t=[\w-]+"/)
+    expect(arg.html.match(/Unsubscribe/g)).toHaveLength(1)
+    expect(arg.text).toMatch(/^Unsubscribe: https:\/\/twinklelocs\.com\/unsubscribe\?e=/)
+  })
+})

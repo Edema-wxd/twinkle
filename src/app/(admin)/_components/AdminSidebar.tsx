@@ -14,6 +14,7 @@ const NAV_LINKS = [
   { href: '/admin/reviews', label: 'Reviews', exact: false },
   { href: '/admin/promo-codes', label: 'Promo Codes', exact: false },
   { href: '/admin/emails', label: 'Emails', exact: false },
+  { href: '/admin/newsletter', label: 'Newsletter', exact: false },
   { href: '/admin/settings', label: 'Settings', exact: false },
 ]
 

@@ -72,3 +72,16 @@ Every post (and the blog page) ends with an **"Add as a preferred source"** butt
 You can share the same link anywhere, for example in an Instagram bio, a WhatsApp broadcast or the newsletter: https://www.google.com/preferences/source?q=twinklelocs.com
 
 Google doesn't show how many people have added us.
+
+## Newsletter
+
+Admin → **Newsletter** emails everyone who joined from the footer or the blog.
+
+1. **Write:** a subject (type `{name}` for each person's first name), optional preview text (shown after the subject in the inbox), an optional photo, the message, and an optional button (for example "Shop the collection" → `/catalog`). The preview on the right shows exactly what subscribers get.
+2. **Send a test to yourself** and check it on your phone.
+3. **Send to N subscribers…**, then confirm. It sends in small batches with a progress bar (roughly 2 emails a second). You can pause and resume; nobody gets the same newsletter twice. If someone's address fails (for example a full or closed mailbox), you can retry them at the end.
+
+Every newsletter has an unsubscribe link and Gmail/Yahoo's one-click unsubscribe; unsubscribing removes the person from the list. **Subscribers** lets you search, remove someone who asked by message, and export a CSV. **Sent** shows past newsletters with how many were delivered and opened (needs the Resend webhook, see Admin → Emails).
+
+The draft is saved in your browser as you type. A send in progress is also remembered there, so if the tab closes, reopen Newsletter and press **Resume**.
+

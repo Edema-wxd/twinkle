@@ -29,6 +29,8 @@ export type SendEmailInput = {
   idempotencyKey?: string
   /** Extra email headers, e.g. List-Unsubscribe for newsletters */
   headers?: Record<string, string>
+  /** Subject to record in email_logs when it differs from what was sent (newsletters log "Hi {name}", not each person's name) */
+  logSubject?: string
 }
 
 export type SendEmailResult = { ok: true; id: string | null; logId: string | null } | { ok: false; error: string; logId: string | null }
@@ -115,7 +117,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       .insert(emailLogs)
       .values({
         to: recipients,
-        subject: input.subject,
+        subject: input.logSubject ?? input.subject,
         templateKey: input.templateKey ?? null,
         orderId: input.orderId ?? null,
         resendMessageId: id,
