@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import Link from 'next/link';
 import { NIGERIAN_STATES } from '@/lib/checkout/shipping';
 import { LAGOS_ZONES } from '@/lib/checkout/shippingZones';
 import { BUSINESS } from '@/lib/config/business';
@@ -194,7 +195,7 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
             href={BUSINESS.whatsapp.url("Hi, I'd like a shipping quote for my Twinkle Locs order")}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-12 items-center gap-2 bg-[#25D366] text-white font-heading font-semibold px-6 rounded-lg hover:bg-[#1da851] transition-colors"
+            className="inline-flex min-h-12 items-center gap-2 bg-whatsapp-dark text-white font-heading font-semibold px-6 rounded-lg hover:bg-whatsapp-darker transition-colors"
           >
             Get a quote on WhatsApp
           </a>
@@ -305,6 +306,12 @@ export function CheckoutForm({ onSubmit, defaultValues }: CheckoutFormProps) {
           >
             Review order
           </button>
+          <p className="mt-3 text-center font-body text-xs text-charcoal/60">
+            We only use your details to deliver your order.{' '}
+            <Link href="/privacy" className="underline underline-offset-2 hover:text-forest">Privacy</Link>
+            {' · '}
+            <Link href="/returns" className="underline underline-offset-2 hover:text-forest">Returns</Link>
+          </p>
         </form>
       )}
     </div>

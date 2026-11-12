@@ -41,6 +41,12 @@
   --color-stone:    #F5F0E8;   /* Near-white card backgrounds */
   --color-cocoa:    #3B1F0E;   /* Legacy — kept for admin UI only */
 
+  /* WhatsApp: bright brand green for the icon-only button; the dark green for
+     buttons with text, so white text stays readable (#25D366 + white is ~2:1) */
+  --color-whatsapp:        #25D366;
+  --color-whatsapp-dark:   #075E54;  /* 7.6:1 with white */
+  --color-whatsapp-darker: #054A42;
+
   /* =============================================
      Typography — next/font injects the actual
      font-family string via a CSS variable on <html>

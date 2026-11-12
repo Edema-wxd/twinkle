@@ -1,3 +1,4 @@
+import { customerWhatsAppUrl } from '@/lib/contact/whatsapp'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { requireAdminSession } from '@/lib/auth/server'
@@ -71,6 +72,8 @@ export default async function AbandonedOrderDetailPage({ params }: PageProps) {
 
   const cartItems = (order.cart_items as unknown as CartItemSnapshot[]) ?? []
 
+  // wa.me needs 234 + the number without its leading 0 (falls back to a phone link)
+  const waUrl = customerWhatsAppUrl(order.customer_phone)
   const whatsappMessage = encodeURIComponent(
     `Hi ${order.customer_name.split(' ')[0]}, we noticed you left some items in your Twinkle Locs cart! Your order totalling ${formatNaira(order.total)} is still waiting for you. Complete your purchase here: ${SITE_URL}/cart`
   )
@@ -132,7 +135,7 @@ export default async function AbandonedOrderDetailPage({ params }: PageProps) {
           <div>
             <p className="text-stone-400 text-xs uppercase tracking-wide mb-1">WhatsApp / Phone</p>
             <a
-              href={`https://wa.me/234${order.customer_phone.replace(/\D/g, '')}?text=${whatsappMessage}`}
+              href={waUrl ? `${waUrl}?text=${whatsappMessage}` : `tel:${order.customer_phone}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-green-400 hover:text-green-300 transition-colors"
@@ -174,10 +177,10 @@ export default async function AbandonedOrderDetailPage({ params }: PageProps) {
           </h2>
           <div className="flex flex-wrap gap-3">
             <a
-              href={`https://wa.me/234${order.customer_phone.replace(/\D/g, '')}?text=${whatsappMessage}`}
+              href={waUrl ? `${waUrl}?text=${whatsappMessage}` : `tel:${order.customer_phone}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-[#25D366] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#1da851] transition-colors"
+              className="inline-flex items-center gap-2 bg-whatsapp-dark text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-whatsapp-darker transition-colors"
             >
               Message on WhatsApp
             </a>

@@ -1,3 +1,4 @@
+import { customerWhatsAppUrl } from '@/lib/contact/whatsapp'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { requireAdminSession } from '@/lib/auth/server'
@@ -180,7 +181,7 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
               WhatsApp / Phone
             </p>
             <a
-              href={`https://wa.me/234${order.customer_phone.replace(/\D/g, '')}`}
+              href={customerWhatsAppUrl(order.customer_phone) ?? `tel:${order.customer_phone}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-green-400 hover:text-green-300 transition-colors"

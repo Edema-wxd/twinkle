@@ -34,7 +34,7 @@ export function WhatsAppButton() {
       aria-hidden={footerVisible || undefined}
       tabIndex={footerVisible ? -1 : undefined}
       style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
-      className={`fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-full bg-[#25D366] shadow-lg transition-[transform,opacity] duration-300 hover:scale-110 active:scale-95 motion-reduce:transition-none ${
+      className={`fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-full bg-whatsapp shadow-lg transition-[transform,opacity] duration-300 hover:scale-110 active:scale-95 motion-reduce:transition-none ${
         footerVisible ? 'pointer-events-none translate-y-6 opacity-0' : 'opacity-100'
       } ${onProductPage ? 'max-md:hidden' : ''}`}
     >

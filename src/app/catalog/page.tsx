@@ -7,10 +7,10 @@ import { applyStockToProducts } from '@/lib/stock'
 
 export const metadata: Metadata = {
   title: { absolute: 'Buy Loc Beads Online in Nigeria | Twinkle Locs' },
-  description: 'Shop the full Twinkle Locs collection. Loc beads in gold, silver, crystal, and onyx. Packs of 50 to 200 beads, sizes 2mm to 6mm. Order online or via WhatsApp.',
+  description: 'Shop the full Twinkle Locs collection. Loc beads in gold, silver and crystal. Packs of 50 to 200 beads, sizes 2mm to 6mm. Order online or via WhatsApp.',
   openGraph: {
     title: 'Buy Loc Beads Online in Nigeria | Twinkle Locs',
-    description: 'Shop the full Twinkle Locs collection. Loc beads in gold, silver, crystal, and onyx. Packs of 50 to 200 beads, sizes 2mm to 6mm. Order online or via WhatsApp.',
+    description: 'Shop the full Twinkle Locs collection. Loc beads in gold, silver and crystal. Packs of 50 to 200 beads, sizes 2mm to 6mm. Order online or via WhatsApp.',
     images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     type: 'website',
   },

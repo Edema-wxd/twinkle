@@ -19,7 +19,7 @@ import type { Testimonial } from '@/components/home/TestimonialsSection'
 export async function generateMetadata(): Promise<Metadata> {
   const info = await getShippingInfo()
   const title = 'Loc Beads Nigeria - Gold, Silver & Crystal | Twinkle Locs'
-  const description = `Buy handcrafted loc beads online in Nigeria. Gold, silver, crystal, and onyx styles from NGN 15,000. Lagos delivery from ${formatNaira(info.lagosFrom)}, same day in most areas; nationwide in ${info.otherDays}.`
+  const description = `Buy handcrafted loc beads online in Nigeria. Gold, silver and crystal styles from NGN 15,000. Lagos delivery from ${formatNaira(info.lagosFrom)}, same day in most areas; nationwide in ${info.otherDays}.`
   return {
     title: { absolute: title },
     description,
@@ -37,7 +37,7 @@ const storeJsonLd = {
   '@type': 'Store',
   name: 'Twinkle Locs',
   description:
-    'Handcrafted loc bead accessories made in Nigeria. Gold, silver, crystal, and onyx loc beads in multiple sizes for loc wearers.',
+    'Handcrafted loc bead accessories made in Nigeria. Gold, silver and crystal loc beads in multiple sizes for loc wearers.',
   url: 'https://twinklelocs.com',
   logo: 'https://twinklelocs.com/images/Logo.png',
   image: 'https://twinklelocs.com/og-image.jpg',

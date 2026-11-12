@@ -94,6 +94,10 @@ export function Footer() {
           <p className="font-body text-xs text-cream/70">
             &copy; {new Date().getFullYear()} Twinkle Locs. All rights reserved.
           </p>
+          <nav aria-label="Policies" className="flex gap-4 font-body text-xs">
+            <Link href="/returns" className="text-cream/80 underline underline-offset-4 hover:text-cream">Returns &amp; refunds</Link>
+            <Link href="/privacy" className="text-cream/80 underline underline-offset-4 hover:text-cream">Privacy</Link>
+          </nav>
           <p className="font-body text-xs text-cream/70">
             Secure payments by Paystack &middot; Made with love in Nigeria
           </p>

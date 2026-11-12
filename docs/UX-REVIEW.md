@@ -194,5 +194,9 @@ This was tested in a real browser against a throwaway in-memory Postgres. The te
    - No more `alert()`: order status errors show under the dropdown (which resets) with a "Saved" note on success, and product show/hide errors show a banner above the list.
    - Abandoned checkouts have their own page in the sidebar (Abandoned Orders); the Orders page shows a "N abandoned checkouts · View" card.
    - The shopping cart drawer is no longer mounted on admin pages.
-8. **[P3]** Copy mentions "onyx" but there's no Onyx category. The WhatsApp greens differ between buttons. There is no returns or privacy page in the footer.
+8. ~~**[P3]** "Onyx" copy, WhatsApp greens, no returns or privacy page.~~ **Fixed:**
+   - "Onyx" removed from the shop and home page descriptions and llms.txt (there's no Onyx category).
+   - WhatsApp colours are tokens in `globals.css`: bright `whatsapp` for the icon-only button, `whatsapp-dark` for buttons with text (white on the bright green was about 2:1 contrast; now 7.6:1).
+   - **Draft** `/returns` and `/privacy` pages (owner to confirm the policy terms), linked from the footer, the sitemap, llms.txt and under the checkout button.
+   - **[P2, found while fixing]** Admin "Message on WhatsApp" links for customers were `wa.me/234` + the number as typed, so 0803... became 23408..., which WhatsApp rejects. `customerWhatsAppUrl()` (tested) builds a working link.
 9. ~~**[P3]** Images inserted inside blog posts aren't deleted from UploadThing when the post is deleted.~~ **Fixed:** deleting a post removes its cover and body images, and files are only deleted once nothing else on the site uses them.
