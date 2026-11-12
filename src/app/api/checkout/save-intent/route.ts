@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { db } from '@/db'
 import { abandonedOrders } from '@/db'
 import { getShippingCostFromDb } from '@/lib/checkout/shippingRates'
+import { deleteExpiredAbandonedOrders } from '@/lib/checkout/abandonedRetention'
 
 interface SaveIntentBody {
   customerName: string
@@ -67,6 +68,11 @@ export async function POST(req: NextRequest) {
       console.error('[save-intent] Failed to insert abandoned order: no data returned')
       return NextResponse.json({ error: 'Failed to save' }, { status: 500 })
     }
+
+    // Housekeeping after the response: drop unfinished checkouts past the retention period
+    after(() =>
+      deleteExpiredAbandonedOrders().catch((err) => console.error('[save-intent] Abandoned-order clean-up failed:', err)),
+    )
 
     return NextResponse.json({ id: data.id }, { status: 201 })
   } catch (err) {

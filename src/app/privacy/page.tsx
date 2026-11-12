@@ -61,7 +61,7 @@ export default function PrivacyPage() {
               <p>
                 <strong>If you start checkout but don&apos;t pay:</strong> once you reach the review step, we save the details you
                 entered and what was in your bag. We use this only to help you finish that order, for example by messaging you if your
-                payment didn&apos;t go through.
+                payment didn&apos;t go through, and delete it after 90 days.
               </p>
               <p>
                 <strong>Newsletter:</strong> if you join, your first name, email and the page you signed up on. We use these to send
@@ -123,8 +123,8 @@ export default function PrivacyPage() {
           body: (
             <ul>
               <li><strong>Orders and payment records:</strong> as long as tax and accounting rules require us to keep sales records.</li>
-              <li><strong>Unfinished checkouts:</strong> only while they&apos;re useful for following up. Ask us and we&apos;ll delete yours.</li>
-              <li><strong>Newsletter:</strong> until you unsubscribe.</li>
+              <li><strong>Unfinished checkouts:</strong> deleted automatically after 90 days, or sooner if you ask us.</li>
+              <li><strong>Newsletter:</strong> until you unsubscribe. Unsubscribing deletes your details from the list.</li>
               <li><strong>Reviews:</strong> while they&apos;re published, or until you ask us to remove yours.</li>
             </ul>
           ),
@@ -143,9 +143,9 @@ export default function PrivacyPage() {
                 <li>stop sending you the newsletter, at any time</li>
               </ul>
               <p>
-                Email <a href={`mailto:${email}`}>{email}</a> or message us on WhatsApp. We&apos;ll reply within 30 days. To unsubscribe
-                from the newsletter, just reply to any newsletter email or message us. If you&apos;re unhappy with how we&apos;ve handled
-                your information, you can complain to the Nigeria Data Protection Commission.
+                Email <a href={`mailto:${email}`}>{email}</a> or message us on WhatsApp. We&apos;ll reply within 30 days. To leave the
+                newsletter, use the Unsubscribe link at the bottom of any newsletter email (or message us). If you&apos;re unhappy with how
+                we&apos;ve handled your information, you can complain to the Nigeria Data Protection Commission.
               </p>
             </>
           ),

@@ -114,6 +114,7 @@ Every email goes through `src/lib/email/client.ts`. That includes order confirma
 | `RESEND_FROM` | Yes | Sender, e.g. `Twinkle Locs <orders@twinklelocs.com>`. Its domain must be **verified in Resend**, or every send is rejected. |
 | `EMAIL_REPLY_TO` | No | Where customer replies go. Defaults to `hello@twinklelocs.com`. The new-order alert replies to the customer instead. |
 | `RESEND_WEBHOOK_SECRET` | No (recommended) | Turns on delivery tracking. In Resend → Webhooks, add `https://<site>/api/webhooks/resend` (all `email.*` events) and paste its signing secret. The Emails log then shows Delivered, Opened, Bounced and Marked as spam. |
+| `NEWSLETTER_SECRET` | No | Signs the personal unsubscribe links in newsletter emails. Falls back to `BETTER_AUTH_SECRET`, so it's only needed if you want to rotate one without the other. Changing it makes links in emails already sent stop working (people can still unsubscribe by message). Newsletters must be sent with `sendNewsletterEmail()` (`src/lib/newsletter/send.ts`), which adds the unsubscribe link and the one-click headers Gmail and Yahoo require. |
 
 What the client guarantees:
 - **Logging:** each send is logged in `email_logs` (awaited) with Resend's message id.

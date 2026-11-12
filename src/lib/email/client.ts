@@ -27,6 +27,8 @@ export type SendEmailInput = {
   replyTo?: string | string[]
   /** Same key within 24h = Resend sends once. Use for anything a retry could repeat. */
   idempotencyKey?: string
+  /** Extra email headers, e.g. List-Unsubscribe for newsletters */
+  headers?: Record<string, string>
 }
 
 export type SendEmailResult = { ok: true; id: string | null; logId: string | null } | { ok: false; error: string; logId: string | null }
@@ -80,6 +82,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
             html: input.html,
             text: input.text,
             replyTo: input.replyTo ?? cfg.replyTo,
+            ...(input.headers ? { headers: input.headers } : {}),
             tags: [
               { name: 'category', value: input.category },
               ...(input.templateKey ? [{ name: 'template', value: input.templateKey.replace(/[^a-zA-Z0-9_-]/g, '_') }] : []),

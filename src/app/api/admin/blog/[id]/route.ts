@@ -6,6 +6,7 @@ import { blogPosts } from '@/db'
 import { deleteUploadthingFilesByUrls } from '@/lib/uploadthing/server'
 import { slugify } from '@/lib/content'
 import { bodyImageUrls, isUuid, parseBlogInput, revalidateBlog } from '@/lib/content-api'
+import { isUniqueViolation } from '@/lib/db/errors'
 
 export async function PUT(
   req: NextRequest,
@@ -132,8 +133,7 @@ export async function PUT(
     return NextResponse.json({ ok: true, post: data })
   } catch (err: unknown) {
     console.error('Failed to update blog post:', err)
-    const pgErr = err as { code?: string }
-    if (pgErr?.code === '23505') {
+    if (isUniqueViolation(err)) {
       return NextResponse.json({ error: 'Another post already uses this web address. Change it under Search & sharing.' }, { status: 409 })
     }
     return NextResponse.json({ error: 'Failed to update blog post' }, { status: 500 })

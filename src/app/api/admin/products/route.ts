@@ -4,6 +4,7 @@ import { getAdminSession } from '@/lib/auth/server'
 import { setStock } from '@/lib/stock'
 import { db } from '@/db'
 import { products } from '@/db'
+import { isUniqueViolation } from '@/lib/db/errors'
 
 function generateSlug(name: string): string {
   return name
@@ -119,8 +120,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(data, { status: 201 })
   } catch (err: unknown) {
     console.error('Failed to create product:', err)
-    const pgErr = err as { code?: string }
-    if (pgErr?.code === '23505') {
+    if (isUniqueViolation(err)) {
       return NextResponse.json({ error: 'A product with this slug already exists' }, { status: 409 })
     }
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })

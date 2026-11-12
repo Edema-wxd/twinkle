@@ -3,12 +3,16 @@ import { desc } from 'drizzle-orm'
 import { requireAdminSession } from '@/lib/auth/server'
 import { db, abandonedOrders as abandonedOrdersTable } from '@/db'
 import type { AbandonedOrder } from '@/types/db'
+import { ABANDONED_RETENTION_DAYS, deleteExpiredAbandonedOrders } from '@/lib/checkout/abandonedRetention'
 import { AbandonedOrdersTable } from '../../../_components/AbandonedOrdersTable'
 
 /** Customers who filled in their details at checkout but didn't pay: worth a follow-up. */
 export default async function AdminAbandonedOrdersPage() {
   // Layout checks too, but pages never trust the layout alone (CVE-2025-29927)
   await requireAdminSession()
+
+  // Keep the privacy promise even if nobody has checked out recently
+  await deleteExpiredAbandonedOrders().catch((e) => console.error('Abandoned-order clean-up failed:', e))
 
   let loadFailed = false
   const rows = await db
@@ -55,6 +59,7 @@ export default async function AdminAbandonedOrdersPage() {
         <p className="text-stone-400 text-sm">
           {unrecovered} unrecovered: customers who filled in their details but didn&apos;t complete payment. Open one to message them on
           WhatsApp or email. Paid orders are on the <Link href="/admin/orders" className="text-gold-light underline">Orders</Link> page.
+          Checkouts older than {ABANDONED_RETENTION_DAYS} days are deleted automatically, as the privacy policy promises.
         </p>
       </div>
       {loadFailed ? (

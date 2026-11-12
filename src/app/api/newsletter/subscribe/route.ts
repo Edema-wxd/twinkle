@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { newsletterSubscribers } from '@/db'
+import { isUniqueViolation } from '@/lib/db/errors'
 
 export async function POST(req: NextRequest) {
   let body: unknown
@@ -32,8 +33,7 @@ export async function POST(req: NextRequest) {
     })
     return NextResponse.json({ ok: true }, { status: 201 })
   } catch (err: unknown) {
-    const pgErr = err as { code?: string }
-    if (pgErr?.code === '23505') {
+    if (isUniqueViolation(err)) {
       return NextResponse.json({ error: 'already subscribed' }, { status: 409 })
     }
     console.error('Newsletter subscribe error:', err)

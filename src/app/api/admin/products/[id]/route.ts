@@ -6,6 +6,7 @@ import { db } from '@/db'
 import { products } from '@/db'
 import { eq } from 'drizzle-orm'
 import { deleteUploadthingFilesByUrls } from '@/lib/uploadthing/server'
+import { isUniqueViolation } from '@/lib/db/errors'
 
 export async function PUT(
   req: NextRequest,
@@ -153,8 +154,7 @@ export async function PUT(
     return NextResponse.json(data)
   } catch (err: unknown) {
     console.error('Failed to update product:', err)
-    const pgErr = err as { code?: string }
-    if (pgErr?.code === '23505') {
+    if (isUniqueViolation(err)) {
       return NextResponse.json({ error: 'A product with this slug already exists' }, { status: 409 })
     }
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 })

@@ -3,6 +3,7 @@ import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { promoCodes } from '@/db'
 import { eq } from 'drizzle-orm'
+import { isUniqueViolation } from '@/lib/db/errors'
 
 async function requireAdmin() {
   const session = await getAdminSession()
@@ -71,8 +72,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ code: created }, { status: 201 })
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : ''
-    if (msg.includes('unique')) {
+    if (isUniqueViolation(err)) {
       return NextResponse.json({ error: 'A promo code with that name already exists' }, { status: 409 })
     }
     console.error('[admin/promo-codes] POST failed:', err)
