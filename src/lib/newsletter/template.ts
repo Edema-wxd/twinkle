@@ -46,13 +46,15 @@ function styleBody(html: string): string {
     img: 'max-width:100%;height:auto;border-radius:8px;display:block;margin:0 0 16px 0;',
     hr: 'border:none;border-top:1px solid #e7e2d8;margin:24px 0;',
   }
-  return html.replace(/<(p|h2|h3|ul|ol|li|a|blockquote|img|hr)(\s[^>]*)?>/gi, (m, tag: string, attrs = '') => {
+  const styled = html.replace(/<(p|h2|h3|ul|ol|li|a|blockquote|img|hr)(\s[^>]*)?>/gi, (m, tag: string, attrs = '') => {
     const style = s[tag.toLowerCase()]
     if (!style || /\sstyle=/i.test(attrs)) return m
     const selfClosing = /\/\s*$/.test(attrs)
     const rest = attrs.replace(/\/\s*$/, '')
     return `<${tag}${rest} style="${style}"${selfClosing ? ' /' : ''}>`
   })
+  // The editor wraps each list item's text in a <p>; without this every bullet gets paragraph spacing
+  return styled.replace(/(<li[^>]*>)\s*<p style="margin:0 0 16px 0;/gi, '$1<p style="margin:0;')
 }
 
 function fillName(text: string, firstName: string | null | undefined): string {

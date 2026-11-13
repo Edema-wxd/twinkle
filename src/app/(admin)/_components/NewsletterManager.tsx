@@ -1,29 +1,20 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
-import { RichTextEditor } from './RichTextEditor'
-import { MediaLibraryDialog } from './MediaLibraryDialog'
-import { useUploadThing } from '@/lib/uploadthing'
-import { renderNewsletter, UNSUBSCRIBE_PLACEHOLDER, type NewsletterContent } from '@/lib/newsletter/template'
 import type { CampaignSummary } from '@/lib/newsletter/campaign'
+import { contentProblems, EMPTY_DRAFT as EMPTY, inputClass, NewsletterFields, NewsletterPreview, toContent, type Draft } from './NewsletterContentEditor'
+import { WelcomeEmailEditor, type WelcomeSettings } from './WelcomeEmailEditor'
 
 export type SubscriberRow = { id: string; firstName: string; email: string; sourcePage: string | null; subscribedAt: string }
 
-type Tab = 'write' | 'subscribers' | 'sent'
-type Draft = { subject: string; preheader: string; heroImageUrl: string | null; bodyHtml: string; ctaLabel: string; ctaUrl: string }
+type Tab = 'write' | 'welcome' | 'subscribers' | 'sent'
 type Progress = { total: number; sent: number; failed: number; remaining: number }
 /** A send that's under way (kept in this browser so it can be resumed if the tab closes) */
 type ActiveSend = { campaignId: string; content: Draft; progress: Progress | null }
 
 const DRAFT_KEY = 'twinkle:newsletter-draft'
 const ACTIVE_KEY = 'twinkle:newsletter-active'
-const EMPTY: Draft = { subject: '', preheader: '', heroImageUrl: null, bodyHtml: '', ctaLabel: 'Shop the collection', ctaUrl: '/catalog' }
-
-const inputClass =
-  'w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold'
-
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { timeZone: 'Africa/Lagos', day: 'numeric', month: 'short', year: 'numeric' })
 
 function load<T>(key: string): T | null {
@@ -43,27 +34,20 @@ function save(key: string, value: unknown) {
   }
 }
 
-const toContent = (d: Draft): NewsletterContent => ({
-  subject: d.subject,
-  preheader: d.preheader,
-  heroImageUrl: d.heroImageUrl,
-  bodyHtml: d.bodyHtml,
-  ctaLabel: d.ctaLabel || undefined,
-  ctaUrl: d.ctaUrl || undefined,
-})
-
 export function NewsletterManager({
   subscribers,
   loadFailed,
   history,
   adminEmail,
   emailReady,
+  welcome,
 }: {
   subscribers: SubscriberRow[]
   loadFailed: boolean
   history: CampaignSummary[]
   adminEmail: string
   emailReady: boolean
+  welcome: WelcomeSettings
 }) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('write')
@@ -73,13 +57,10 @@ export function NewsletterManager({
   const [editorKey, setEditorKey] = useState(0)
   const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
   const [testing, setTesting] = useState(false)
-  const [libraryOpen, setLibraryOpen] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [active, setActive] = useState<ActiveSend | null>(null)
   const [sending, setSending] = useState(false)
   const stopRef = useRef(false)
-  const fileRef = useRef<HTMLInputElement>(null)
 
   // Restore the draft and any interrupted send after mount (localStorage isn't available on the server)
   useEffect(() => {
@@ -101,24 +82,7 @@ export function NewsletterManager({
   const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }))
   const flash = (tone: 'ok' | 'error', text: string) => setNotice({ tone, text })
 
-  const { startUpload } = useUploadThing('contentImages', {
-    onClientUploadComplete: (res) => {
-      if (res?.[0]) set({ heroImageUrl: res[0].ufsUrl })
-    },
-    onUploadError: (err) => flash('error', `Upload failed: ${err.message}`),
-  })
-
-  const preview = useMemo(() => {
-    const firstName = subscribers[0]?.firstName || 'Ada'
-    const { html } = renderNewsletter(toContent({ ...draft, subject: draft.subject || 'Your subject line', bodyHtml: draft.bodyHtml || '<p>Start writing…</p>' }), firstName)
-    return { html: html.split(UNSUBSCRIBE_PLACEHOLDER).join('#'), firstName }
-  }, [draft, subscribers])
-
-  const problems = [
-    !draft.subject.trim() && 'Add a subject line.',
-    !draft.bodyHtml.replace(/<[^>]+>/g, '').trim() && 'Write the newsletter.',
-    draft.ctaLabel.trim() && !draft.ctaUrl.trim() && 'Add a link for the button, or clear the button text.',
-  ].filter(Boolean) as string[]
+  const problems = contentProblems(draft)
 
   async function sendTest() {
     setTesting(true)
@@ -206,6 +170,7 @@ export function NewsletterManager({
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'write', label: 'Write' },
+    { id: 'welcome', label: `Welcome email${welcome.enabled ? '' : ' (off)'}` },
     { id: 'subscribers', label: `Subscribers (${subscribers.length})` },
     { id: 'sent', label: `Sent (${history.length})` },
   ]
@@ -310,84 +275,7 @@ export function NewsletterManager({
       {tab === 'write' && (
         <div className="grid gap-6 xl:grid-cols-2">
           <div className="space-y-5">
-            <div>
-              <label htmlFor="nl-subject" className="block text-sm font-medium text-stone-200 mb-1">
-                Subject
-              </label>
-              <input id="nl-subject" className={inputClass} value={draft.subject} maxLength={150} onChange={(e) => set({ subject: e.target.value })} placeholder="New gold beads just dropped, {name}" />
-              <p className="mt-1 text-xs text-stone-500">Type {'{name}'} to use each subscriber&apos;s first name.</p>
-            </div>
-            <div>
-              <label htmlFor="nl-preheader" className="block text-sm font-medium text-stone-200 mb-1">
-                Preview text <span className="text-stone-500 font-normal">(optional)</span>
-              </label>
-              <input id="nl-preheader" className={inputClass} value={draft.preheader} maxLength={200} onChange={(e) => set({ preheader: e.target.value })} placeholder="Shown after the subject in the inbox" />
-            </div>
-
-            <div>
-              <p className="text-sm font-medium text-stone-200 mb-2">Photo at the top <span className="text-stone-500 font-normal">(optional)</span></p>
-              {draft.heroImageUrl ? (
-                <div className="flex items-center gap-3">
-                  <div className="relative h-20 w-32 overflow-hidden rounded-lg ring-1 ring-stone-600 bg-stone-800">
-                    <Image src={draft.heroImageUrl} alt="" fill className="object-cover" sizes="128px" unoptimized />
-                  </div>
-                  <div className="flex flex-col items-start gap-1 text-sm">
-                    <button type="button" onClick={() => setLibraryOpen(true)} className="text-stone-300 hover:text-white">Change</button>
-                    <button type="button" onClick={() => set({ heroImageUrl: null })} className="text-red-400 hover:text-red-300">Remove</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => setLibraryOpen(true)} className="px-3 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-sm text-stone-200">
-                    Choose from uploaded photos
-                  </button>
-                  <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="px-3 py-2 rounded-lg bg-stone-800 hover:bg-stone-700 text-sm text-stone-200 disabled:opacity-60">
-                    {uploading ? 'Uploading…' : 'Upload a photo'}
-                  </button>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={async (e) => {
-                      const f = e.target.files?.[0]
-                      if (!f) return
-                      setUploading(true)
-                      try {
-                        await startUpload([f])
-                      } finally {
-                        setUploading(false)
-                        e.target.value = ''
-                      }
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div>
-              <p className="text-sm font-medium text-stone-200 mb-1">Message</p>
-              <RichTextEditor key={editorKey} value={draft.bodyHtml} onChange={(html) => set({ bodyHtml: html })} variant="faq" placeholder="Hi {name}, …" />
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label htmlFor="nl-cta" className="block text-sm font-medium text-stone-200 mb-1">Button text <span className="text-stone-500 font-normal">(optional)</span></label>
-                <input id="nl-cta" className={inputClass} value={draft.ctaLabel} maxLength={60} onChange={(e) => set({ ctaLabel: e.target.value })} placeholder="Shop the collection" />
-              </div>
-              <div>
-                <label htmlFor="nl-cta-url" className="block text-sm font-medium text-stone-200 mb-1">Button link</label>
-                <input id="nl-cta-url" className={inputClass} value={draft.ctaUrl} maxLength={500} onChange={(e) => set({ ctaUrl: e.target.value })} placeholder="/catalog or /catalog/gold-twinkles" />
-              </div>
-            </div>
-
-            {problems.length > 0 && (
-              <ul className="text-xs text-amber-200 space-y-0.5">
-                {problems.map((p) => (
-                  <li key={p}>• {p}</li>
-                ))}
-              </ul>
-            )}
+            <NewsletterFields draft={draft} onChange={set} editorKey={editorKey} idPrefix="nl" onError={(m) => flash('error', m)} />
 
             <div className="flex flex-wrap items-center gap-3 border-t border-stone-800 pt-5">
               <button type="button" onClick={sendTest} disabled={testing || problems.length > 0 || !emailReady} className="px-4 py-2 text-sm text-stone-200 border border-stone-600 rounded-lg hover:border-stone-400 disabled:opacity-50">
@@ -432,14 +320,11 @@ export function NewsletterManager({
           </div>
 
           {/* Live preview: exactly what subscribers get (with the first subscriber's name) */}
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-stone-200">
-              Preview <span className="text-stone-500 font-normal">(as {preview.firstName} sees it)</span>
-            </p>
-            <iframe title="Email preview" srcDoc={preview.html} sandbox="" className="h-[720px] w-full rounded-xl bg-[#E8E0D0] ring-1 ring-stone-700" />
-          </div>
+          <NewsletterPreview draft={draft} firstName={subscribers[0]?.firstName || 'Ada'} />
         </div>
       )}
+
+      {tab === 'welcome' && <WelcomeEmailEditor initial={welcome} adminEmail={adminEmail} emailReady={emailReady} previewName={subscribers[0]?.firstName || 'Ada'} />}
 
       {tab === 'subscribers' && <Subscribers subscribers={subscribers} onRemove={removeSubscriber} />}
 
@@ -479,14 +364,6 @@ export function NewsletterManager({
           </div>
         ))}
 
-      {libraryOpen && (
-        <MediaLibraryDialog
-          title="Choose a photo for the newsletter"
-          current={draft.heroImageUrl}
-          onClose={() => setLibraryOpen(false)}
-          onSelect={([url]) => set({ heroImageUrl: url })}
-        />
-      )}
     </div>
   )
 }

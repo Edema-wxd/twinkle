@@ -83,5 +83,7 @@ Admin → **Newsletter** emails everyone who joined from the footer or the blog.
 
 Every newsletter has an unsubscribe link and Gmail/Yahoo's one-click unsubscribe; unsubscribing removes the person from the list. **Subscribers** lets you search, remove someone who asked by message, and export a CSV. **Sent** shows past newsletters with how many were delivered and opened (needs the Resend webhook, see Admin → Emails).
 
+**Welcome email:** everyone who joins gets a welcome email straight away, once per address, with an unsubscribe link. Edit it (or switch it off) under Newsletter → **Welcome email**; "Reset to the default wording" brings back the original. People who were already subscribed don't get it. The sign-up form ignores obvious bots, and welcome emails pause if more than 50 go out in an hour, so the form can't be used to spam strangers from your address.
+
 The draft is saved in your browser as you type. A send in progress is also remembered there, so if the tab closes, reopen Newsletter and press **Resume**.
 

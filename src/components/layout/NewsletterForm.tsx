@@ -1,6 +1,6 @@
 'use client'
 
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 
 type Status = 'idle' | 'loading' | 'success' | 'duplicate' | 'error'
@@ -12,6 +12,9 @@ export function NewsletterForm({ layout = 'stacked', cta = 'Join' }: { layout?: 
   const [firstName, setFirstName] = useState('')
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<Status>('idle')
+  // Light bot checks: a hidden field people leave empty, and how long the form was open
+  const [website, setWebsite] = useState('')
+  const openedAt = useRef(Date.now())
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -20,7 +23,7 @@ export function NewsletterForm({ layout = 'stacked', cta = 'Join' }: { layout?: 
       const res = await fetch('/api/newsletter/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ first_name: firstName, email, source_page: pathname }),
+        body: JSON.stringify({ first_name: firstName, email, source_page: pathname, website, elapsed_ms: Date.now() - openedAt.current }),
       })
       if (res.status === 409) setStatus('duplicate')
       else if (res.ok) setStatus('success')
@@ -40,6 +43,11 @@ export function NewsletterForm({ layout = 'stacked', cta = 'Join' }: { layout?: 
         onSubmit={handleSubmit}
         className={layout === 'inline' ? 'flex flex-col sm:flex-row gap-2' : 'flex flex-col gap-2'}
       >
+        {/* Honeypot: off-screen, skipped by keyboard and screen readers; only bots fill it in */}
+        <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+          <label htmlFor={`${id}-website`}>Website</label>
+          <input id={`${id}-website`} type="text" name="website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+        </div>
         <label htmlFor={`${id}-name`} className="sr-only">First name</label>
         <input
           id={`${id}-name`}

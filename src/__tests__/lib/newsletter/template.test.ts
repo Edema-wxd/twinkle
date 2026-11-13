@@ -81,3 +81,10 @@ describe('parseNewsletterContent', () => {
     expect('error' in r && r.error).toMatch(err)
   })
 })
+
+describe('list spacing', () => {
+  it('removes paragraph spacing inside list items (the editor wraps each item in <p>)', () => {
+    const { html } = renderNewsletter({ subject: 'S', bodyHtml: '<ul><li><p>One</p></li><li><p>Two</p></li></ul>' }, 'Ada')
+    expect(html).toMatch(/<li style="[^"]*"><p style="margin:0;[^"]*">One<\/p>/)
+  })
+})
