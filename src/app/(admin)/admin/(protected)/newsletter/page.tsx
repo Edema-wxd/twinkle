@@ -32,6 +32,7 @@ export default async function AdminNewsletterPage() {
     email: s.email,
     sourcePage: s.sourcePage,
     subscribedAt: s.subscribedAt.toISOString(),
+    confirmed: s.confirmedAt !== null,
   }))
   const cfg = emailConfig()
 

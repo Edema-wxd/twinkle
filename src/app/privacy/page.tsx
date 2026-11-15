@@ -21,7 +21,7 @@ export default function PrivacyPage() {
     <PolicyPage
       eyebrow="Your privacy"
       title="Privacy policy"
-      updated="12 November 2026"
+      updated="15 November 2026"
       intro={
         <p>
           This explains what personal information {BUSINESS.name} collects when you shop with us, why we need it and what you can ask us
@@ -64,8 +64,9 @@ export default function PrivacyPage() {
                 payment didn&apos;t go through, and delete it after 90 days.
               </p>
               <p>
-                <strong>Newsletter:</strong> if you join, your first name, email and the page you signed up on. We use these to send
-                you guides, restock news and offers.
+                <strong>Newsletter:</strong> if you join, your first name, email and the page you signed up on. We first email you a
+                link to confirm it&apos;s really you; nothing else is sent until you do. After that we use these details to send you
+                guides, restock news and offers.
               </p>
               <p>
                 <strong>Reviews:</strong> the name, rating and words you choose to share. Reviews are published on the product page.
@@ -124,7 +125,7 @@ export default function PrivacyPage() {
             <ul>
               <li><strong>Orders and payment records:</strong> as long as tax and accounting rules require us to keep sales records.</li>
               <li><strong>Unfinished checkouts:</strong> deleted automatically after 90 days, or sooner if you ask us.</li>
-              <li><strong>Newsletter:</strong> until you unsubscribe. Unsubscribing deletes your details from the list.</li>
+              <li><strong>Newsletter:</strong> until you unsubscribe. Unsubscribing deletes your details from the list. If you never confirm your sign-up, we delete it after 7 days.</li>
               <li><strong>Reviews:</strong> while they&apos;re published, or until you ask us to remove yours.</li>
             </ul>
           ),

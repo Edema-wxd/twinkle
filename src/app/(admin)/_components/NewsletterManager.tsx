@@ -6,7 +6,8 @@ import type { CampaignSummary } from '@/lib/newsletter/campaign'
 import { contentProblems, EMPTY_DRAFT as EMPTY, inputClass, NewsletterFields, NewsletterPreview, toContent, type Draft } from './NewsletterContentEditor'
 import { WelcomeEmailEditor, type WelcomeSettings } from './WelcomeEmailEditor'
 
-export type SubscriberRow = { id: string; firstName: string; email: string; sourcePage: string | null; subscribedAt: string }
+/** confirmed = they clicked the link in the confirmation email; only they get newsletters */
+export type SubscriberRow = { id: string; firstName: string; email: string; sourcePage: string | null; subscribedAt: string; confirmed: boolean }
 
 type Tab = 'write' | 'welcome' | 'subscribers' | 'sent'
 type Progress = { total: number; sent: number; failed: number; remaining: number }
@@ -50,6 +51,9 @@ export function NewsletterManager({
   welcome: WelcomeSettings
 }) {
   const router = useRouter()
+  // Only people who confirmed their email get newsletters
+  const confirmed = subscribers.filter((s) => s.confirmed)
+  const waiting = subscribers.length - confirmed.length
   const [tab, setTab] = useState<Tab>('write')
   const [draft, setDraft] = useState<Draft>(EMPTY)
   const [hydrated, setHydrated] = useState(false)
@@ -171,7 +175,7 @@ export function NewsletterManager({
   const tabs: { id: Tab; label: string }[] = [
     { id: 'write', label: 'Write' },
     { id: 'welcome', label: `Welcome email${welcome.enabled ? '' : ' (off)'}` },
-    { id: 'subscribers', label: `Subscribers (${subscribers.length})` },
+    { id: 'subscribers', label: `Subscribers (${confirmed.length})` },
     { id: 'sent', label: `Sent (${history.length})` },
   ]
 
@@ -180,7 +184,8 @@ export function NewsletterManager({
       <div>
         <h1 className="font-heading text-2xl font-bold text-white mb-1">Newsletter</h1>
         <p className="text-stone-400 text-sm">
-          {subscribers.length} {subscribers.length === 1 ? 'subscriber' : 'subscribers'}. Every email includes an unsubscribe link.
+          {confirmed.length} {confirmed.length === 1 ? 'subscriber' : 'subscribers'}
+          {waiting > 0 ? `, plus ${waiting} waiting to confirm their email` : ''}. Every email includes an unsubscribe link.
         </p>
       </div>
 
@@ -284,10 +289,10 @@ export function NewsletterManager({
               <button
                 type="button"
                 onClick={() => setConfirming(true)}
-                disabled={problems.length > 0 || !emailReady || sending || subscribers.length === 0}
+                disabled={problems.length > 0 || !emailReady || sending || confirmed.length === 0}
                 className="px-5 py-2 bg-gold hover:bg-gold-deep text-white text-sm font-semibold rounded-lg disabled:opacity-50"
               >
-                Send to {subscribers.length} {subscribers.length === 1 ? 'subscriber' : 'subscribers'}…
+                Send to {confirmed.length} {confirmed.length === 1 ? 'subscriber' : 'subscribers'}…
               </button>
               <button
                 type="button"
@@ -304,7 +309,7 @@ export function NewsletterManager({
             {confirming && (
               <div role="alertdialog" aria-labelledby="nl-confirm-title" className="rounded-xl border border-gold/50 bg-stone-900 p-4 space-y-3">
                 <p id="nl-confirm-title" className="font-heading text-sm font-semibold text-white">
-                  Send “{draft.subject}” to {subscribers.length} {subscribers.length === 1 ? 'person' : 'people'}?
+                  Send “{draft.subject}” to {confirmed.length} {confirmed.length === 1 ? 'person' : 'people'}?
                 </p>
                 <p className="text-sm text-stone-400">This can&apos;t be undone. Sending a test to yourself first is a good idea.</p>
                 <div className="flex gap-2">
@@ -320,11 +325,11 @@ export function NewsletterManager({
           </div>
 
           {/* Live preview: exactly what subscribers get (with the first subscriber's name) */}
-          <NewsletterPreview draft={draft} firstName={subscribers[0]?.firstName || 'Ada'} />
+          <NewsletterPreview draft={draft} firstName={confirmed[0]?.firstName || 'Ada'} />
         </div>
       )}
 
-      {tab === 'welcome' && <WelcomeEmailEditor initial={welcome} adminEmail={adminEmail} emailReady={emailReady} previewName={subscribers[0]?.firstName || 'Ada'} />}
+      {tab === 'welcome' && <WelcomeEmailEditor initial={welcome} adminEmail={adminEmail} emailReady={emailReady} previewName={confirmed[0]?.firstName || 'Ada'} />}
 
       {tab === 'subscribers' && <Subscribers subscribers={subscribers} onRemove={removeSubscriber} />}
 
@@ -375,7 +380,9 @@ function Subscribers({ subscribers, onRemove }: { subscribers: SubscriberRow[]; 
 
   function exportCsv() {
     const esc = (v: string) => `"${v.replace(/"/g, '""')}"`
-    const csv = ['First name,Email,Signed up on,Joined', ...subscribers.map((s) => [s.firstName, s.email, s.sourcePage ?? '', s.subscribedAt.slice(0, 10)].map(esc).join(','))].join('\n')
+    // Confirmed only: unconfirmed addresses never agreed to emails, so they shouldn't leave the site
+    const rows = subscribers.filter((s) => s.confirmed)
+    const csv = ['First name,Email,Signed up on,Joined', ...rows.map((s) => [s.firstName, s.email, s.sourcePage ?? '', s.subscribedAt.slice(0, 10)].map(esc).join(','))].join('\n')
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
     const a = document.createElement('a')
     a.href = url
@@ -391,7 +398,7 @@ function Subscribers({ subscribers, onRemove }: { subscribers: SubscriberRow[]; 
       <div className="flex flex-wrap gap-3">
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or email" aria-label="Search subscribers" className={`${inputClass} sm:w-72`} />
         <button type="button" onClick={exportCsv} className="px-4 py-2 text-sm text-stone-200 border border-stone-600 rounded-lg hover:border-stone-400">
-          Export CSV
+          Export CSV (confirmed only)
         </button>
       </div>
       <div className="overflow-x-auto rounded-lg border border-stone-700">
@@ -411,7 +418,14 @@ function Subscribers({ subscribers, onRemove }: { subscribers: SubscriberRow[]; 
                 <td className="px-4 py-3">{s.firstName}</td>
                 <td className="px-4 py-3">{s.email}</td>
                 <td className="px-4 py-3 text-stone-400">{s.sourcePage ?? 'Not recorded'}</td>
-                <td className="px-4 py-3 text-stone-400 whitespace-nowrap">{fmtDate(s.subscribedAt)}</td>
+                <td className="px-4 py-3 text-stone-400 whitespace-nowrap">
+                  {fmtDate(s.subscribedAt)}
+                  {!s.confirmed && (
+                    <span title="They haven’t clicked the link in the confirmation email yet, so they don’t get newsletters. Removed automatically after 7 days." className="ml-2 rounded-full bg-amber-950 px-2 py-0.5 text-[11px] text-amber-200 ring-1 ring-amber-800">
+                      Waiting to confirm
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-right">
                   {confirmId === s.id ? (
                     <span className="inline-flex items-center gap-2">

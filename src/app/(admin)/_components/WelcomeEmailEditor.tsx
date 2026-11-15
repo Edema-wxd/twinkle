@@ -82,7 +82,7 @@ export function WelcomeEmailEditor({
             <span>
               <span className="block text-sm font-medium text-white">Send this to everyone who joins the newsletter</span>
               <span className="block text-xs text-stone-400 mt-0.5">
-                Sent straight after they sign up, once per email address, with an unsubscribe link. People already on the list don&apos;t get it.
+                Sent once they confirm their email (we email new sign-ups a link to check it&apos;s really them), once per address, with an unsubscribe link. People already on the list don&apos;t get it.
               </span>
             </span>
           </label>

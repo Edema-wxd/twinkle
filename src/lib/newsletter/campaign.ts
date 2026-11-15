@@ -59,6 +59,7 @@ export async function campaignProgress(campaignId: string): Promise<CampaignProg
           EXISTS (SELECT 1 FROM email_logs l WHERE l.template_key = ${key} AND s.email = ANY(l."to") AND l.status = 'sent') AS sent,
           EXISTS (SELECT 1 FROM email_logs l WHERE l.template_key = ${key} AND s.email = ANY(l."to") AND l.status <> 'sent') AS failed
         FROM newsletter_subscribers s
+        WHERE s.confirmed_at IS NOT NULL
       )
       SELECT count(*)::int AS total,
         count(*) FILTER (WHERE sent)::int AS sent,
@@ -78,12 +79,14 @@ async function nextRecipients(campaignId: string, limit: number, retryFailed: bo
       retryFailed
         ? sql`
           SELECT s.email, s.first_name FROM newsletter_subscribers s
-          WHERE NOT EXISTS (SELECT 1 FROM email_logs l WHERE l.template_key = ${key} AND s.email = ANY(l."to") AND l.status = 'sent')
+          WHERE s.confirmed_at IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM email_logs l WHERE l.template_key = ${key} AND s.email = ANY(l."to") AND l.status = 'sent')
             AND EXISTS (SELECT 1 FROM email_logs l WHERE l.template_key = ${key} AND s.email = ANY(l."to") AND l.status <> 'sent')
           ORDER BY s.subscribed_at LIMIT ${limit}`
         : sql`
           SELECT s.email, s.first_name FROM newsletter_subscribers s
-          WHERE NOT EXISTS (SELECT 1 FROM email_logs l WHERE l.template_key = ${key} AND s.email = ANY(l."to"))
+          WHERE s.confirmed_at IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM email_logs l WHERE l.template_key = ${key} AND s.email = ANY(l."to"))
           ORDER BY s.subscribed_at LIMIT ${limit}`,
     ),
   )

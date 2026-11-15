@@ -233,6 +233,8 @@ export const newsletterSubscribers = pgTable('newsletter_subscribers', {
   email: text('email').notNull().unique(),
   sourcePage: text('source_page'),
   subscribedAt: timestamp('subscribed_at', { withTimezone: true }).notNull().defaultNow(),
+  /** Set when they click the link in the confirmation email (double opt-in). Only confirmed subscribers get newsletters. */
+  confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
 })
 
 export const abandonedOrders = pgTable('abandoned_orders', {

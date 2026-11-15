@@ -26,7 +26,8 @@ The Paystack webhook (`/api/webhooks/paystack`) uses HMAC-SHA512 signature verif
 | Method | Path | Auth Required | Description |
 |--------|------|:---:|-------------|
 | `POST` | `/api/checkout/save-intent` | No | Record a checkout attempt before payment (abandoned order capture) |
-| `POST` | `/api/newsletter/subscribe` | No | Subscribe an email address to the newsletter |
+| `POST` | `/api/newsletter/subscribe` | No | Sign up for the newsletter (sends a confirmation link) |
+| `POST` | `/api/newsletter/confirm` | No | Confirm a sign-up from the emailed link (double opt-in) |
 | `POST` | `/api/webhooks/paystack` | HMAC signature | Receive Paystack `charge.success` events and create orders |
 | `POST` | `/api/admin/products` | Yes | Create a new product |
 | `PUT` | `/api/admin/products/[id]` | Yes | Replace a product's fields |
@@ -100,7 +101,7 @@ All fields are required. `cartItems` must be a non-empty array. `subtotal` must 
 
 ### `POST /api/newsletter/subscribe`
 
-Subscribes an email address to the newsletter. Duplicate email addresses return `409` rather than silently failing.
+Signs an email address up for the newsletter, **unconfirmed** (double opt-in). After responding, it emails a confirmation link to `/newsletter/confirm` (at most once per address every 10 minutes, and 50 an hour in total) and deletes sign-ups left unconfirmed for 7 days. Only confirmed subscribers get the welcome email and newsletters. Signing up again before confirming re-sends the link; a confirmed address returns `409`.
 
 **Request body:**
 
@@ -117,7 +118,7 @@ Subscribes an email address to the newsletter. Duplicate email addresses return 
 **Success response — `201 Created`:**
 
 ```json
-{ "ok": true }
+{ "ok": true, "pending": true }
 ```
 
 **Error responses:**
@@ -127,8 +128,21 @@ Subscribes an email address to the newsletter. Duplicate email addresses return 
 | `400` | `{ "error": "first_name is required" }` | `first_name` is missing or empty |
 | `400` | `{ "error": "A valid email address is required" }` | `email` is missing or does not contain `@` and `.` |
 | `400` | `{ "error": "Invalid JSON body" }` | Request body is not valid JSON |
-| `409` | `{ "error": "already subscribed" }` | Email already exists in `newsletter_subscribers` |
-| `500` | `{ "error": "Failed to subscribe. Please try again." }` | Supabase write failure |
+| `409` | `{ "error": "already subscribed" }` | Email is already a confirmed subscriber |
+| `500` | `{ "error": "Failed to subscribe. Please try again." }` | Database write failure |
+
+---
+
+### `POST /api/newsletter/confirm`
+
+Called by the **Yes, sign me up** button on `/newsletter/confirm`. POST only, so email security scanners that open links can't confirm a sign-up. Body: `{ "e": "<email>", "t": "<token>" }`, where the token is an HMAC of the email (`NEWSLETTER_SECRET`, else `BETTER_AUTH_SECRET`), separate from the unsubscribe token.
+
+| Status | Body | Cause |
+|--------|------|-------|
+| `200` | `{ "ok": true, "already": false }` | Confirmed now; the welcome email is sent after the response |
+| `200` | `{ "ok": true, "already": true }` | Already confirmed; nothing sent |
+| `400` | `{ "error": "This confirmation link isn’t valid…" }` | Token doesn't match the email |
+| `404` | `{ "error": "This sign-up has expired…" }` | No sign-up for that email (unconfirmed for 7 days, or unsubscribed) |
 
 ---
 

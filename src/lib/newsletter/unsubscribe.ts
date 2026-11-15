@@ -15,19 +15,23 @@ function secret(): string {
 
 const normalise = (email: string) => email.trim().toLowerCase()
 
-export function unsubscribeToken(email: string): string {
+/** A token tying a link to one email address, for one purpose (so a confirm link can't unsubscribe, and the reverse). */
+export function emailToken(purpose: 'unsubscribe' | 'confirm', email: string): string {
   // Domain-separated so this can never be confused with any other use of the secret
-  return createHmac('sha256', secret()).update(`newsletter-unsubscribe:${normalise(email)}`).digest('base64url')
+  return createHmac('sha256', secret()).update(`newsletter-${purpose}:${normalise(email)}`).digest('base64url')
 }
 
-export function verifyUnsubscribeToken(email: string, token: string): boolean {
+export function verifyEmailToken(purpose: 'unsubscribe' | 'confirm', email: string, token: string): boolean {
   if (!email || !token) return false
-  const expected = Buffer.from(unsubscribeToken(email))
+  const expected = Buffer.from(emailToken(purpose, email))
   const given = Buffer.from(token)
   return expected.length === given.length && timingSafeEqual(expected, given)
 }
 
-function siteUrl(): string {
+export const unsubscribeToken = (email: string) => emailToken('unsubscribe', email)
+export const verifyUnsubscribeToken = (email: string, token: string) => verifyEmailToken('unsubscribe', email, token)
+
+export function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com').replace(/\/$/, '')
 }
 

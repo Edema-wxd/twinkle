@@ -84,7 +84,9 @@ export function NewsletterForm({ layout = 'stacked', cta = 'Join' }: { layout?: 
 
       <div aria-live="polite">
         {status === 'success' && (
-          <p className="text-sm font-body text-gold-light mt-3">You&apos;re in! Welcome to the Twinkle family.</p>
+          <p className="text-sm font-body text-gold-light mt-3">
+            Almost there! Check your inbox and tap the link we sent to confirm. (Not there? Look in Spam or Promotions.)
+          </p>
         )}
         {status === 'duplicate' && (
           <p className="text-sm font-body text-cream/80 mt-3">Looks like you&apos;re already on the list!</p>

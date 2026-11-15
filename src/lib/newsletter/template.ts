@@ -84,7 +84,12 @@ export function newsletterHtmlToText(html: string): string {
     .trim()
 }
 
-export function renderNewsletter(content: NewsletterContent, firstName?: string | null): { subject: string; html: string; text: string } {
+export function renderNewsletter(
+  content: NewsletterContent,
+  firstName?: string | null,
+  /** Replaces the "you joined… Unsubscribe" footer (the confirmation email goes to people who haven't joined yet) */
+  footer?: string,
+): { subject: string; html: string; text: string } {
   const subject = fillName(content.subject, firstName).replace(/\s+/g, ' ').trim()
   const body = styleBody(fillName(content.bodyHtml, firstName))
   const preheader = fillName(content.preheader ?? '', firstName).trim()
@@ -122,8 +127,12 @@ export function renderNewsletter(content: NewsletterContent, firstName?: string 
         </td></tr>
         <tr><td style="background-color:#F5F0E8;border-radius:0 0 12px 12px;padding:20px 32px;text-align:center;">
           <p style="margin:0 0 6px 0;font-size:12px;color:#78716c;line-height:1.6;">
-            You're getting this because you joined the Twinkle Locs newsletter.
-            <a href="${UNSUBSCRIBE_PLACEHOLDER}" style="color:#1A3C34;text-decoration:underline;">Unsubscribe</a>
+            ${
+              footer
+                ? escapeHtml(footer)
+                : `You're getting this because you joined the Twinkle Locs newsletter.
+            <a href="${UNSUBSCRIBE_PLACEHOLDER}" style="color:#1A3C34;text-decoration:underline;">Unsubscribe</a>`
+            }
           </p>
           <p style="margin:0;font-size:11px;color:#a8a29e;">&copy; ${year} Twinkle Locs &middot; Lagos, Nigeria</p>
         </td></tr>
@@ -138,7 +147,7 @@ export function renderNewsletter(content: NewsletterContent, firstName?: string 
     preheader,
     textBody,
     cta && cta.url ? `${cta.label}: ${cta.url}` : '',
-    `--\nYou're getting this because you joined the Twinkle Locs newsletter.\nUnsubscribe: ${UNSUBSCRIBE_PLACEHOLDER}`,
+    footer ? `--\n${footer}` : `--\nYou're getting this because you joined the Twinkle Locs newsletter.\nUnsubscribe: ${UNSUBSCRIBE_PLACEHOLDER}`,
   ]
     .filter(Boolean)
     .join('\n\n')
