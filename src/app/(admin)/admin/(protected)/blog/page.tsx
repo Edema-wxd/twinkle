@@ -3,8 +3,9 @@ import Image from 'next/image'
 import { requireAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { blogPosts } from '@/db'
-import { desc } from 'drizzle-orm'
-import { readingTime } from '@/lib/content'
+import { desc, eq } from 'drizzle-orm'
+import { readingTime, wordCount } from '@/lib/content'
+import { postState } from '@/lib/blog/live'
 
 export const metadata = {
   title: 'Blog Posts — Twinkle Locs Admin',
@@ -19,6 +20,8 @@ type Row = {
   isFeatured: boolean
   published: boolean
   publishedAt: Date | null
+  state: 'draft' | 'scheduled' | 'live'
+  hasPending: boolean
   updatedAt: Date
   minutes: number
   productCount: number
@@ -37,6 +40,13 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
   let loadError = false
   try {
     const rows = await db.select().from(blogPosts).orderBy(desc(blogPosts.updatedAt))
+    // Older posts saved before word counts were stored: fill them in so /blog can skip loading bodies
+    for (const r of rows) {
+      if (r.wordCount === 0 && r.body) {
+        const words = wordCount(r.body)
+        if (words > 0) await db.update(blogPosts).set({ wordCount: words }).where(eq(blogPosts.id, r.id)).catch(() => {})
+      }
+    }
     posts = rows.map((r) => ({
       id: r.id,
       title: r.title,
@@ -46,6 +56,8 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
       isFeatured: r.isFeatured,
       published: r.published,
       publishedAt: r.publishedAt,
+      state: postState(r),
+      hasPending: r.pendingChanges != null,
       updatedAt: r.updatedAt,
       minutes: readingTime(r.body),
       productCount: r.featuredProductIds?.length ?? 0,
@@ -55,16 +67,18 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
     console.error('Failed to fetch blog posts for admin:', error)
   }
 
-  const live = posts.filter((p) => p.published)
-  const drafts = posts.filter((p) => !p.published)
-  const featured = posts.find((p) => p.isFeatured && p.published)
+  const live = posts.filter((p) => p.state === 'live')
+  const scheduled = posts.filter((p) => p.state === 'scheduled')
+  const drafts = posts.filter((p) => p.state === 'draft')
+  const featured = posts.find((p) => p.isFeatured && p.state === 'live')
   const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
   const recent = live.filter((p) => p.publishedAt && p.publishedAt.getTime() >= thirtyDaysAgo).length
-  const visible = status === 'draft' ? drafts : status === 'live' ? live : posts
+  const visible = status === 'draft' ? drafts : status === 'live' ? live : status === 'scheduled' ? scheduled : posts
 
   const tabs = [
     { key: undefined, label: 'All', count: posts.length },
     { key: 'live', label: 'Live', count: live.length },
+    ...(scheduled.length ? [{ key: 'scheduled', label: 'Scheduled', count: scheduled.length }] : []),
     { key: 'draft', label: 'Drafts', count: drafts.length },
   ]
 
@@ -146,9 +160,14 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${post.published ? 'bg-emerald-900/60 text-emerald-300' : 'bg-stone-700 text-stone-300'}`}>
-                    {post.published ? 'Live' : 'Draft'}
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                      post.state === 'live' ? 'bg-emerald-900/60 text-emerald-300' : post.state === 'scheduled' ? 'bg-sky-900/60 text-sky-200' : 'bg-stone-700 text-stone-300'
+                    }`}
+                  >
+                    {post.state === 'live' ? 'Live' : post.state === 'scheduled' ? 'Scheduled' : 'Draft'}
                   </span>
+                  {post.hasPending && <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-900/50 text-amber-200">Changes saved for later</span>}
                   {post.isFeatured && <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-gold/25 text-gold-light">★ Featured</span>}
                   {post.tag && <span className="text-xs text-stone-400">{post.tag}</span>}
                 </div>
@@ -156,11 +175,11 @@ export default async function AdminBlogPage({ searchParams }: { searchParams: Pr
                   {post.title}
                 </Link>
                 <p className="text-xs text-stone-500 mt-0.5 truncate">
-                  {post.published ? `Published ${fmt(post.publishedAt)}` : `Edited ${fmt(post.updatedAt)}`} &middot; {post.minutes} min read
+                  {post.state === 'scheduled' ? `Goes live ${fmt(post.publishedAt)}` : post.published ? `Published ${fmt(post.publishedAt)}` : `Edited ${fmt(post.updatedAt)}`} &middot; {post.minutes} min read
                   {post.productCount > 0 && <> &middot; {post.productCount} product{post.productCount === 1 ? '' : 's'} linked</>}
                 </p>
               </div>
-              {post.published && (
+              {post.state === 'live' && (
                 <a
                   href={`/blog/${post.slug}`}
                   target="_blank"

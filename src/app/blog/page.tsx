@@ -2,12 +2,13 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { db, blogPosts as blogPostsTable } from '@/db'
-import { desc, eq } from 'drizzle-orm'
+import { desc } from 'drizzle-orm'
 import { BlogPostCard } from '@/components/blog/BlogPostCard'
 import { BlogCategoryFilter } from '@/components/blog/BlogCategoryFilter'
 import { NewsletterBand } from '@/components/blog/NewsletterBand'
 import { PreferredSourceButton } from '@/components/blog/PreferredSourceButton'
 import { formatPostDate, toBlogCard, type BlogCardPost } from '@/lib/content'
+import { isLivePost } from '@/lib/blog/live'
 
 export const metadata: Metadata = {
   title: { absolute: 'Loc Care Tips & Styling Guides | Twinkle Locs Blog' },
@@ -32,10 +33,21 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   // True when the database didn't answer, so the page doesn't claim there are no stories
   let loadFailed = false
   try {
+    // Card fields only: reading time comes from the stored word count, so no post bodies are loaded
     const rows = await db
-      .select()
+      .select({
+        id: blogPostsTable.id,
+        title: blogPostsTable.title,
+        slug: blogPostsTable.slug,
+        excerpt: blogPostsTable.excerpt,
+        featuredImage: blogPostsTable.featuredImage,
+        tag: blogPostsTable.tag,
+        publishedAt: blogPostsTable.publishedAt,
+        wordCount: blogPostsTable.wordCount,
+        isFeatured: blogPostsTable.isFeatured,
+      })
       .from(blogPostsTable)
-      .where(eq(blogPostsTable.published, true))
+      .where(isLivePost())
       .orderBy(desc(blogPostsTable.publishedAt))
     all = rows.map((r) => ({ ...toBlogCard(r), is_featured: r.isFeatured }))
   } catch (err) {

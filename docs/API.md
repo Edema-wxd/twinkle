@@ -35,6 +35,8 @@ The Paystack webhook (`/api/webhooks/paystack`) uses HMAC-SHA512 signature verif
 | `POST` | `/api/admin/blog` | Yes | Create a new blog post |
 | `PUT` | `/api/admin/blog/[id]` | Yes | Update a blog post |
 | `DELETE` | `/api/admin/blog/[id]` | Yes | Delete a blog post |
+| `GET` | `/api/admin/blog/[id]/revisions` | Yes | List a post's saved versions (newest first, last 50) |
+| `GET` | `/api/admin/blog/[id]/revisions/[revisionId]` | Yes | One saved version's full content |
 | `POST` | `/api/admin/faqs` | Yes | Create a new FAQ entry |
 | `PUT` | `/api/admin/faqs/[id]` | Yes | Update a FAQ entry |
 | `DELETE` | `/api/admin/faqs/[id]` | Yes | Delete a FAQ entry |
@@ -343,6 +345,15 @@ Creates a new blog post. If `slug` is omitted, it is auto-generated from `title`
 #### `PUT /api/admin/blog/[id]`
 
 Partially updates a blog post. Only fields provided in the body are changed. When `published` transitions from `false` to `true`, `published_at` is set automatically if not supplied.
+
+A `published_at` in the future schedules the post: it stays off the public site until then. Every save records a revision (see the revisions routes).
+
+Two special bodies:
+
+- `{ "mode": "stage", ...fields }` on a published post stores the edits in `pending_changes` without changing the live post. Returns `400` on a draft.
+- `{ "discard_pending": true }` clears `pending_changes`.
+
+A normal save also clears `pending_changes`, because the editor sends the staged edits as part of it.
 
 **Request body:** Any subset of the `POST` body fields.
 

@@ -56,13 +56,31 @@ On phones, a wide table scrolls sideways inside its own box.
 - The About page has it too: each section has **Choose from uploaded photos** under its image. Those images show as a wide strip, so square or tall photos are labelled **Square** or **Tall** (only their top part shows). Remember to press **Save all sections**.
 - Removing a photo from a product, post or page only deletes the file once nothing else on the site uses it, so sharing photos is safe.
 - After uploading an image, click it and choose **Describe image** to add alt text.
+- To put a caption under a photo, click it and choose **Add caption**. The caption shows in small text under the photo on the site. In Markdown, `![Gold beads](photo.jpg "Gold 4mm on black thread")` does the same.
 - **Shop the look** adds up to 4 products at the end of the post.
+
+## Scheduling a post
+
+- Pick a future **Publish date**, then press **Schedule** instead of Publish. The post stays off the blog, the home page and the sitemap until that time (Lagos time), then appears on its own within about 10 minutes.
+- Scheduled posts have their own **Scheduled** tab in Admin → Blog, with the time they go live.
+- To change the time, edit the date and press **Update scheduled post**. To publish it now instead, clear the date and press it again. **Unpublish** turns it back into a draft.
+
+## Editing a live post without changing it yet
+
+- **Save for later** keeps your edits without touching the live post. Readers keep seeing the current version.
+- Next time you open the post, your saved edits load in the editor, with a blue note saying so. Press **Publish changes** when they're ready, or **Discard them** to go back to the live version.
+- Cmd+S (Ctrl+S on Windows) on a live post does **Save for later**, never publish.
+
+## History
+
+- Every save is kept (the last 50 per post), with who saved it and when. Open **History** in the top bar to see them.
+- **Load** puts an older version back into the editor. Nothing on the site changes until you save or publish it, so it's safe to look.
 
 ## Safety nets
 
 - Unsaved work is kept in your browser. If the tab closes, reopen the post and choose **Restore them**.
 - Leaving the editor with unsaved changes asks you first.
-- On a live post, **Update live post** publishes your changes straight away. Use **Unpublish** to take it down.
+- On a live post, **Publish changes** puts your changes live straight away (use **Save for later** if they aren't ready). Use **Unpublish** to take it down.
 - Renaming a live post's web address keeps the old link working. Anyone with the old link is redirected to the new one.
 
 ## Google Preferred Sources

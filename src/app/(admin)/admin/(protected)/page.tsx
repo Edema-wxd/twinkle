@@ -55,9 +55,9 @@ export default async function AdminDashboardPage() {
     const [[postStats], [faqStats]] = await Promise.all([
       db
         .select({
-          live: sql<number>`count(*) filter (where ${blogPosts.published})`.mapWith(Number),
+          live: sql<number>`count(*) filter (where ${blogPosts.published} and (${blogPosts.publishedAt} is null or ${blogPosts.publishedAt} <= now()))`.mapWith(Number),
           drafts: sql<number>`count(*) filter (where not ${blogPosts.published})`.mapWith(Number),
-          lastPublished: sql<string | null>`max(${blogPosts.publishedAt})`,
+          lastPublished: sql<string | null>`max(${blogPosts.publishedAt}) filter (where ${blogPosts.published} and ${blogPosts.publishedAt} <= now())`,
         })
         .from(blogPosts),
       db

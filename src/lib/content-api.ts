@@ -60,8 +60,8 @@ export function parseBlogInput(raw: unknown): BlogInput {
   if (b.published_at === null) out.publishedAt = null
   else if (typeof b.published_at === 'string' && b.published_at) {
     const d = new Date(b.published_at)
-    // No scheduling yet: a future date would show "published tomorrow" today, so clamp to now
-    if (!Number.isNaN(d.getTime())) out.publishedAt = d.getTime() > Date.now() ? new Date() : d
+    // A future date schedules the post: it stays off the site until then (see lib/blog/live.ts)
+    if (!Number.isNaN(d.getTime())) out.publishedAt = d
   }
 
   return out

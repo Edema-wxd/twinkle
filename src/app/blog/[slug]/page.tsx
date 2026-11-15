@@ -11,6 +11,7 @@ import { NewsletterBand } from '@/components/blog/NewsletterBand'
 import { ShopTheLook, type LookProduct } from '@/components/blog/ShopTheLook'
 import { PreferredSourceButton } from '@/components/blog/PreferredSourceButton'
 import { BUSINESS } from '@/lib/config/business'
+import { isLivePost } from '@/lib/blog/live'
 import {
   formatPostDate,
   htmlToText,
@@ -32,7 +33,7 @@ const getPost = cache(async (slug: string) => {
   const [row] = await db
     .select()
     .from(blogPostsTable)
-    .where(and(eq(blogPostsTable.slug, slug), eq(blogPostsTable.published, true)))
+    .where(and(eq(blogPostsTable.slug, slug), isLivePost()))
     .limit(1)
   return row ?? null
 })
@@ -70,7 +71,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     const [moved] = await db
       .select({ slug: blogPostsTable.slug })
       .from(blogPostsTable)
-      .where(and(eq(blogPostsTable.published, true), arrayContains(blogPostsTable.previousSlugs, [slug])))
+      .where(and(isLivePost(), arrayContains(blogPostsTable.previousSlugs, [slug])))
       .limit(1)
     if (moved) permanentRedirect(`/blog/${moved.slug}`)
     return notFound()
@@ -96,14 +97,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       ? db
           .select()
           .from(blogPostsTable)
-          .where(and(eq(blogPostsTable.published, true), eq(blogPostsTable.tag, post.tag), ne(blogPostsTable.id, post.id)))
+          .where(and(isLivePost(), eq(blogPostsTable.tag, post.tag), ne(blogPostsTable.id, post.id)))
           .orderBy(desc(blogPostsTable.publishedAt))
           .limit(3)
       : Promise.resolve([]),
     db
       .select()
       .from(blogPostsTable)
-      .where(and(eq(blogPostsTable.published, true), ne(blogPostsTable.id, post.id)))
+      .where(and(isLivePost(), ne(blogPostsTable.id, post.id)))
       .orderBy(desc(blogPostsTable.publishedAt))
       .limit(3),
   ])

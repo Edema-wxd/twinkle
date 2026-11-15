@@ -8,6 +8,8 @@ import type { Editor } from '@tiptap/react'
 import { RichTextEditor } from './RichTextEditor'
 import { MarkdownImportDialog } from './MarkdownImportDialog'
 import { MediaLibraryDialog } from './MediaLibraryDialog'
+import { BlogHistoryDialog, type RevisionSnapshot } from './BlogHistoryDialog'
+import { captionImages } from '@/lib/blog/captions'
 import type { MarkdownImportResult } from '@/lib/markdown-import'
 import { useUploadThing } from '@/lib/uploadthing'
 import type { BlogPost } from '@/types/db'
@@ -55,25 +57,48 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
   const isEdit = !!postId
   const backupKey = `twinkle:blog-draft:${postId ?? 'new'}`
 
-  const [title, setTitle] = useState(post?.title ?? '')
-  const [slug, setSlug] = useState(post?.slug ?? '')
+  // A live post with edits saved for later opens with those edits in the editor
+  const pending = post?.pending_changes ?? null
+  const src = pending && post
+    ? {
+        ...post,
+        title: pending.title,
+        slug: pending.slug,
+        excerpt: pending.excerpt,
+        body: pending.body,
+        featured_image: pending.featuredImage,
+        tag: pending.tag,
+        seo_title: pending.seoTitle,
+        seo_description: pending.seoDescription,
+        is_featured: pending.isFeatured,
+        featured_product_ids: pending.featuredProductIds,
+      }
+    : post
+
+  const [title, setTitle] = useState(src?.title ?? '')
+  const [slug, setSlug] = useState(src?.slug ?? '')
   const [slugTouched, setSlugTouched] = useState(isEdit)
-  const [excerpt, setExcerpt] = useState(post?.excerpt ?? '')
-  const [body, setBody] = useState(post?.body ?? '')
-  const [featuredImage, setFeaturedImage] = useState<string | null>(post?.featured_image ?? null)
-  const [tag, setTag] = useState(post?.tag ?? '')
-  const [seoTitle, setSeoTitle] = useState(post?.seo_title ?? '')
-  const [seoDescription, setSeoDescription] = useState(post?.seo_description ?? '')
-  const [isFeatured, setIsFeatured] = useState(post?.is_featured ?? false)
+  const [excerpt, setExcerpt] = useState(src?.excerpt ?? '')
+  const [body, setBody] = useState(src?.body ?? '')
+  const [featuredImage, setFeaturedImage] = useState<string | null>(src?.featured_image ?? null)
+  const [tag, setTag] = useState(src?.tag ?? '')
+  const [seoTitle, setSeoTitle] = useState(src?.seo_title ?? '')
+  const [seoDescription, setSeoDescription] = useState(src?.seo_description ?? '')
+  const [isFeatured, setIsFeatured] = useState(src?.is_featured ?? false)
   // Drop products that were deleted/archived since the post was written
   const [productIds, setProductIds] = useState<string[]>(() =>
-    (post?.featured_product_ids ?? []).filter((id) => products.some((p) => p.id === id)),
+    (src?.featured_product_ids ?? []).filter((id) => products.some((p) => p.id === id)),
   )
   const [published, setPublished] = useState(post?.published ?? false)
   // Stored as an ISO string (timezone-neutral); converted to local time only in the browser
   const [publishedAt, setPublishedAt] = useState<string>(post?.published_at ?? '')
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
+  // Published with a future date = scheduled (not on the site until then)
+  const scheduled = mounted && published && !!publishedAt && new Date(publishedAt).getTime() > Date.now()
+  const scheduledFor = (iso: string) => new Date(iso).toLocaleString('en-GB', { timeZone: 'Africa/Lagos', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  const [pendingInfo, setPendingInfo] = useState<{ savedAt: string; savedBy?: string | null } | null>(pending ? { savedAt: pending.savedAt, savedBy: pending.savedBy } : null)
+  const [historyOpen, setHistoryOpen] = useState(false)
 
   const [mode, setMode] = useState<'write' | 'preview'>('write')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -278,13 +303,9 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
   }
 
   const save = useCallback(
-    (nextPublished: boolean) => {
+    (nextPublished: boolean, opts: { stage?: boolean } = {}) => {
       if (title.trim() === '') {
         showToast('error', 'Give your post a title first')
-        return
-      }
-      if (publishedAt && new Date(publishedAt).getTime() > Date.now() + 60_000) {
-        showToast('error', 'The publish date is in the future. Scheduling isn’t supported yet, so pick today or earlier.')
         return
       }
       const finalSlug = slugify(slug || title)
@@ -292,6 +313,10 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
         showToast('error', 'The URL slug needs at least one letter or number')
         return
       }
+
+      // Clearing the date on a scheduled post means "publish it now"
+      const savedDate = (JSON.parse(savedSnapshot) as { publishedAt?: string }).publishedAt
+      const unschedule = nextPublished && !publishedAt && !!savedDate && new Date(savedDate).getTime() > Date.now()
 
       startTransition(async () => {
         try {
@@ -307,7 +332,8 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
             is_featured: isFeatured,
             featured_product_ids: productIds,
             published: nextPublished,
-            published_at: publishedAt || undefined,
+            published_at: publishedAt || (unschedule ? new Date().toISOString() : undefined),
+            ...(opts.stage ? { mode: 'stage' } : {}),
           }
 
           const res = await fetch(isEdit ? `/api/admin/blog/${postId}` : '/api/admin/blog', {
@@ -322,6 +348,20 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
             return
           }
 
+          if (opts.stage) {
+            // Saved for later: the live post is untouched; these edits reopen next time
+            setSavedSnapshot(JSON.stringify(snapshot))
+            setPendingInfo({ savedAt: new Date().toISOString() })
+            showToast('success', 'Saved for later. The live post hasn’t changed.')
+            try {
+              localStorage.removeItem(backupKey)
+            } catch {
+              /* ignore */
+            }
+            return
+          }
+          setPendingInfo(null)
+
           const saved = data.post as { id: string; slug: string; published_at: string | null; publishedAt?: string | null } | undefined
           setSlug(finalSlug)
           setPublished(nextPublished)
@@ -333,7 +373,16 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
           )
 
           const wasLive = published
-          const verb = nextPublished ? (wasLive ? 'Changes are live' : 'Published, it is live on the blog') : wasLive ? 'Unpublished, now a draft' : 'Draft saved'
+          const willBeScheduled = nextPublished && !!nextPublishedAt && new Date(nextPublishedAt).getTime() > Date.now()
+          const verb = willBeScheduled
+            ? `Scheduled: goes live ${scheduledFor(nextPublishedAt)}`
+            : nextPublished
+              ? wasLive
+                ? 'Changes are live'
+                : 'Published, it is live on the blog'
+              : wasLive
+                ? 'Unpublished, now a draft'
+                : 'Draft saved'
           showToast('success', verb)
           try {
             localStorage.removeItem(backupKey)
@@ -356,7 +405,7 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
         }
       })
     },
-    [title, slug, excerpt, body, featuredImage, tag, seoTitle, seoDescription, isFeatured, productIds, publishedAt, isEdit, postId, published, snapshot, backupKey],
+    [title, slug, excerpt, body, featuredImage, tag, seoTitle, seoDescription, isFeatured, productIds, publishedAt, isEdit, postId, published, snapshot, savedSnapshot, backupKey],
   )
 
   // Cmd/Ctrl + S saves without changing publish state
@@ -364,12 +413,50 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 's') {
         e.preventDefault()
-        if (!isPending) save(published)
+        // On a live post, Cmd/Ctrl+S saves for later rather than changing the site
+        if (!isPending) save(published, { stage: isEdit && published && !scheduled })
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [save, published, isPending])
+  }, [save, published, isPending, isEdit, scheduled])
+
+  function discardPending() {
+    if (!postId) return
+    startTransition(async () => {
+      const res = await fetch(`/api/admin/blog/${postId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ discard_pending: true }),
+      }).catch(() => null)
+      if (!res?.ok) {
+        showToast('error', 'Couldn’t discard them. Please try again.')
+        return
+      }
+      try {
+        localStorage.removeItem(backupKey)
+      } catch {
+        /* ignore */
+      }
+      // Reload so the editor shows the live version again
+      window.location.reload()
+    })
+  }
+
+  function loadRevision(s: RevisionSnapshot, label: string) {
+    setTitle(s.title)
+    setSlug(s.slug)
+    setExcerpt(s.excerpt)
+    setBody(s.body)
+    editorRef.current?.commands.setContent(s.body, false)
+    setFeaturedImage(s.featuredImage)
+    setTag(s.tag ?? '')
+    setSeoTitle(s.seoTitle ?? '')
+    setSeoDescription(s.seoDescription ?? '')
+    setIsFeatured(s.isFeatured)
+    setProductIds((s.featuredProductIds ?? []).filter((id) => products.some((p) => p.id === id)))
+    showToast('success', `Loaded: ${label}. Nothing changes on the site until you save.`)
+  }
 
   function handleDelete() {
     if (!postId) return
@@ -427,7 +514,7 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
         <Link href="/admin/blog" className="text-sm text-stone-400 hover:text-white transition-colors">
           &larr; All posts
         </Link>
-        <StatusPill published={published} dirty={isDirty} />
+        <StatusPill state={!published ? 'draft' : scheduled ? 'scheduled' : 'live'} scheduledLabel={scheduled ? scheduledFor(publishedAt) : null} dirty={isDirty} />
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <div className="inline-flex rounded-lg bg-stone-800 p-0.5 ring-1 ring-stone-700" role="tablist" aria-label="Editor mode">
             {(['write', 'preview'] as const).map((m) => (
@@ -452,7 +539,12 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
           >
             Import Markdown
           </button>
-          {isEdit && published && !isDirty && (
+          {isEdit && (
+            <button type="button" onClick={() => setHistoryOpen(true)} className="px-3 py-2 text-sm text-stone-300 hover:text-white transition-colors">
+              History
+            </button>
+          )}
+          {isEdit && published && !scheduled && !isDirty && !pendingInfo && (
             <a href={liveUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-2 text-sm text-stone-300 hover:text-white transition-colors">
               View live &#8599;
             </a>
@@ -462,13 +554,24 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
               <button type="button" onClick={() => save(false)} disabled={isPending} className="px-3 py-2 text-sm text-stone-300 hover:text-white disabled:opacity-50 transition-colors">
                 Unpublish
               </button>
+              {isEdit && !scheduled && (
+                <button
+                  type="button"
+                  onClick={() => save(true, { stage: true })}
+                  disabled={isPending || !isDirty}
+                  title="Keep these edits without changing the live post (Cmd/Ctrl+S)"
+                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 ring-1 ring-stone-600 disabled:opacity-50 text-stone-100 text-sm font-medium rounded-lg transition-colors"
+                >
+                  Save for later
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={isPending}
-                title="Changes go live on the blog straight away"
+                title={scheduled ? 'Saves the scheduled post' : 'Changes go live on the blog straight away'}
                 className="px-4 py-2 bg-gold hover:bg-gold-deep disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
               >
-                {isPending ? 'Saving…' : 'Update live post'}
+                {isPending ? 'Saving…' : scheduled ? 'Update scheduled post' : pendingInfo || isDirty ? 'Publish changes' : 'Update live post'}
               </button>
             </>
           ) : (
@@ -476,8 +579,14 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
               <button type="submit" disabled={isPending} className="px-4 py-2 bg-stone-800 hover:bg-stone-700 ring-1 ring-stone-600 disabled:opacity-50 text-stone-100 text-sm font-medium rounded-lg transition-colors">
                 {isPending ? 'Saving…' : 'Save draft'}
               </button>
-              <button type="button" onClick={() => save(true)} disabled={isPending} className="px-4 py-2 bg-gold hover:bg-gold-deep disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
-                Publish
+              <button
+                type="button"
+                onClick={() => save(true)}
+                disabled={isPending}
+                title={mounted && publishedAt && new Date(publishedAt).getTime() > Date.now() ? `Goes live ${scheduledFor(publishedAt)}` : 'Goes live straight away'}
+                className="px-4 py-2 bg-gold hover:bg-gold-deep disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                {mounted && publishedAt && new Date(publishedAt).getTime() > Date.now() ? 'Schedule' : 'Publish'}
               </button>
             </>
           )}
@@ -497,6 +606,20 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
           </button>
         </div>
       )}
+
+      {pendingInfo && published && (
+        <div role="status" className="mb-6 flex flex-wrap items-center gap-3 rounded-xl bg-sky-950/60 ring-1 ring-sky-800 px-4 py-3">
+          <p className="flex-1 text-sm text-sky-100">
+            You&apos;re editing changes saved for later on {new Date(pendingInfo.savedAt).toLocaleString('en-GB', { timeZone: 'Africa/Lagos', dateStyle: 'medium', timeStyle: 'short' })}
+            {pendingInfo.savedBy ? ` by ${pendingInfo.savedBy}` : ''}. The live post doesn&apos;t show them yet. Press <strong>Publish changes</strong> when they&apos;re ready.
+          </p>
+          <button type="button" onClick={discardPending} disabled={isPending} className="px-3 py-1.5 text-sm text-sky-200 hover:text-white">
+            Discard them
+          </button>
+        </div>
+      )}
+
+      {historyOpen && postId && <BlogHistoryDialog postId={postId} onClose={() => setHistoryOpen(false)} onLoad={loadRevision} />}
 
       {libraryOpen && (
         <MediaLibraryDialog
@@ -653,13 +776,18 @@ export function BlogPostForm({ post, products, existingTags }: BlogPostFormProps
               <Field
                 id="post-date"
                 label="Publish date"
-                hint={published ? 'Change to backdate a post. Newest posts show first.' : 'Optional. Leave blank to use the moment you press Publish.'}
+                hint={
+                  scheduled
+                    ? `Scheduled: goes live ${scheduledFor(publishedAt)} (Lagos time). Clear the date to publish now.`
+                    : published
+                      ? 'Change to backdate. A future date takes the post off the blog until then.'
+                      : 'Leave blank to publish straight away, or pick a future date and press Schedule.'
+                }
               >
                 <input
                   id="post-date"
                   type="datetime-local"
                   value={mounted && publishedAt ? toLocalInput(publishedAt) : ''}
-                  max={mounted ? toLocalInput(new Date().toISOString()) : undefined}
                   onChange={(e) => setPublishedAt(e.target.value ? new Date(e.target.value).toISOString() : '')}
                   suppressHydrationWarning
                   className={inputClass + ' [color-scheme:dark]'}
@@ -948,11 +1076,12 @@ function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange
   )
 }
 
-function StatusPill({ published, dirty }: { published: boolean; dirty: boolean }) {
+function StatusPill({ state, scheduledLabel, dirty }: { state: 'draft' | 'scheduled' | 'live'; scheduledLabel: string | null; dirty: boolean }) {
+  const style = state === 'live' ? 'bg-emerald-900/60 text-emerald-300' : state === 'scheduled' ? 'bg-sky-900/60 text-sky-200' : 'bg-stone-700 text-stone-300'
   return (
     <span className="inline-flex items-center gap-2 text-xs">
-      <span className={`px-2 py-0.5 rounded-full font-medium ${published ? 'bg-emerald-900/60 text-emerald-300' : 'bg-stone-700 text-stone-300'}`}>
-        {published ? 'Live' : 'Draft'}
+      <span className={`px-2 py-0.5 rounded-full font-medium ${style}`}>
+        {state === 'live' ? 'Live' : state === 'scheduled' ? `Scheduled · ${scheduledLabel}` : 'Draft'}
       </span>
       {dirty && <span className="text-amber-300">Unsaved changes</span>}
     </span>
@@ -995,7 +1124,7 @@ function ArticlePreview({
       )}
       <div className="max-w-2xl mx-auto px-6 py-10">
         {body ? (
-          <div className="tl-prose tl-prose--article" dangerouslySetInnerHTML={{ __html: body }} />
+          <div className="tl-prose tl-prose--article" dangerouslySetInnerHTML={{ __html: captionImages(body) }} />
         ) : (
           <p className="text-charcoal/50 italic">Nothing written yet.</p>
         )}

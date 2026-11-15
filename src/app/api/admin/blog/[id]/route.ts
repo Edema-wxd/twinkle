@@ -4,9 +4,28 @@ import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { blogPosts } from '@/db'
 import { deleteUploadthingFilesByUrls } from '@/lib/uploadthing/server'
-import { slugify } from '@/lib/content'
+import { slugify, wordCount } from '@/lib/content'
 import { bodyImageUrls, isUuid, parseBlogInput, revalidateBlog } from '@/lib/content-api'
 import { isUniqueViolation } from '@/lib/db/errors'
+import { recordRevision, revisionLabel, snapshotOf, type BlogSnapshot } from '@/lib/blog/revisions'
+import type { BlogInput } from '@/lib/content-api'
+
+/** The post as it would look with these edits applied (used for staged changes). */
+function applyInput(base: BlogSnapshot, input: BlogInput): BlogSnapshot {
+  return {
+    ...base,
+    ...(input.title ? { title: input.title } : {}),
+    ...(input.slug ? { slug: slugify(input.slug) || base.slug } : {}),
+    ...(input.body !== undefined ? { body: input.body } : {}),
+    ...(input.excerpt !== undefined ? { excerpt: input.excerpt } : {}),
+    ...(input.featuredImage !== undefined ? { featuredImage: input.featuredImage } : {}),
+    ...(input.tag !== undefined ? { tag: input.tag } : {}),
+    ...(input.seoTitle !== undefined ? { seoTitle: input.seoTitle } : {}),
+    ...(input.seoDescription !== undefined ? { seoDescription: input.seoDescription } : {}),
+    ...(input.isFeatured !== undefined ? { isFeatured: input.isFeatured } : {}),
+    ...(input.featuredProductIds !== undefined ? { featuredProductIds: input.featuredProductIds } : {}),
+  }
+}
 
 export async function PUT(
   req: NextRequest,
@@ -29,24 +48,35 @@ export async function PUT(
   }
 
   const input = parseBlogInput(raw)
+  const action = (raw ?? {}) as { mode?: unknown; discard_pending?: unknown }
+  const editor = session.user.name || session.user.email
 
-  // Fetch current post to detect published transition + cleanup replaced featured image
-  const [currentPost] = await db
-    .select({
-      id: blogPosts.id,
-      slug: blogPosts.slug,
-      published: blogPosts.published,
-      publishedAt: blogPosts.publishedAt,
-      featuredImage: blogPosts.featuredImage,
-      previousSlugs: blogPosts.previousSlugs,
-      body: blogPosts.body,
-    })
-    .from(blogPosts)
-    .where(eq(blogPosts.id, id))
-    .limit(1)
+  // Current post: detect the published transition, clean up replaced images, base staged edits on it
+  const [currentPost] = await db.select().from(blogPosts).where(eq(blogPosts.id, id)).limit(1)
 
   if (!currentPost) {
     return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+  }
+
+  // Drop edits that were saved for later
+  if (action.discard_pending === true) {
+    const [data] = await db.update(blogPosts).set({ pendingChanges: null }).where(eq(blogPosts.id, id)).returning()
+    return NextResponse.json({ ok: true, post: data })
+  }
+
+  // Save edits to a live post without publishing them: the site keeps showing the current version
+  if (action.mode === 'stage') {
+    if (!currentPost.published) {
+      return NextResponse.json({ error: 'This post isn’t live, so just save the draft.' }, { status: 400 })
+    }
+    const staged = applyInput(snapshotOf(currentPost), input)
+    const [data] = await db
+      .update(blogPosts)
+      .set({ pendingChanges: { ...staged, savedAt: new Date().toISOString(), savedBy: editor } })
+      .where(eq(blogPosts.id, id))
+      .returning()
+    await recordRevision(id, revisionLabel(currentPost, currentPost, true), staged, editor)
+    return NextResponse.json({ ok: true, post: data })
   }
 
   const updates: Partial<typeof blogPosts.$inferInsert> = {}
@@ -62,7 +92,10 @@ export async function PUT(
       }
     }
   }
-  if (input.body !== undefined) updates.body = input.body
+  if (input.body !== undefined) {
+    updates.body = input.body
+    updates.wordCount = wordCount(input.body)
+  }
   if (input.excerpt !== undefined) updates.excerpt = input.excerpt
   if (input.featuredImage !== undefined) updates.featuredImage = input.featuredImage
   if (input.tag !== undefined) updates.tag = input.tag
@@ -84,6 +117,8 @@ export async function PUT(
   }
 
   updates.updatedAt = new Date()
+  // A normal save publishes/keeps what's in the editor, which already includes any staged edits
+  updates.pendingChanges = null
 
   try {
     const [data] = await db
@@ -128,6 +163,8 @@ export async function PUT(
         console.error('UploadThing cleanup failed (blog images):', err)
       }
     }
+
+    await recordRevision(id, revisionLabel(currentPost, data), snapshotOf(data), editor)
 
     revalidateBlog(currentPost.slug, data.slug)
     return NextResponse.json({ ok: true, post: data })

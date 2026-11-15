@@ -1,4 +1,5 @@
 import sanitizeHtml from 'sanitize-html'
+import { captionImages } from '@/lib/blog/captions'
 import { productDescriptionHtml } from '@/lib/product-description'
 import type { blogPosts, faqs } from '@/db/schema'
 import type { BlogPost, Faq } from '@/types/db'
@@ -72,7 +73,7 @@ export function sanitizeArticleHtml(html: string | null | undefined, { forDispla
   })
   // Wide tables scroll inside their own box on phones instead of stretching the page
   return forDisplay
-    ? clean.replace(/<table>/g, '<div class="tl-table-scroll"><table>').replace(/<\/table>/g, '</table></div>')
+    ? captionImages(clean).replace(/<table>/g, '<div class="tl-table-scroll"><table>').replace(/<\/table>/g, '</table></div>')
     : clean
 }
 
@@ -104,7 +105,11 @@ export function wordCount(html: string | null | undefined): number {
 
 /** Minutes to read at ~220 wpm, never less than 1. */
 export function readingTime(html: string | null | undefined): number {
-  return Math.max(1, Math.round(wordCount(html) / 220))
+  return minutesFor(wordCount(html))
+}
+
+export function minutesFor(words: number): number {
+  return Math.max(1, Math.round(words / 220))
 }
 
 export function slugify(input: string): string {
@@ -143,6 +148,7 @@ export function toBlogPostDto(row: BlogRow): BlogPost {
     published_at: row.publishedAt ? row.publishedAt.toISOString() : null,
     created_at: row.createdAt.toISOString(),
     updated_at: row.updatedAt.toISOString(),
+    pending_changes: (row.pendingChanges as BlogPost['pending_changes']) ?? null,
   }
 }
 
@@ -164,7 +170,10 @@ export type BlogCardPost = Pick<
   'id' | 'title' | 'slug' | 'excerpt' | 'featured_image' | 'tag' | 'published_at'
 > & { reading_minutes: number }
 
-export function toBlogCard(row: BlogRow): BlogCardPost {
+/** Card fields; pass `body` only when the stored word count may be missing (older rows). */
+type CardRow = Pick<BlogRow, 'id' | 'title' | 'slug' | 'excerpt' | 'featuredImage' | 'tag' | 'publishedAt'> & { wordCount?: number | null; body?: string | null }
+
+export function toBlogCard(row: CardRow): BlogCardPost {
   return {
     id: row.id,
     title: row.title,
@@ -173,6 +182,6 @@ export function toBlogCard(row: BlogRow): BlogCardPost {
     featured_image: row.featuredImage ?? null,
     tag: row.tag ?? null,
     published_at: row.publishedAt ? row.publishedAt.toISOString() : null,
-    reading_minutes: readingTime(row.body),
+    reading_minutes: row.wordCount ? minutesFor(row.wordCount) : readingTime(row.body),
   }
 }

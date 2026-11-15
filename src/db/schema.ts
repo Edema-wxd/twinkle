@@ -9,6 +9,7 @@ import {
   timestamp,
   unique,
   primaryKey,
+  index,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
@@ -193,11 +194,29 @@ export const blogPosts = pgTable('blog_posts', {
   isFeatured: boolean('is_featured').notNull().default(false), // hero slot on /blog
   featuredProductIds: text('featured_product_ids').array().notNull().default([]), // "Shop the look" on the post
   previousSlugs: text('previous_slugs').array().notNull().default([]), // old URLs that 301 to this post
+  wordCount: integer('word_count').notNull().default(0), // kept in sync on save so /blog needn't load every body
+  pendingChanges: jsonb('pending_changes'), // edits to a live post saved for later (not on the site yet); null = none
   published: boolean('published').notNull().default(false),
   publishedAt: timestamp('published_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+/** Every saved version of a blog post, newest first, so an edit can be undone (last 50 kept per post). */
+export const blogPostRevisions = pgTable(
+  'blog_post_revisions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    postId: uuid('post_id')
+      .notNull()
+      .references(() => blogPosts.id, { onDelete: 'cascade' }),
+    label: text('label').notNull(), // e.g. 'Published', 'Draft saved', 'Live post updated', 'Changes saved for later'
+    snapshot: jsonb('snapshot').notNull(), // title, slug, body, excerpt, cover, SEO fields, publish state
+    createdBy: text('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('blog_post_revisions_post_created_idx').on(t.postId, t.createdAt)],
+)
 
 export const testimonials = pgTable('testimonials', {
   id: uuid('id').primaryKey().defaultRandom(),

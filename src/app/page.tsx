@@ -14,6 +14,10 @@ import { faqAnswerHtml, htmlToText, toBlogCard, type BlogCardPost } from '@/lib/
 import { eq, and, asc, desc } from 'drizzle-orm'
 import type { Product, ProductMaterial, ProductVariant } from '@/lib/types/product'
 import type { Testimonial } from '@/components/home/TestimonialsSection'
+import { isLivePost } from '@/lib/blog/live'
+
+// Refresh at least every 10 minutes so scheduled blog posts appear soon after their publish time
+export const revalidate = 600
 
 // Shipping figures come from the same settings checkout charges from
 export async function generateMetadata(): Promise<Metadata> {
@@ -78,7 +82,7 @@ export default async function HomePage() {
     db
       .select()
       .from(blogPostsTable)
-      .where(eq(blogPostsTable.published, true))
+      .where(isLivePost())
       .orderBy(desc(blogPostsTable.publishedAt))
       .limit(3)
       .catch((err) => {

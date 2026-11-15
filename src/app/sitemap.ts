@@ -2,6 +2,10 @@ import type { MetadataRoute } from 'next'
 import { db } from '@/db'
 import { products, blogPosts } from '@/db'
 import { eq } from 'drizzle-orm'
+import { isLivePost } from '@/lib/blog/live'
+
+// Refresh at least every 10 minutes so scheduled blog posts appear soon after their publish time
+export const revalidate = 600
 
 const BASE = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://twinklelocs.com').replace(/\/$/, '')
 
@@ -14,7 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     db
       .select({ slug: blogPosts.slug, updatedAt: blogPosts.updatedAt })
       .from(blogPosts)
-      .where(eq(blogPosts.published, true)),
+      .where(isLivePost()),
   ])
 
   // Audited 2026-04-01: all public routes present. /cart, /checkout, and /orders/ are intentionally excluded.

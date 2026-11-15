@@ -310,6 +310,15 @@ export function RichTextEditor({
             >
               {editor.getAttributes('image').alt ? 'Edit description' : 'Describe image (alt text)'}
             </TableAction>
+            <TableAction
+              onClick={() => {
+                const current = (editor.getAttributes('image').title as string | undefined) ?? ''
+                const caption = window.prompt('Caption shown under the image (leave empty for none):', current)
+                if (caption !== null) editor.chain().focus().updateAttributes('image', { title: caption.trim() || null }).run()
+              }}
+            >
+              {editor.getAttributes('image').title ? 'Edit caption' : 'Add caption'}
+            </TableAction>
             <TableAction onClick={() => setLibrary('replace')}>Swap photo</TableAction>
             <TableAction danger onClick={() => editor.chain().focus().deleteSelection().run()}>Remove image</TableAction>
           </div>

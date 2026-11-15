@@ -109,6 +109,24 @@ export type BlogPost = {
   published_at: string | null
   created_at: string
   updated_at: string
+  /** Edits to a live post saved for later (not on the site yet) */
+  pending_changes?: BlogPendingChanges | null
+}
+
+/** Mirrors lib/blog/revisions BlogSnapshot, plus when/who saved it for later. */
+export type BlogPendingChanges = {
+  title: string
+  slug: string
+  excerpt: string
+  body: string
+  featuredImage: string | null
+  tag: string | null
+  seoTitle: string | null
+  seoDescription: string | null
+  isFeatured: boolean
+  featuredProductIds: string[]
+  savedAt: string
+  savedBy?: string | null
 }
 
 export type NewsletterSubscriber = {

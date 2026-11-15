@@ -3,7 +3,8 @@ import { ne } from 'drizzle-orm'
 import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { blogPosts } from '@/db'
-import { slugify } from '@/lib/content'
+import { slugify, wordCount } from '@/lib/content'
+import { recordRevision, revisionLabel, snapshotOf } from '@/lib/blog/revisions'
 import { parseBlogInput, revalidateBlog } from '@/lib/content-api'
 import { isUniqueViolation } from '@/lib/db/errors'
 
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
         title: input.title,
         slug,
         body: input.body ?? '',
+        wordCount: wordCount(input.body ?? ''),
         excerpt: input.excerpt ?? '',
         featuredImage: input.featuredImage ?? null,
         tag: input.tag ?? null,
@@ -63,6 +65,8 @@ export async function POST(req: NextRequest) {
     if (data.isFeatured && data.published) {
       await db.update(blogPosts).set({ isFeatured: false }).where(ne(blogPosts.id, data.id))
     }
+
+    await recordRevision(data.id, revisionLabel(null, data), snapshotOf(data), session.user.name || session.user.email)
 
     revalidateBlog(data.slug)
     return NextResponse.json({ post: data }, { status: 201 })
