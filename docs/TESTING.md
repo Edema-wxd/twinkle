@@ -42,7 +42,23 @@ npm run test:coverage
 | Promo codes | `api/admin/promo-codes.test.ts`, `api/checkout/validate-promo.test.ts` |
 | Other | product descriptions, Paystack subscription forwarding |
 
-Not covered by unit tests: `recordPaidOrder()` (needs a real Postgres for its atomic stock and duplicate-order guarantees), email sending, and the admin UI. Those were checked end to end against an in-memory Postgres while being built.
+| Paid orders (real database) | `db/recordPaidOrder.test.ts`: honest payment → paid with items and stock taken; webhook retries and the webhook/verify race create one order and take stock once; short payment held for review with real prices; two orders racing for the last items (one paid, one held, stock never negative); promo use counted; abandoned checkout recovered; a shipped order never rewound |
+| Email sending (real database) | `db/emailSending.test.ts`: log row with Resend id and bodies, retry on rate limit, no retry on permanent errors, missing settings, idempotency keys, the status-email claim (only one sender), forced re-sends |
+
+Not covered: the admin UI (checked in a browser while being built).
+
+### Tests against a real database
+
+Tests in `src/__tests__/db/` run against **PGlite**, a real Postgres that runs inside the test process (no server or Docker). The tables are generated from `src/db/schema.ts` by drizzle-kit, so they always match the real schema. Use it when the behaviour depends on Postgres itself (constraints, `ON CONFLICT`, atomic updates, concurrency):
+
+```ts
+vi.mock('@/db', () => import('../helpers/pgliteDb'))
+import { db, resetDb, orders } from '../helpers/pgliteDb'
+
+beforeEach(resetDb) // empties every table
+```
+
+Each test file gets its own fresh database.
 
 ---
 
