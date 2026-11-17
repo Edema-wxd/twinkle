@@ -21,7 +21,7 @@ export function ShopTheLook({ products }: { products: LookProduct[] }) {
           <p className="font-heading text-xs font-semibold uppercase tracking-[0.2em] text-gold-deep">Featured in this story</p>
           <h2 id="shop-the-look" className="mt-5 font-display text-4xl leading-[1.2] text-forest">Shop the look</h2>
         </div>
-        <Link href="/catalog" className="font-heading text-sm font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4 hover:text-gold-deep">
+        <Link href="/" className="font-heading text-sm font-semibold text-forest underline decoration-gold decoration-2 underline-offset-4 hover:text-gold-deep">
           See the full collection
         </Link>
       </div>

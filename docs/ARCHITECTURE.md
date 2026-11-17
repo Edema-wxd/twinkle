@@ -38,7 +38,7 @@ graph TD
 
 ### Shopper purchase flow
 
-1. The shopper browses `/catalog` — the page Server Component fetches active products directly from Supabase using the server client (`src/lib/supabase/server.ts`).
+1. The shopper browses the shop at `/` (the homepage; `/catalog` redirects there) — the page Server Component fetches active products directly from Supabase using the server client (`src/lib/supabase/server.ts`).
 2. The shopper adds a product to their cart. `CartContext` (a `useReducer`-based React context in `src/lib/cart/CartContext.tsx`) updates client-side state and persists cart items to `localStorage` under the key `twinkle_cart`.
 3. On the checkout page (`/checkout`), the shopper fills in delivery details. Before payment is initiated, the form calls `POST /api/checkout/save-intent` which writes an `abandoned_orders` row to Supabase for recovery tracking.
 4. The shopper clicks Pay. The Paystack Inline JS widget opens. Metadata (cart items, customer details, shipping) is embedded in the Paystack charge.

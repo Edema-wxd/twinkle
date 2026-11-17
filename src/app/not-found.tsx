@@ -10,7 +10,7 @@ export default function NotFound() {
         <h1 className="mt-8 font-display text-6xl leading-[1.2] text-cream md:text-7xl">This bead rolled away</h1>
         <p className="mt-4 font-body text-cream/80">The page you&apos;re looking for has moved or no longer exists.</p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/catalog" className="inline-flex min-h-12 items-center rounded-lg bg-gold-light px-7 font-heading font-semibold text-forest hover:bg-cream transition-colors">
+          <Link href="/" className="inline-flex min-h-12 items-center rounded-lg bg-gold-light px-7 font-heading font-semibold text-forest hover:bg-cream transition-colors">
             Shop the collection
           </Link>
           <a

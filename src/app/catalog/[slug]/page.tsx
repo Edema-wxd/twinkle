@@ -173,9 +173,8 @@ export default async function ProductDetailPage({
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
-      { '@type': 'ListItem', position: 2, name: 'Catalog', item: `${BASE}/catalog` },
-      { '@type': 'ListItem', position: 3, name: product.name, item: `${BASE}/catalog/${product.slug}` },
+      { '@type': 'ListItem', position: 1, name: 'Shop', item: BASE },
+      { '@type': 'ListItem', position: 2, name: product.name, item: `${BASE}/catalog/${product.slug}` },
     ],
   }
 
@@ -253,7 +252,7 @@ export default async function ProductDetailPage({
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" className="max-w-6xl mx-auto px-4 pt-6 pb-0">
         <Link
-          href="/catalog"
+          href="/"
           className="text-forest underline decoration-gold underline-offset-2 hover:text-gold-deep font-body text-sm"
         >
           Shop

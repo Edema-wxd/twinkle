@@ -56,7 +56,7 @@ export function UnsubscribeForm({ email, token }: { email: string; token: string
             delivery updates for anything you order.
           </p>
           <p className="mt-6">
-            <Link href="/catalog">Back to the shop</Link>
+            <Link href="/">Back to the shop</Link>
           </p>
         </>
       ) : (

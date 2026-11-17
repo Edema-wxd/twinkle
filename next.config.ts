@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "ta1u3ge9om.ufs.sh", pathname: "/f/*" },
     ],
   },
+  async redirects() {
+    return [
+      // The homepage is the shop. Old /catalog links (emails, WhatsApp, Google) land there; filters in the query are kept.
+      { source: "/catalog", destination: "/", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

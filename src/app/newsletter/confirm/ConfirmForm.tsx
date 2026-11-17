@@ -49,7 +49,7 @@ export function ConfirmForm({ email, token }: { email: string; token: string }) 
             unsubscribe link.
           </p>
           <p className="mt-6">
-            <Link href="/catalog">Browse the beads</Link>
+            <Link href="/">Browse the beads</Link>
           </p>
         </>
       ) : (

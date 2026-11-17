@@ -10,7 +10,7 @@ import { renderNewsletter, UNSUBSCRIBE_PLACEHOLDER, type NewsletterContent } fro
 /** The editable parts of a newsletter-style email (used for newsletters and the welcome email). */
 export type Draft = { subject: string; preheader: string; heroImageUrl: string | null; bodyHtml: string; ctaLabel: string; ctaUrl: string }
 
-export const EMPTY_DRAFT: Draft = { subject: '', preheader: '', heroImageUrl: null, bodyHtml: '', ctaLabel: 'Shop the collection', ctaUrl: '/catalog' }
+export const EMPTY_DRAFT: Draft = { subject: '', preheader: '', heroImageUrl: null, bodyHtml: '', ctaLabel: 'Shop the collection', ctaUrl: '/' }
 
 export const inputClass =
   'w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold'

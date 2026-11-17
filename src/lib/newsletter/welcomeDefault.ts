@@ -17,6 +17,6 @@ export const DEFAULT_WELCOME: WelcomeSettings = {
       '<p>Every bead is handcrafted in Nigeria. Have a look around the collection, and message us on WhatsApp any time if you need help choosing.</p>' +
       '<p>With love,<br>Unoma and the Twinkle Locs family</p>',
     ctaLabel: 'Shop the collection',
-    ctaUrl: '/catalog',
+    ctaUrl: '/',
   },
 }

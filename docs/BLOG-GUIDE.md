@@ -95,7 +95,7 @@ Google doesn't show how many people have added us.
 
 Admin → **Newsletter** emails everyone who joined from the footer or the blog.
 
-1. **Write:** a subject (type `{name}` for each person's first name), optional preview text (shown after the subject in the inbox), an optional photo, the message, and an optional button (for example "Shop the collection" → `/catalog`). The preview on the right shows exactly what subscribers get.
+1. **Write:** a subject (type `{name}` for each person's first name), optional preview text (shown after the subject in the inbox), an optional photo, the message, and an optional button (for example "Shop the collection" → `/`, the shop). The preview on the right shows exactly what subscribers get.
 2. **Send a test to yourself** and check it on your phone.
 3. **Send to N subscribers…**, then confirm. It sends in small batches with a progress bar (roughly 2 emails a second). You can pause and resume; nobody gets the same newsletter twice. If someone's address fails (for example a full or closed mailbox), you can retry them at the end.
 

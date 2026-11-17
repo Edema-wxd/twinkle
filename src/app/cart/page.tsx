@@ -44,7 +44,7 @@ export default function CartPage() {
             Your cart is empty.
           </p>
           <Link
-            href="/catalog"
+            href="/"
             className="inline-flex min-h-12 items-center rounded-lg bg-forest px-7 font-heading font-semibold text-cream hover:bg-forest/90 transition-colors"
           >
             Continue Shopping
@@ -111,7 +111,7 @@ export default function CartPage() {
               </Link>
 
               <Link
-                href="/catalog"
+                href="/"
                 className="text-sm text-charcoal/60 hover:text-forest underline text-center block mt-3"
               >
                 Continue Shopping

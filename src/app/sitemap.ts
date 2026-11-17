@@ -23,8 +23,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Audited 2026-04-01: all public routes present. /cart, /checkout, and /orders/ are intentionally excluded.
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: BASE, changeFrequency: 'weekly', priority: 1 },
-    { url: `${BASE}/catalog`, changeFrequency: 'weekly', priority: 0.9 },
+    // The homepage is the shop (/catalog redirects to it)
+    { url: BASE, changeFrequency: 'daily', priority: 1 },
     { url: `${BASE}/about`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE}/faq`, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE}/shipping`, changeFrequency: 'monthly', priority: 0.5 },

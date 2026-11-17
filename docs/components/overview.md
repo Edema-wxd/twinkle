@@ -33,14 +33,6 @@ src/components/
 │   └── PaystackButton.tsx
 ├── faq/
 │   └── FaqAccordion.tsx
-├── home/
-│   ├── AddToCartModal.tsx
-│   ├── BrandStorySection.tsx
-│   ├── FeaturedProductsSection.tsx
-│   ├── HeroSection.tsx
-│   ├── InstagramCTASection.tsx
-│   ├── ProductCard.tsx
-│   └── TestimonialsSection.tsx
 ├── layout/
 │   ├── Footer.tsx
 │   ├── Header.tsx
@@ -154,7 +146,7 @@ Also re-exports `lineKey` from `@/lib/cart/cartReducer` for convenience.
 
 ## `catalog/`
 
-Components for the `/catalog` product listing page.
+Components for the shop, which is the homepage (`/`). `/catalog` redirects there; product pages stay at `/catalog/<slug>`.
 
 ### `CatalogClient`
 
@@ -253,58 +245,6 @@ Client component. Renders FAQs grouped by `category` from the Supabase `faqs` ta
 | Prop | Type | Description |
 |------|------|-------------|
 | `faqs` | `Faq[]` | Array of FAQ rows from the `faqs` Supabase table |
-
----
-
-## `home/`
-
-Section components assembled on the homepage (`/`).
-
-### `HeroSection`
-
-Server component. Full-viewport hero with the headline "Adorn Your Locs", a subheading, a CTA link to `/catalog`, and a secondary WhatsApp order link. No props.
-
-### `FeaturedProductsSection`
-
-Client component. A 4-column product grid for featured products. Manages `selectedProduct` state. Clicking "Add to cart" on a `ProductCard` opens `AddToCartModal` for that product.
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `products` | `Product[]` | Featured products fetched server-side |
-
-### `ProductCard`
-
-Used exclusively in `FeaturedProductsSection`. Renders a product image, name, price range, and an "Add to cart" button that calls `onAddToCart`. Does not dispatch to the cart directly — delegates to the parent.
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `product` | `Product` | Product to display |
-| `onAddToCart` | `() => void` | Called when the button is clicked |
-
-### `AddToCartModal`
-
-Client component. A centred overlay modal (`role="dialog"`) for adding a product to the cart from the homepage product grid. Lets the shopper select variant (size), pack size (tier), and thread colour. Colour selection is required for non-Tool products before the "Add to cart" button is enabled. Dispatches `ADD_ITEM` to `CartContext` on confirmation, then closes.
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `product` | `Product` | Product whose options are being selected |
-| `onClose` | `() => void` | Closes the modal |
-
-### `BrandStorySection`
-
-Server component. Two-column section with brand narrative text and an image placeholder. Links to `/about`. Content contains `TODO` comments for placeholder copy to be replaced with real brand content. No props.
-
-### `TestimonialsSection`
-
-Client component. Auto-rotating testimonial carousel with a 5-second interval. Dot indicators allow manual navigation.
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `testimonials` | `Testimonial[]` | Testimonial objects from `@/lib/mock/testimonials` |
-
-### `InstagramCTASection`
-
-Server component. Dark cocoa-background section linking to the brand Instagram account. Handle and URL come from `BUSINESS.instagram` in `@/lib/config/business`. No props.
 
 ---
 

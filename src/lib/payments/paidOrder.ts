@@ -312,7 +312,6 @@ export async function recordPaidOrder(charge: ChargeInput): Promise<RecordedOrde
   }
   // Cached shop pages show stock, so refresh the ones this order touched
   try {
-    revalidatePath('/catalog')
     revalidatePath('/')
     for (const slug of new Set(priced.slugs)) revalidatePath(`/catalog/${slug}`)
   } catch {

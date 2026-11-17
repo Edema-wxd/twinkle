@@ -113,7 +113,7 @@ export function CartDrawer() {
               </svg>
               <p className="font-body text-charcoal/60 mb-4">Your cart is empty</p>
               <Link
-                href="/catalog"
+                href="/"
                 onClick={() => dispatch({ type: 'CLOSE_DRAWER' })}
                 className="font-heading text-sm font-semibold text-gold underline hover:text-forest transition-colors"
               >

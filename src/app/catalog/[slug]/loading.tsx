@@ -6,7 +6,7 @@ export default function ProductLoading() {
     <div className="bg-cream min-h-screen" aria-busy="true">
       <p className="sr-only" role="status">Loading product…</p>
       <nav aria-label="Breadcrumb" className="max-w-6xl mx-auto px-4 pt-6 pb-0">
-        <Link href="/catalog" className="text-forest underline decoration-gold underline-offset-2 hover:text-gold-deep font-body text-sm">
+        <Link href="/" className="text-forest underline decoration-gold underline-offset-2 hover:text-gold-deep font-body text-sm">
           Shop
         </Link>
       </nav>

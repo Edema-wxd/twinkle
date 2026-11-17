@@ -215,7 +215,7 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
       </div>
 
       <div className="text-center mt-6">
-        <Link href="/catalog" className="font-heading font-semibold text-sm text-gold-deep underline underline-offset-2 hover:text-forest transition-colors">
+        <Link href="/" className="font-heading font-semibold text-sm text-gold-deep underline underline-offset-2 hover:text-forest transition-colors">
           Continue shopping →
         </Link>
       </div>

@@ -8,12 +8,16 @@ import { useCart } from '@/lib/cart/CartContext'
 import Image from 'next/image'
 
 const navLinks = [
-  { href: '/catalog', label: 'Shop' },
+  { href: '/', label: 'Shop' },
   { href: '/about', label: 'About' },
   { href: '/blog', label: 'Blog' },
   { href: '/faq', label: 'FAQ' },
   { href: '/shipping', label: 'Shipping' },
 ]
+
+/** Shop (the homepage) is also current on product pages, which live under /catalog/ */
+const isCurrent = (pathname: string, href: string) =>
+  href === '/' ? pathname === '/' || pathname.startsWith('/catalog/') : pathname === href || pathname.startsWith(href + '/')
 
 export function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -39,7 +43,7 @@ export function Header() {
                 <Link
                   key={href}
                   href={href}
-                  aria-current={pathname === href || pathname.startsWith(href + '/') ? 'page' : undefined}
+                  aria-current={isCurrent(pathname, href) ? 'page' : undefined}
                   className="relative py-2 font-heading text-sm font-medium text-cream/90 hover:text-gold-light transition-colors aria-[current=page]:text-gold-light after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:bg-gold-light after:scale-x-0 aria-[current=page]:after:scale-x-100 after:transition-transform"
                 >
                   {label}
@@ -124,7 +128,7 @@ export function Header() {
               key={href}
               href={href}
               onClick={closeDrawer}
-              aria-current={pathname === href || pathname.startsWith(href + '/') ? 'page' : undefined}
+              aria-current={isCurrent(pathname, href) ? 'page' : undefined}
               className="font-heading text-lg font-medium text-charcoal py-3 border-b border-charcoal/10 hover:text-gold-deep aria-[current=page]:text-forest aria-[current=page]:font-semibold transition-colors"
             >
               {label}

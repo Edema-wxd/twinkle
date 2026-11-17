@@ -11,7 +11,7 @@ export default function ProductNotFound() {
           This product doesn&apos;t exist or may have been removed.
         </p>
         <Link
-          href="/catalog"
+          href="/"
           className="font-body text-sm text-gold hover:underline"
         >
           ← Back to catalog

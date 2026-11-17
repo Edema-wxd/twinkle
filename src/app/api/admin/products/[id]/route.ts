@@ -148,7 +148,6 @@ export async function PUT(
       }
     }
 
-    revalidatePath('/catalog')
     revalidatePath('/')
     revalidatePath(`/catalog/${data.slug}`)
     return NextResponse.json(data)
@@ -191,7 +190,6 @@ export async function DELETE(
       }
     }
 
-    revalidatePath('/catalog')
     revalidatePath('/')
     return NextResponse.json({ success: true })
   } catch (err) {

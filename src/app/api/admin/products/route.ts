@@ -115,7 +115,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })
     }
 
-    revalidatePath('/catalog')
     revalidatePath('/')
     return NextResponse.json(data, { status: 201 })
   } catch (err: unknown) {
