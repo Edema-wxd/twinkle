@@ -12,5 +12,7 @@ export async function GET(req: NextRequest) {
 
   const info = await getShippingInfo()
   const { cost, deliveryTime, zone } = quoteShipping(info, state, lga)
-  return NextResponse.json({ state, lga, cost, deliveryTime, zone: zone ? { id: zone.id, name: zone.name } : null })
+  // The browser applies free delivery with the same rule as the server (lib/checkout/freeDelivery.ts)
+  const freeOver = state === 'Lagos' ? info.freeLagosOver : 0
+  return NextResponse.json({ state, lga, cost, deliveryTime, zone: zone ? { id: zone.id, name: zone.name } : null, freeOver })
 }

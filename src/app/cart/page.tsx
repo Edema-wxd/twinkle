@@ -5,6 +5,8 @@ import { useCart } from '@/lib/cart/CartContext';
 import { BUSINESS } from '@/lib/config/business';
 import { CartLineItem, lineKey } from '@/components/cart/CartLineItem';
 import { UndoRemoveBar } from '@/components/cart/UndoRemoveBar';
+import { FreeDeliveryNudge } from '@/components/cart/FreeDeliveryNudge';
+import { PaymentMethods } from '@/components/checkout/PaymentMethods';
 import { useRemoveWithUndo } from '@/lib/cart/useRemoveWithUndo';
 
 export default function CartPage() {
@@ -85,9 +87,10 @@ export default function CartPage() {
                   ₦{subtotal.toLocaleString()}
                 </span>
               </div>
-              <p className="font-body text-xs text-charcoal/50 mt-1 mb-4">
+              <p className="font-body text-xs text-charcoal/50 mt-1 mb-3">
                 Shipping calculated at checkout
               </p>
+              <FreeDeliveryNudge subtotal={subtotal} className="mb-4" />
 
               <hr className="border-charcoal/10 mb-4" />
 
@@ -109,6 +112,7 @@ export default function CartPage() {
               >
                 Checkout
               </Link>
+              <PaymentMethods className="mt-3" />
 
               <Link
                 href="/"

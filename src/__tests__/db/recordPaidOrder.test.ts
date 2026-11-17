@@ -8,6 +8,8 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 import { eq } from 'drizzle-orm'
 import { db, resetDb, products, productStock, orders, orderItems, promoCodes, abandonedOrders } from '../helpers/pgliteDb'
 import { recordPaidOrder, type ChargeInput, type ClaimedItem } from '@/lib/payments/paidOrder'
+import { LAGOS_ZONES } from '@/lib/checkout/shippingZones'
+import { settings } from '../helpers/pgliteDb'
 
 const GOLD = '11111111-1111-1111-1111-111111111111'
 const SHEARS = '22222222-2222-2222-2222-222222222222'
@@ -171,5 +173,42 @@ describe('recordPaidOrder (real database)', () => {
   it('ignores a charge with unusable metadata', async () => {
     expect(await recordPaidOrder({ ...charge('tw-9', [gold()], 19500), metadata: { nonsense: true } })).toBeNull()
     expect(await db.$count(orders)).toBe(0)
+  })
+
+  describe('free Lagos delivery over the threshold (default ₦100,000)', () => {
+    const zone = LAGOS_ZONES[0]
+    // Big orders: plenty of stock so stock never holds them
+    beforeEach(async () => {
+      await db.update(productStock).set({ units: 5000 })
+    })
+    const lagos = (ref: string, items: ClaimedItem[], amountNaira: number, extra: Record<string, unknown> = {}) => {
+      const c = charge(ref, items, amountNaira, extra)
+      const meta = c.metadata as { customer_details: Record<string, string> }
+      meta.customer_details = { ...meta.customer_details, state: 'Lagos', lga: zone.areas[0] }
+      return c
+    }
+
+    it('charges no delivery once the items reach ₦100,000', async () => {
+      const r = await recordPaidOrder(lagos('tw-f1', [gold({ tierQty: 100, unitPrice: 28000, quantity: 4 })], 112000))
+      expect(r).toMatchObject({ status: 'paid', paymentIssue: null })
+      expect((await db.select().from(orders))[0]).toMatchObject({ subtotal: 112000, shippingCost: 0, total: 112000 })
+    })
+
+    it('still charges delivery below it, and a promo that takes the items under it counts', async () => {
+      expect((await recordPaidOrder(lagos('tw-f2', [gold({ tierQty: 100, unitPrice: 28000, quantity: 3 })], 84000 + zone.defaultFee)))?.status).toBe('paid')
+      await db.insert(promoCodes).values({ code: 'TEN', discountType: 'percentage', discountValue: 10 })
+      // ₦112,000 - 10% = ₦100,800: still over, so free
+      expect((await recordPaidOrder(lagos('tw-f3', [gold({ tierQty: 100, unitPrice: 28000, quantity: 4 })], 100800, { promo_code: 'TEN' })))?.status).toBe('paid')
+      // ₦99,000 - 10% = ₦89,100: under, so delivery is charged and paying without it is held
+      const items = [gold({ tierQty: 100, unitPrice: 28000, quantity: 3 }), gold({ unitPrice: 15000, quantity: 1, threadColour: 'red' })]
+      expect((await recordPaidOrder(lagos('tw-f4', items, 89100, { promo_code: 'TEN' })))?.status).toBe('payment_review')
+      expect((await recordPaidOrder(lagos('tw-f5', items, 89100 + zone.defaultFee, { promo_code: 'TEN' })))?.status).toBe('paid')
+    })
+
+    it('can be switched off in Admin → Shipping', async () => {
+      await db.insert(settings).values({ key: 'shipping_free_lagos_over', value: '0' })
+      const r = await recordPaidOrder(lagos('tw-f6', [gold({ tierQty: 100, unitPrice: 28000, quantity: 4 })], 112000))
+      expect(r?.status).toBe('payment_review')
+    })
   })
 })

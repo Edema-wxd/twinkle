@@ -7,6 +7,8 @@ import { useCart } from '@/lib/cart/CartContext';
 import { lineKey } from '@/lib/cart/cartReducer';
 import { CartLineItem } from './CartLineItem';
 import { UndoRemoveBar } from './UndoRemoveBar';
+import { FreeDeliveryNudge } from './FreeDeliveryNudge';
+import { PaymentMethods } from '@/components/checkout/PaymentMethods';
 import { useRemoveWithUndo } from '@/lib/cart/useRemoveWithUndo';
 
 export function CartDrawer() {
@@ -149,9 +151,10 @@ export function CartDrawer() {
               ₦{subtotal.toLocaleString()}
             </span>
           </div>
-          <p className="font-body text-xs text-charcoal/50 mb-4">
+          <p className="font-body text-xs text-charcoal/50 mb-3">
             Shipping calculated at checkout
           </p>
+          <FreeDeliveryNudge subtotal={subtotal} className="mb-4" />
 
           {/* Checkout CTA */}
           {items.length > 0 ? (
@@ -170,6 +173,7 @@ export function CartDrawer() {
               Checkout
             </div>
           )}
+          {items.length > 0 && <PaymentMethods className="mt-3" />}
         </div>
       </div>
     </>

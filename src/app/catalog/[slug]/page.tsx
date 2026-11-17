@@ -11,6 +11,8 @@ import { ProductReviews } from '@/components/product/ProductReviews'
 import { summariseRatings } from '@/components/product/StarRating'
 import { RelatedProducts } from '@/components/product/RelatedProducts'
 import { productDescriptionHtml, productDescriptionText } from '@/lib/product-description'
+import { popularChoice } from '@/lib/products/popularChoice'
+import { getShippingInfo } from '@/lib/checkout/shippingInfo'
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>
@@ -103,6 +105,8 @@ export default async function ProductDetailPage({
   const [product] = await applyStockToProducts([productBase])
 
   // Fetch reviews for this product
+  const popularPromise = popularChoice(product.id)
+  const shippingPromise = getShippingInfo()
   const reviewsData = await db
     .select()
     .from(reviewsTable)
@@ -268,6 +272,8 @@ export default async function ProductDetailPage({
           descriptionHtml={productDescriptionHtml(product.description)}
           rating={summariseRatings(reviews.map((r) => r.rating))}
           addOn={shearsProduct}
+          popular={await popularPromise}
+          freeLagosOver={(await shippingPromise).freeLagosOver}
         />
       </div>
 

@@ -1,6 +1,7 @@
 import { inArray } from 'drizzle-orm'
 import { db, settings as settingsTable } from '@/db'
 import { deliveryAreaFromPayload } from '@/lib/orders/deliveryPlace'
+import { DEFAULT_FREE_LAGOS_OVER } from './freeDelivery'
 import { LAGOS_ZONES, dbKeyForZone, getZoneIdForArea, type ShippingZone } from './shippingZones'
 
 /**
@@ -24,6 +25,7 @@ const KEYS = [
   'shipping_other_days',
   'shipping_intl_message',
   'shipping_page_intro',
+  'shipping_free_lagos_over',
   ...LAGOS_ZONES.map((z) => dbKeyForZone(z.id)),
 ]
 
@@ -37,6 +39,8 @@ export type ShippingInfo = {
   otherDays: string
   intlMessage: string
   pageIntro: string
+  /** Lagos delivery is free when the items (after any promo) reach this. 0 = no offer. */
+  freeLagosOver: number
 }
 
 function parseRate(value: string | undefined, fallback: number): number {
@@ -65,6 +69,7 @@ export async function getShippingInfo(): Promise<ShippingInfo> {
     otherDays: raw.shipping_other_days?.trim() || DEFAULT_OTHER_STATES_DAYS,
     intlMessage: raw.shipping_intl_message?.trim() || "Hi, I'd like a shipping quote for an international order.",
     pageIntro: raw.shipping_page_intro?.trim() || 'We deliver across Nigeria.',
+    freeLagosOver: parseRate(raw.shipping_free_lagos_over, DEFAULT_FREE_LAGOS_OVER),
   }
 }
 

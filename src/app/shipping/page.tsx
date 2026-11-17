@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const info = await getShippingInfo()
   const title = 'Shipping Rates Nigeria - Lagos & Nationwide | Twinkle Locs'
   const fastest = info.zones[0]
-  const description = `Lagos delivery from ${formatNaira(info.lagosFrom)} (${fastest.deliveryTime} in the ${fastest.name}). Other Nigerian states ${formatNaira(info.otherRate)}, ${info.otherDays}. International shipping on request.`
+  const description = `Lagos delivery from ${formatNaira(info.lagosFrom)} (${fastest.deliveryTime} in the ${fastest.name})${info.freeLagosOver > 0 ? `, free on orders over ${formatNaira(info.freeLagosOver)}` : ''}. Other Nigerian states ${formatNaira(info.otherRate)}, ${info.otherDays}. International shipping on request.`
   return {
     title: { absolute: title },
     description,
@@ -32,7 +32,11 @@ export default async function ShippingPage() {
 
           <dl className="mt-10 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
             {[
-              { k: 'Lagos', v: `${formatNaira(info.lagosFrom)} to ${formatNaira(info.lagosTo)}`, s: 'By delivery area, same day in most of Lagos' },
+              {
+                k: 'Lagos',
+                v: `${formatNaira(info.lagosFrom)} to ${formatNaira(info.lagosTo)}`,
+                s: info.freeLagosOver > 0 ? `By delivery area. Free on orders over ${formatNaira(info.freeLagosOver)}` : 'By delivery area, same day in most of Lagos',
+              },
               { k: 'Rest of Nigeria', v: formatNaira(info.otherRate), s: `Flat rate, ${info.otherDays}` },
               { k: 'International', v: 'On request', s: 'Quoted on WhatsApp within 24 hours' },
             ].map((c) => (
@@ -98,6 +102,11 @@ export default async function ShippingPage() {
               </li>
             ))}
           </ul>
+          {info.freeLagosOver > 0 && (
+            <p className="mt-4 rounded-xl bg-green-50 px-4 py-3 font-body text-sm font-semibold text-green-800 ring-1 ring-green-200">
+              Free Lagos delivery on orders over {formatNaira(info.freeLagosOver)}, any zone.
+            </p>
+          )}
           <p className="mt-4 font-body text-sm text-charcoal/70">
             Not sure which zone you&apos;re in, or your area isn&apos;t listed?{' '}
             <a

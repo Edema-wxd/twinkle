@@ -22,6 +22,9 @@ export function ShippingForm({ settings }: ShippingFormProps) {
     return init
   })
 
+  // Free Lagos delivery over this order value ("0" = off)
+  const [freeOver, setFreeOver] = useState(settings.shipping_free_lagos_over ?? '100000')
+
   // International
   const [intlMessage, setIntlMessage] = useState(
     settings.shipping_intl_message ??
@@ -59,6 +62,7 @@ export function ShippingForm({ settings }: ShippingFormProps) {
             shipping_other_days: otherDays,
             shipping_intl_message: intlMessage,
             shipping_page_intro: pageIntro,
+            shipping_free_lagos_over: freeOver.trim() === '' ? '0' : freeOver,
             ...zonePayload,
           }),
         })
@@ -157,6 +161,31 @@ export function ShippingForm({ settings }: ShippingFormProps) {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Free Lagos delivery */}
+      <section className="space-y-4">
+        <div>
+          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Free Lagos Delivery</p>
+          <div className="mt-2 border-t border-stone-700" />
+          <p className="text-xs text-stone-500 mt-2">
+            Lagos orders at or over this amount (items after any promo code, before delivery) get free delivery to any zone.
+            Shown on product pages, the cart (&ldquo;₦X away from free delivery&rdquo;), checkout and /shipping. Set 0 to switch it off.
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <label htmlFor="free-lagos-over" className="block text-sm font-medium text-stone-300">Free delivery on orders over (₦)</label>
+          <input
+            id="free-lagos-over"
+            type="number"
+            value={freeOver}
+            onChange={(e) => setFreeOver(e.target.value)}
+            placeholder="100000"
+            min="0"
+            step="1000"
+            className="w-48 px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
+          />
         </div>
       </section>
 

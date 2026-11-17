@@ -6,6 +6,7 @@ import { lineKey } from '@/lib/cart/cartReducer';
 import type { CartItem } from '@/lib/cart/types';
 import type { CustomerDetails } from './CheckoutForm';
 import { PaystackButton } from './PaystackButton';
+import { amountToFreeDelivery, freeDeliveryApplies, naira } from '@/lib/checkout/freeDelivery';
 import { getZoneIdForArea, getZoneById } from '@/lib/checkout/shippingZones';
 
 interface OrderReviewProps {
@@ -85,6 +86,8 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
 
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const [shippingCost, setShippingCost] = useState<number | null>(null);
+  // Free Lagos delivery threshold for this destination (0 = no offer), from the server
+  const [freeOver, setFreeOver] = useState(0);
   const [deliveryTime, setDeliveryTime] = useState<string | null>(null);
   const [shippingError, setShippingError] = useState<string | null>(null);
 
@@ -160,11 +163,12 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
 
     fetch(`/api/checkout/shipping-cost?${params.toString()}`)
       .then(async (res) => {
-        const data = (await res.json().catch(() => null)) as { cost?: unknown; deliveryTime?: unknown; error?: string } | null;
+        const data = (await res.json().catch(() => null)) as { cost?: unknown; deliveryTime?: unknown; freeOver?: unknown; error?: string } | null;
         if (!res.ok) throw new Error(data?.error ?? `Failed to fetch shipping (${res.status})`);
         if (typeof data?.cost !== 'number') throw new Error('Invalid shipping response');
         if (!cancelled) {
           setShippingCost(data.cost);
+          setFreeOver(typeof data.freeOver === 'number' ? data.freeOver : 0);
           setDeliveryTime(typeof data.deliveryTime === 'string' ? data.deliveryTime : null);
         }
       })
@@ -181,8 +185,12 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
     };
   }, [customerDetails.state, customerDetails.lga, shippingAttempt]);
 
-  const effectiveShipping = appliedPromo?.discountType === 'free_shipping' ? 0 : (shippingCost ?? 0);
   const subtotalDiscount = appliedPromo?.discountType !== 'free_shipping' ? (appliedPromo?.discountAmount ?? 0) : 0;
+  // Same rule the server charges by (lib/checkout/freeDelivery.ts)
+  const freeByThreshold = freeDeliveryApplies(customerDetails.state, subtotal - subtotalDiscount, freeOver);
+  const toFree = amountToFreeDelivery(customerDetails.state, subtotal - subtotalDiscount, freeOver);
+  const shippingIsFree = appliedPromo?.discountType === 'free_shipping' || freeByThreshold;
+  const effectiveShipping = shippingIsFree ? 0 : (shippingCost ?? 0);
   const total = subtotal - subtotalDiscount + effectiveShipping;
   const totalKobo = total * 100;
 
@@ -194,7 +202,7 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
 
   const shippingLabel =
     zone
-      ? `${customerDetails.lga} (Zone ${zone.id} — ${zone.name})`
+      ? `${customerDetails.lga} (Zone ${zone.id}, ${zone.name})`
       : customerDetails.state;
 
   const metadata = {
@@ -375,11 +383,19 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
           <span className="font-body text-sm text-charcoal">
             {shippingCost === null
               ? (shippingError ? 'Unavailable' : 'Loading…')
-              : appliedPromo?.discountType === 'free_shipping'
+              : shippingIsFree
                 ? <><s className="text-charcoal/40">₦{shippingCost.toLocaleString()}</s> <span className="text-green-600 font-semibold">FREE</span></>
                 : `₦${shippingCost.toLocaleString()}`}
           </span>
         </div>
+        {shippingCost !== null && freeByThreshold && appliedPromo?.discountType !== 'free_shipping' && (
+          <p className="font-body text-xs font-semibold text-green-700 mb-2">You get free Lagos delivery on orders over {naira(freeOver)}.</p>
+        )}
+        {shippingCost !== null && !shippingIsFree && toFree !== null && toFree > 0 && (
+          <p className="font-body text-xs text-charcoal/70 mb-2">
+            Add <strong className="text-forest">{naira(toFree)}</strong> more for free Lagos delivery.
+          </p>
+        )}
         {subtotalDiscount > 0 && (
           <div className="flex justify-between items-center mb-2">
             <span className="font-body text-sm text-green-600">Discount ({appliedPromo?.code})</span>

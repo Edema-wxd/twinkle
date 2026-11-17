@@ -2,6 +2,7 @@ import { and, eq, gte, inArray, sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { db, orders, orderItems, abandonedOrders, products, promoCodes } from '@/db'
 import { getShippingInfo, quoteShipping, formatNaira } from '@/lib/checkout/shippingInfo'
+import { freeDeliveryApplies } from '@/lib/checkout/freeDelivery'
 import type { ProductVariant } from '@/lib/types/product'
 import type { OrderEmailItem } from '@/lib/notifications/customerEmail'
 import { aggregateNeeds, getStockMap, takeStock, withStock } from '@/lib/stock'
@@ -197,6 +198,9 @@ export async function priceOrder(meta: CheckoutMetadata): Promise<PricedOrder> {
       else if (promo.discountType === 'fixed') discount = Math.min(promo.discountValue, subtotal)
     }
   }
+
+  // Free Lagos delivery over the threshold (same rule checkout shows the customer)
+  if (freeDeliveryApplies(meta.customer_details.state, subtotal - discount, info.freeLagosOver)) shipping = 0
 
   return { lines, slugs: rows.map((r) => r.slug), subtotal, discount, promoCode, shipping, total: subtotal - discount + shipping, problems }
 }
