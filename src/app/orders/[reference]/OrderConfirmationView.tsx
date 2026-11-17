@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { PublicOrder, PublicOrderStatus } from '@/lib/orders/publicOrder';
 import { THREAD_COLOURS } from '@/lib/cart/threadColours';
 import { BUSINESS } from '@/lib/config/business';
+import { deliveryPlace } from '@/lib/orders/deliveryPlace';
 
 interface OrderConfirmationViewProps {
   order: PublicOrder;
@@ -182,7 +183,7 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
           <br />
           {order.delivery_address}
           <br />
-          {order.delivery_state}
+          {deliveryPlace(order.delivery_state, order.delivery_area)}
         </p>
         {order.status !== 'delivered' && (
           <p className="font-body text-sm text-charcoal/70 mt-3">

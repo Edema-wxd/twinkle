@@ -25,7 +25,7 @@ const baseRow = (over: Record<string, unknown> = {}) => ({
   customerIp: '102.89.1.1',
   deliveryAddress: '12 Allen Avenue',
   deliveryState: 'Lagos',
-  paystackPayload: { authorization: { bank: 'GTBank', last4: '4081' }, customer: { email: 'ada@example.com' }, ip_address: '102.89.1.1' },
+  paystackPayload: { authorization: { bank: 'GTBank', last4: '4081' }, customer: { email: 'ada@example.com' }, ip_address: '102.89.1.1', metadata: { customer_details: { lga: 'Lekki Phase 1', phone: '08031234567' } } },
   trackingNumber: 'GIG123',
   subtotal: 30000,
   shippingCost: 3000,
@@ -46,7 +46,7 @@ describe('getPublicOrder', () => {
     for (const secret of ['ada@example.com', '08031234567', '102.89.1.1', '4081', 'GTBank', 'paystack_payload', 'authorization']) {
       expect(text).not.toContain(secret)
     }
-    expect(order).toMatchObject({ reference: 'tw-1-abcde', customer_name: 'Ada Obi', delivery_address: '12 Allen Avenue', total: 33000 })
+    expect(order).toMatchObject({ reference: 'tw-1-abcde', customer_name: 'Ada Obi', delivery_address: '12 Allen Avenue', delivery_area: 'Lekki Phase 1', total: 33000 })
   })
 
   it('works out the promo discount from the totals', async () => {

@@ -1,6 +1,7 @@
 import { eq, sql } from 'drizzle-orm'
 import { db, orders } from '@/db'
 import { deliveryEstimateForOrder, getShippingInfo } from '@/lib/checkout/shippingInfo'
+import { deliveryAreaFromPayload } from './deliveryPlace'
 
 /**
  * What the customer's order page (/orders/[reference]) may show.
@@ -28,6 +29,8 @@ export type PublicOrder = {
   customer_name: string
   delivery_address: string
   delivery_state: string
+  /** The area chosen at checkout, e.g. "Lekki Phase 1" (null for older orders or when none was asked) */
+  delivery_area: string | null
   delivery_estimate: string
   tracking_number: string | null
   subtotal: number
@@ -69,6 +72,7 @@ export async function getPublicOrder(reference: string): Promise<PublicOrder | n
     customer_name: row.customerName,
     delivery_address: row.deliveryAddress,
     delivery_state: row.deliveryState,
+    delivery_area: deliveryAreaFromPayload(row.paystackPayload),
     // Uses the payload server-side only (for the Lagos area); the payload itself isn't returned
     delivery_estimate: deliveryEstimateForOrder(await getShippingInfo(), row.deliveryState, row.paystackPayload),
     tracking_number: status === 'shipped' || status === 'delivered' ? (row.trackingNumber ?? null) : null,

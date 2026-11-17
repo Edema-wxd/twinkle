@@ -7,6 +7,7 @@ import { orders, orderStatusEmails } from '@/db'
 import { eq, and } from 'drizzle-orm'
 import { Order, OrderItem, Json } from '@/types/db'
 import { OrderStatusSelect } from '../../../../_components/OrderStatusSelect'
+import { deliveryAreaFromPayload, deliveryPlace } from '@/lib/orders/deliveryPlace'
 import { ReviewReminderButton } from '../../../../_components/ReviewReminderButton'
 
 type FullOrder = Order & { order_items: OrderItem[] }
@@ -192,9 +193,9 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
 
           <div>
             <p className="text-stone-400 text-xs uppercase tracking-wide mb-1">
-              Delivery State
+              Delivery Area
             </p>
-            <p className="text-white">{order.delivery_state}</p>
+            <p className="text-white">{deliveryPlace(order.delivery_state, deliveryAreaFromPayload(result.paystackPayload))}</p>
           </div>
 
           <div className="sm:col-span-2">

@@ -1,5 +1,6 @@
 import { inArray } from 'drizzle-orm'
 import { db, settings as settingsTable } from '@/db'
+import { deliveryAreaFromPayload } from '@/lib/orders/deliveryPlace'
 import { LAGOS_ZONES, dbKeyForZone, getZoneIdForArea, type ShippingZone } from './shippingZones'
 
 /**
@@ -95,8 +96,7 @@ export function formatNaira(n: number): string {
 
 /** Delivery estimate for a placed order (the Lagos area lives in the Paystack metadata). */
 export function deliveryEstimateForOrder(info: ShippingInfo, state: string, paystackPayload: unknown): string {
-  const meta = (paystackPayload as { metadata?: { customer_details?: { lga?: unknown } } } | null)?.metadata
-  const area = typeof meta?.customer_details?.lga === 'string' ? meta.customer_details.lga : null
+  const area = deliveryAreaFromPayload(paystackPayload)
   const q = quoteShipping(info, state, area)
   if (state === 'Lagos') {
     return q.zone ? `${q.deliveryTime} after dispatch (${q.zone.name}, Lagos)` : `same day or next day within Lagos`
