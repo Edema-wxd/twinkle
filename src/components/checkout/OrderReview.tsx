@@ -430,14 +430,16 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
       )}
 
       {/* Action buttons */}
-      <div className="flex gap-3 mt-6">
+      {/* items-start: Back stays the height of the Pay button, not Pay plus the note under it */}
+      <div className="flex items-start gap-3 mt-6">
         <button
+          type="button"
           onClick={onBack}
-          className="flex-1 border border-charcoal/30 text-charcoal font-heading font-semibold py-4 rounded-lg hover:border-forest hover:text-forest transition-colors"
+          className="shrink-0 min-h-14 px-6 sm:px-10 border border-charcoal/30 text-charcoal font-heading font-semibold rounded-lg hover:border-forest hover:text-forest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
         >
           Back
         </button>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <PaystackButton
             config={{
               email: customerDetails.email,
