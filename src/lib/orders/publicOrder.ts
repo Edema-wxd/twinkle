@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { db, orders } from '@/db'
 import { deliveryEstimateForOrder, getShippingInfo } from '@/lib/checkout/shippingInfo'
 
@@ -44,10 +44,20 @@ export async function getPublicOrder(reference: string): Promise<PublicOrder | n
   // Paystack references we create look like tw-<timestamp>-<random>; anything wildly different can't be ours
   if (!reference || reference.length > 100) return null
 
-  const row = await db.query.orders.findFirst({
+  let row = await db.query.orders.findFirst({
     where: eq(orders.paystackReference, reference),
     with: { orderItems: true },
   })
+  if (!row) {
+    // Links that were lowercased by an older version of the site (or retyped): match
+    // regardless of case, but only when exactly one order fits
+    const matches = await db.query.orders.findMany({
+      where: sql`lower(${orders.paystackReference}) = lower(${reference})`,
+      with: { orderItems: true },
+      limit: 2,
+    })
+    if (matches.length === 1) row = matches[0]
+  }
   if (!row) return null
 
   const status = (KNOWN as string[]).includes(row.status) ? (row.status as PublicOrderStatus) : 'paid'

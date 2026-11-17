@@ -3,10 +3,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const { state } = vi.hoisted(() => ({ state: { row: null as Record<string, unknown> | null } }))
 
 vi.mock('@/db', () => ({
-  db: { query: { orders: { findFirst: vi.fn(async () => state.row) } } },
+  db: { query: { orders: { findFirst: vi.fn(async () => state.row), findMany: vi.fn(async () => []) } } },
   orders: { paystackReference: 'paystack_reference' },
 }))
-vi.mock('drizzle-orm', () => ({ eq: vi.fn() }))
+vi.mock('drizzle-orm', () => ({ eq: vi.fn(), sql: vi.fn() }))
 vi.mock('@/lib/checkout/shippingInfo', () => ({
   getShippingInfo: vi.fn(async () => ({})),
   deliveryEstimateForOrder: vi.fn(() => '1–2 hrs after dispatch (Lekki Corridor, Lagos)'),

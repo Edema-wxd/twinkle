@@ -18,7 +18,10 @@ export async function middleware(request: NextRequest) {
   // and never API routes, whose case is meaningful to callers.
   const isApi = pathname.startsWith('/api/')
   const looksLikeFile = /\.[a-z0-9]+$/i.test(pathname)
-  if (!isApi && !looksLikeFile && pathname !== pathname.toLowerCase()) {
+  // Payment references are case-sensitive (Paystack can issue ones with capitals),
+  // so lowercasing /orders/<reference> would point at an order that doesn't exist
+  const isOrderPage = pathname.startsWith('/orders/')
+  if (!isApi && !looksLikeFile && !isOrderPage && pathname !== pathname.toLowerCase()) {
     const url = request.nextUrl.clone()
     url.pathname = pathname.toLowerCase()
     return NextResponse.redirect(url, 308)
