@@ -47,7 +47,13 @@ export function PaystackButton({ config, onSuccess, onClose, disabled, beforePay
           setOpening(false);
         },
         onSuccess(tranx) {
-          onSuccess(tranx.reference);
+          // Use the reference we created: it's the one Paystack's webhook records the order under.
+          // The popup can report a different, Paystack-internal reference (seen with some payment
+          // methods), which sent customers to an order page that never confirmed.
+          if (tranx.reference && tranx.reference !== config.reference) {
+            console.warn('[paystack] popup reported a different reference', { ours: config.reference, popup: tranx.reference });
+          }
+          onSuccess(config.reference);
         },
         onCancel() {
           setOpening(false);
