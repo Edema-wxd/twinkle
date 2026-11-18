@@ -1,5 +1,4 @@
 import { HERO_VARIANT_KEY, SIZE_GUIDE_SIZES, hasPlaceholder, type LandingConfig } from '@/lib/landing/config'
-import { freeDeliveryLine } from '@/lib/checkout/freeDelivery'
 
 /**
  * Pure helpers for the Admin → Ad landing page form (client-safe, no DB).
@@ -15,15 +14,8 @@ export type LandingProductOption = {
   variants: { name: string; packs: number[] }[]
 }
 
-/**
- * The announcement bar text when the field is left empty, built from Admin → Shipping.
- * The landing page builds the same line, so keep the two in step.
- */
-export function autoAnnouncement(freeLagosOver: number, otherDays: string): string {
-  const days = otherDays.trim() || '3 to 5 business days'
-  const lagos = freeLagosOver > 0 ? freeDeliveryLine(freeLagosOver) : 'Same-day delivery in most of Lagos'
-  return `${lagos} · Nationwide in ${days}`
-}
+/** The announcement bar text when the field is left empty: the same function the landing page uses */
+export { autoAnnouncement } from '@/lib/landing/announcement'
 
 /** Same rule as parseLandingConfig: an https link or a path on this site (not //) */
 export function isSafeLink(value: string): boolean {

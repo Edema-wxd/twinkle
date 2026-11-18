@@ -53,6 +53,16 @@ graph TD
 
 ---
 
+### Ad landing page (`/shop-twinkles`)
+
+A single-scroll page for paid Instagram and TikTok traffic, built inside the store so it shares the cart, checkout and Paystack flow.
+
+- **Content** lives in one JSON value in `settings` (`landing_page_config`), edited in Admin → Ad landing page. `src/lib/landing/config.ts` holds the type, defaults and `parseLandingConfig` (never throws, drops unsafe URLs); `config.server.ts` loads and saves it. Prices, stock, delivery fees and reviews are never stored there: they come from products, Admin → Shipping and the reviews table.
+- **Hero versions** for ad tests live at `/shop-twinkles/<key>` (`resolveHero`), each falling back to the main hero. `/lp` and `/lp/<key>` 308-redirect there, keeping UTM tags. Pages are ISR (`revalidate = 600`); saves call `revalidatePath('/shop-twinkles', 'layout')`.
+- **Data** (`src/lib/landing/data.ts`): featured products with live stock, each card's default pick worked out on the server (best-seller from paid orders, then the admin fallback, then the first size in stock), photo reviews (photo + written permission), and landing FAQs (Admin → FAQs, category "Landing page", or the drafts in config). Every read fails soft so the page always renders.
+- **Welcome code**: the email capture posts to `/api/newsletter/subscribe` with `offer: 'welcome'`; `src/lib/promo/welcomeCode.ts` issues one one-use code per email (10%, 6 hours, ₦100,000 minimum by default). The minimum is checked at checkout (`validate-promo`) and again by `priceOrder`, and the use is claimed atomically when the paid order is recorded.
+- **Tracking**: `trackEvent()` (`src/lib/tracking/events.ts`) sends Meta + TikTok pixel events only after the cookie banner is accepted; `recordPaidOrder` callers send a server-side Purchase (`src/lib/tracking/server.ts`) deduplicated by the Paystack reference. UTM tags are kept in a 30-day first-party cookie, passed in the Paystack metadata and shown on the admin order page.
+
 ## Key abstractions
 
 | Abstraction | File | Description |

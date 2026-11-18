@@ -1,18 +1,11 @@
-import { freeDeliveryLine } from '@/lib/checkout/freeDelivery'
-import type { ShippingInfo } from '@/lib/checkout/shippingInfo'
 import { Copy } from './Copy'
 
 /**
  * The offer, before anything else. Admin → Ad landing page can set the text;
- * left empty it's built from Admin → Shipping, so it always matches checkout.
+ * left empty it's built from Admin → Shipping (see lib/landing/announcement.ts),
+ * so it always matches checkout and the admin preview.
  */
-export function announcementText(custom: string, shipping: Pick<ShippingInfo, 'freeLagosOver' | 'otherDays'>): string {
-  if (custom.trim()) return custom.trim()
-  const nationwide = `Nationwide in ${shipping.otherDays}`
-  return shipping.freeLagosOver > 0
-    ? `${freeDeliveryLine(shipping.freeLagosOver)} · ${nationwide}`
-    : `Same-day delivery in most of Lagos · ${nationwide}`
-}
+export { announcementText } from '@/lib/landing/announcement'
 
 /** Full-width forest strip, 36 px (two short lines on the narrowest phones), not dismissible */
 export function AnnouncementBar({ text }: { text: string }) {

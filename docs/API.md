@@ -131,6 +131,14 @@ Signs an email address up for the newsletter, **unconfirmed** (double opt-in). A
 | `409` | `{ "error": "already subscribed" }` | Email is already a confirmed subscriber |
 | `500` | `{ "error": "Failed to subscribe. Please try again." }` | Database write failure |
 
+**Welcome offer (ad landing page).** The landing page's email capture adds `"offer": "welcome"` and `"source_page": "lp"`. When the offer is on in Admin → Ad landing page, the response includes the visitor's own one-use code (the same code again if this email already has a live one), and the code is emailed too (inside the confirmation email, or on its own when no confirmation goes out):
+
+```json
+{ "ok": true, "pending": true, "offer": { "code": "TWINKLE-7KQ2MX", "percent": 10, "expiresAt": "2026-11-18T21:30:00.000Z", "minOrder": 100000 } }
+```
+
+`201` for new or unconfirmed sign-ups, `200` for confirmed subscribers. `409` with an `error` when this email has already used its welcome code. Bots caught by the honeypot or timing check get the normal fake `201` and no code. With the offer off, the response is the plain one above.
+
 ---
 
 ### `POST /api/newsletter/confirm`
@@ -474,6 +482,8 @@ Creates a product review. Reviews are admin-managed (no public submission endpoi
 
 `product_id`, `author_name`, `body`, and `rating` are all required. `rating` must be an integer between 1 and 5 inclusive.
 
+Optional, for photo reviews on the ad landing page (also accepted by `PUT`; leaving them out keeps what is saved): `photo_url` (https, UploadThing only), `city` (up to 60 characters) and `photo_permission` (`true` only when the customer gave written permission to show their photo and first name). A review shows on the landing page only with both a photo and permission.
+
 **Success response — `201 Created`:** The full review row.
 
 **Error responses:**
@@ -580,6 +590,22 @@ Upserts shipping configuration into the `settings` table. Only the six allowlist
 **Error responses:** Same as `PUT /api/admin/settings`.
 
 > **Note:** These settings are what checkout charges. Saving revalidates `/shipping`, `/` and `/llms.txt`, which all read the same values via `getShippingInfo()`.
+
+---
+
+### Ad landing page
+
+#### `PUT /api/admin/landing-page`
+
+Saves the whole landing page config (the `LandingConfig` shape in `src/lib/landing/config.ts`). The body must be a JSON object; it is cleaned with `parseLandingConfig` (bad or unsafe values fall back to defaults), saved to `settings.landing_page_config`, and every version of `/shop-twinkles` is refreshed. Returns the saved config. `401` without an admin session.
+
+#### `POST /api/admin/landing-page/faqs`
+
+Adds the draft landing page FAQs (`DEFAULT_LANDING_FAQS`) to Admin → FAQs under the "Landing page" category. Only works while that category is empty (`409` otherwise).
+
+### Promo codes
+
+Welcome codes issued by the landing page (`source = 'welcome'`) are left out of `GET /api/admin/promo-codes` and summarised as `welcome: { issued, used }`; `GET /api/admin/promo-codes?source=welcome` lists them with the email each was issued to. Any code can carry a `minOrder` (₦ of items before discount and delivery; empty or 0 = none), checked by `validate-promo` at checkout and again when the paid order is priced.
 
 ---
 

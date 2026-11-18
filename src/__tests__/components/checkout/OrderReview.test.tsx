@@ -242,7 +242,7 @@ describe('OrderReview — promo code (errors)', () => {
 
 // ─── promo code: bag changes after applying ──────────────────────────────────
 
-describe('OrderReview — promo code re-checked when the bag changes', () => {
+describe('OrderReview: promo code re-checked when the bag changes', () => {
   const tenPercent = (subtotal: number) =>
     json({ valid: true, discountType: 'percentage', discountAmount: subtotal / 10, shippingSaving: 0, message: `Discount of ₦${(subtotal / 10).toLocaleString()} applied!` })
 
