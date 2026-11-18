@@ -105,6 +105,12 @@ export const reviews = pgTable('reviews', {
   authorName: text('author_name').notNull(),
   body: text('body').notNull(),
   rating: integer('rating').notNull(), // CHECK (rating BETWEEN 1 AND 5) — added via raw SQL after push
+  /** Customer's photo of their locs (UploadThing URL), for the ad landing page's review carousel */
+  photoUrl: text('photo_url'),
+  /** Shown after the first name, e.g. "Adaeze, Lagos" */
+  city: text('city'),
+  /** The customer gave written permission to show their photo and first name publicly */
+  photoPermission: boolean('photo_permission').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -139,6 +145,10 @@ export const promoCodes = pgTable('promo_codes', {
   currentUses: integer('current_uses').notNull().default(0),
   expiresAt: timestamp('expires_at', { withTimezone: true }),
   isActive: boolean('is_active').notNull().default(true),
+  /** Where the code came from: null = made in Admin, 'welcome' = issued by the landing page's email capture */
+  source: text('source'),
+  /** Who a one-use welcome code was issued to (lowercased email), so the same person gets the same code back */
+  issuedToEmail: text('issued_to_email'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
