@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { db, orders, orderItems, abandonedOrders, products, promoCodes } from '@/db'
 import { getShippingInfo, quoteShipping, formatNaira } from '@/lib/checkout/shippingInfo'
 import { freeDeliveryApplies } from '@/lib/checkout/freeDelivery'
+import { meetsMinOrder, minOrderOf } from '@/lib/promo/minOrder'
 import type { ProductVariant } from '@/lib/types/product'
 import type { OrderEmailItem } from '@/lib/notifications/customerEmail'
 import { aggregateNeeds, getStockMap, takeStock, withStock } from '@/lib/stock'
@@ -191,6 +192,9 @@ export async function priceOrder(meta: CheckoutMetadata): Promise<PricedOrder> {
       !(promo.maxUses !== null && promo.currentUses >= promo.maxUses)
     if (!usable) {
       problems.push(`Promo code ${code} was used but isn't valid any more (inactive, expired or used up).`)
+    } else if (!meetsMinOrder(promo, subtotal)) {
+      // Checkout refuses this too; checking again here means a tampered or stale bag can't get the discount
+      problems.push(`Promo code ${code} needs ${formatNaira(minOrderOf(promo))} of items before delivery, but the order has ${formatNaira(subtotal)}.`)
     } else {
       promoCode = promo.code
       if (promo.discountType === 'free_shipping') shipping = 0

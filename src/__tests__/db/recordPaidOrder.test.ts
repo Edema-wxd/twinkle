@@ -209,6 +209,20 @@ describe('recordPaidOrder (real database)', () => {
       expect((await recordPaidOrder(lagos('tw-f6', under, 89100 + zone.defaultFee, { promo_code: 'TEN' })))?.status).toBe('paid')
     })
 
+    it("refuses a code's discount when the items are under its minimum order", async () => {
+      await db.insert(promoCodes).values({ code: 'WELCOME', discountType: 'percentage', discountValue: 10, maxUses: 1, minOrder: 100_000 })
+      const under = [gold({ tierQty: 100, unitPrice: 28000, quantity: 3 }), gold({ unitPrice: 15000, quantity: 1, threadColour: 'red' })]
+      // ₦99,000 of items: paying the discounted price is held for review, no use is counted
+      const held = await recordPaidOrder(lagos('tw-m1', under, 89100 + zone.defaultFee, { promo_code: 'WELCOME' }))
+      expect(held).toMatchObject({ status: 'payment_review' })
+      expect(held?.paymentIssue).toContain('needs ₦100,000 of items')
+      expect((await db.select().from(promoCodes))[0].currentUses).toBe(0)
+      // ₦112,000 of items: discount and free delivery both apply
+      const ok = await recordPaidOrder(lagos('tw-m2', [gold({ tierQty: 100, unitPrice: 28000, quantity: 4 })], 100800, { promo_code: 'WELCOME' }))
+      expect(ok).toMatchObject({ status: 'paid', paymentIssue: null })
+      expect((await db.select().from(promoCodes))[0].currentUses).toBe(1)
+    })
+
     it('can be switched off in Admin → Shipping', async () => {
       await db.insert(settings).values({ key: 'shipping_free_lagos_over', value: '0' })
       const r = await recordPaidOrder(lagos('tw-f6', [gold({ tierQty: 100, unitPrice: 28000, quantity: 4 })], 112000))
