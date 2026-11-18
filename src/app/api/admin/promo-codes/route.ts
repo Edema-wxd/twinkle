@@ -4,6 +4,8 @@ import { db } from '@/db'
 import { promoCodes } from '@/db'
 import { eq } from 'drizzle-orm'
 import { isUniqueViolation } from '@/lib/db/errors'
+import { WELCOME_OFFER_SOURCE } from '@/lib/landing/welcomeOffer'
+import { listAdminPromoCodes, listWelcomeCodes, parseMinOrder, welcomeCodeSummary } from '@/app/(admin)/_lib/promo-codes'
 
 async function requireAdmin() {
   const session = await getAdminSession()
@@ -11,16 +13,22 @@ async function requireAdmin() {
   return null
 }
 
-export async function GET() {
+/**
+ * GET: the codes made in Admin, plus a count of the landing page's one-use
+ * welcome codes (kept out of the list so they don't bury the real ones).
+ * GET ?source=welcome: the welcome codes themselves, newest first, with the email each went to.
+ */
+export async function GET(req: NextRequest) {
   const denied = await requireAdmin()
   if (denied) return denied
 
-  const codes = await db
-    .select()
-    .from(promoCodes)
-    .orderBy(promoCodes.createdAt)
+  if (req.nextUrl.searchParams.get('source') === WELCOME_OFFER_SOURCE) {
+    const codes = await listWelcomeCodes()
+    return NextResponse.json({ codes })
+  }
 
-  return NextResponse.json({ codes })
+  const [codes, welcome] = await Promise.all([listAdminPromoCodes(), welcomeCodeSummary()])
+  return NextResponse.json({ codes, welcome })
 }
 
 export async function POST(req: NextRequest) {
@@ -39,6 +47,7 @@ export async function POST(req: NextRequest) {
     discountType,
     discountValue,
     maxUses,
+    minOrder,
     expiresAt,
     isActive,
   } = body as Record<string, unknown>
@@ -57,6 +66,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid discount value' }, { status: 400 })
   }
 
+  const min = parseMinOrder(minOrder)
+  if (min === undefined) {
+    return NextResponse.json({ error: 'Minimum order must be a whole number of naira (0 or blank for none)' }, { status: 400 })
+  }
+
   try {
     const [created] = await db
       .insert(promoCodes)
@@ -65,6 +79,7 @@ export async function POST(req: NextRequest) {
         discountType: discountType as string,
         discountValue: value,
         maxUses: maxUses != null ? Number(maxUses) : null,
+        minOrder: min,
         expiresAt: expiresAt ? new Date(expiresAt as string) : null,
         isActive: isActive !== false,
       })
@@ -102,6 +117,13 @@ export async function PUT(req: NextRequest) {
   if ('discountType' in fields) patch.discountType = fields.discountType
   if ('discountValue' in fields) patch.discountValue = Number(fields.discountValue)
   if ('maxUses' in fields) patch.maxUses = fields.maxUses != null ? Number(fields.maxUses) : null
+  if ('minOrder' in fields) {
+    const min = parseMinOrder(fields.minOrder)
+    if (min === undefined) {
+      return NextResponse.json({ error: 'Minimum order must be a whole number of naira (0 or blank for none)' }, { status: 400 })
+    }
+    patch.minOrder = min
+  }
   if ('expiresAt' in fields) patch.expiresAt = fields.expiresAt ? new Date(fields.expiresAt as string) : null
 
   if (Object.keys(patch).length === 0) {

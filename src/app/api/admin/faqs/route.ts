@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { faqs } from '@/db'
 import { eq } from 'drizzle-orm'
 import { revalidateFaqs } from '@/lib/content-api'
+import { revalidateLandingPage } from '../_lib/revalidateLanding'
 
 export async function POST(req: NextRequest) {
   // Auth check — validate against auth server (not just local JWT)
@@ -52,6 +53,8 @@ export async function POST(req: NextRequest) {
     }
 
     revalidateFaqs()
+    // "Landing page" FAQs show on the ad landing page
+    revalidateLandingPage()
     return NextResponse.json({ faq: data }, { status: 201 })
   } catch (err) {
     console.error('Failed to insert FAQ:', err)
@@ -94,6 +97,8 @@ export async function PATCH(req: NextRequest) {
       items.map((o) => db.update(faqs).set({ displayOrder: o.display_order }).where(eq(faqs.id, o.id))),
     )
     revalidateFaqs()
+    // "Landing page" FAQs show on the ad landing page
+    revalidateLandingPage()
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('Failed to reorder FAQs:', err)

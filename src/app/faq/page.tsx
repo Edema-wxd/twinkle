@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { db, faqs as faqsTable } from '@/db'
-import { asc } from 'drizzle-orm'
+import { asc, ne } from 'drizzle-orm'
 import { FaqAccordion, type FaqItem } from '@/components/faq/FaqAccordion'
 import { BUSINESS } from '@/lib/config/business'
 import { faqAnswerHtml, htmlToText } from '@/lib/content'
+import { LANDING_FAQ_CATEGORY } from '@/lib/landing/config'
 
 export const metadata: Metadata = {
   title: { absolute: 'Loc Bead FAQs - Sizes, Care & How to Apply | Twinkle Locs' },
@@ -24,6 +25,8 @@ export default async function FaqPage() {
     rows = await db
       .select()
       .from(faqsTable)
+      // "Landing page" questions belong to the ad landing page (/shop-twinkles) and would repeat the ones here
+      .where(ne(faqsTable.category, LANDING_FAQ_CATEGORY))
       .orderBy(asc(faqsTable.category), asc(faqsTable.displayOrder), asc(faqsTable.createdAt))
   } catch (err) {
     console.error('Failed to fetch faqs:', err)

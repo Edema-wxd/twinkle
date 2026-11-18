@@ -4,6 +4,8 @@ import { reviews, products } from '@/db'
 import { desc, asc, eq } from 'drizzle-orm'
 import { ReviewForm } from '../../../_components/ReviewForm'
 import { ReviewsTable, type ReviewRow } from '../../../_components/ReviewsTable'
+import { getLandingConfig } from '@/lib/landing/config.server'
+import { isLandingPhotoReview } from '@/lib/types/review'
 
 export const metadata = {
   title: 'Reviews — Twinkle Locs Admin',
@@ -13,7 +15,7 @@ export default async function AdminReviewsPage() {
   // Belt-and-braces auth check (CVE-2025-29927 — layout.tsx also checks)
   await requireAdminSession()
 
-  const [reviewRows, productRows] = await Promise.all([
+  const [reviewRows, productRows, landing] = await Promise.all([
     db
       .select({
         id: reviews.id,
@@ -22,6 +24,9 @@ export default async function AdminReviewsPage() {
         body: reviews.body,
         rating: reviews.rating,
         createdAt: reviews.createdAt,
+        photoUrl: reviews.photoUrl,
+        city: reviews.city,
+        photoPermission: reviews.photoPermission,
         productName: products.name,
       })
       .from(reviews)
@@ -34,6 +39,7 @@ export default async function AdminReviewsPage() {
       .where(eq(products.isActive, true))
       .orderBy(asc(products.name))
       .catch((e) => { console.error('Failed to fetch products:', e); return [] }),
+    getLandingConfig(),
   ])
 
   const reviewsList: ReviewRow[] = reviewRows.map((r) => ({
@@ -44,7 +50,13 @@ export default async function AdminReviewsPage() {
     body: r.body,
     rating: r.rating,
     created_at: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+    photo_url: r.photoUrl,
+    city: r.city,
+    photo_permission: r.photoPermission,
   }))
+
+  const photoReviewCount = reviewsList.filter(isLandingPhotoReview).length
+  const needed = landing.minReviewsToShowSection
 
   const productOptions = productRows.map((p) => ({ id: p.id, name: p.name }))
 
@@ -62,6 +74,13 @@ export default async function AdminReviewsPage() {
           All reviews
           <span className="ml-2 text-sm font-normal text-stone-500">({reviewsList.length})</span>
         </h2>
+        <p className="text-sm text-stone-400">
+          {photoReviewCount === 1 ? '1 review has' : `${photoReviewCount} reviews have`} a customer photo and written permission, so{' '}
+          {photoReviewCount === 1 ? 'it can' : 'they can'} show on the ad landing page.{' '}
+          {photoReviewCount < needed
+            ? `The reviews section appears there once there are ${needed} (set in Ad landing page).`
+            : 'That is enough for the reviews section to show there.'}
+        </p>
         <ReviewsTable reviews={reviewsList} />
       </section>
 
