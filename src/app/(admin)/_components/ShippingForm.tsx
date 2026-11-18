@@ -170,7 +170,7 @@ export function ShippingForm({ settings }: ShippingFormProps) {
           <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Free Lagos Delivery</p>
           <div className="mt-2 border-t border-stone-700" />
           <p className="text-xs text-stone-500 mt-2">
-            Lagos orders at or over this amount (items after any promo code, before delivery) get free delivery to any zone.
+            Lagos orders at or over this amount (items before any promo code and delivery) get free delivery to any zone, so a discount code never takes it away.
             Shown on product pages, the cart (&ldquo;₦X away from free delivery&rdquo;), checkout and /shipping. Set 0 to switch it off.
           </p>
         </div>

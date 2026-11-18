@@ -39,7 +39,7 @@ export type ShippingInfo = {
   otherDays: string
   intlMessage: string
   pageIntro: string
-  /** Lagos delivery is free when the items (after any promo) reach this. 0 = no offer. */
+  /** Lagos delivery is free when the items (before any promo discount) reach this. 0 = no offer. */
   freeLagosOver: number
 }
 

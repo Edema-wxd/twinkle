@@ -186,9 +186,9 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
   }, [customerDetails.state, customerDetails.lga, shippingAttempt]);
 
   const subtotalDiscount = appliedPromo?.discountType !== 'free_shipping' ? (appliedPromo?.discountAmount ?? 0) : 0;
-  // Same rule the server charges by (lib/checkout/freeDelivery.ts)
-  const freeByThreshold = freeDeliveryApplies(customerDetails.state, subtotal - subtotalDiscount, freeOver);
-  const toFree = amountToFreeDelivery(customerDetails.state, subtotal - subtotalDiscount, freeOver);
+  // Same rule the server charges by (lib/checkout/freeDelivery.ts): items before any discount
+  const freeByThreshold = freeDeliveryApplies(customerDetails.state, subtotal, freeOver);
+  const toFree = amountToFreeDelivery(customerDetails.state, subtotal, freeOver);
   const shippingIsFree = appliedPromo?.discountType === 'free_shipping' || freeByThreshold;
   const effectiveShipping = shippingIsFree ? 0 : (shippingCost ?? 0);
   const total = subtotal - subtotalDiscount + effectiveShipping;

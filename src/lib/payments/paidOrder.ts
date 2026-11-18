@@ -199,8 +199,8 @@ export async function priceOrder(meta: CheckoutMetadata): Promise<PricedOrder> {
     }
   }
 
-  // Free Lagos delivery over the threshold (same rule checkout shows the customer)
-  if (freeDeliveryApplies(meta.customer_details.state, subtotal - discount, info.freeLagosOver)) shipping = 0
+  // Free Lagos delivery over the threshold, on the items before any discount (same rule checkout shows the customer)
+  if (freeDeliveryApplies(meta.customer_details.state, subtotal, info.freeLagosOver)) shipping = 0
 
   return { lines, slugs: rows.map((r) => r.slug), subtotal, discount, promoCode, shipping, total: subtotal - discount + shipping, problems }
 }
