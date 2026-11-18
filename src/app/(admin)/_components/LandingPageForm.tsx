@@ -12,7 +12,7 @@ import {
 import { THREAD_COLOURS } from '@/lib/cart/threadColours'
 import { naira } from '@/lib/checkout/freeDelivery'
 import { NUMBER_LIMITS, placeholderFields, validateLandingForm, type LandingProductOption } from '../_lib/landing-form'
-import { ImageField, NumberField, Section, SelectField, SubHeading, TextField, ToggleField, fieldId } from './LandingFormFields'
+import { ImageField, NumberField, Section, SelectField, SubHeading, TextField, ToggleField, VideoField, fieldId } from './LandingFormFields'
 import { PhotoPicker } from './PhotoPicker'
 
 interface LandingPageFormProps {
@@ -220,15 +220,14 @@ export function LandingPageForm(props: LandingPageFormProps) {
           previewClass="w-24 h-30"
           help="A close-up of locs styled with Twinkles, in warm natural light. Tall photos (4:5) look best on phones. Keep it small (around 200 KB) so the page loads fast."
         />
-        <TextField
+        <VideoField
           path="hero.videoUrl"
-          label="Video link (optional)"
-          value={config.hero.videoUrl ?? ''}
-          onChange={(v) => update((d) => void (d.hero.videoUrl = v.trim() ? v : null))}
-          maxLength={1000}
+          label="Video (optional)"
+          value={config.hero.videoUrl}
+          onChange={(v) => update((d) => void (d.hero.videoUrl = v))}
           placeholder="https://…/hero.mp4"
           error={err('hero.videoUrl')}
-          help="A 6 to 10 second muted loop, same crop as the photo. MP4 under 1.5 MB, as an https link. The photo shows while the video loads, so keep a photo too."
+          help="A 6 to 10 second muted loop, same crop as the photo. Upload an MP4 under 1.5 MB, or paste an https link. The photo shows while the video loads, so keep a photo too."
         />
         <TextField
           path="hero.eyebrow"
@@ -672,12 +671,11 @@ function HeroVersionEditor(props: {
         altError={err(`${p}.image.alt`)}
         previewClass="w-20 h-25"
       />
-      <TextField
+      <VideoField
         path={`${p}.videoUrl`}
-        label="Video link (optional)"
-        value={v.videoUrl ?? ''}
-        onChange={(val) => onChange((d) => void (d.videoUrl = val.trim() ? val : null))}
-        maxLength={1000}
+        label="Video (optional)"
+        value={v.videoUrl}
+        onChange={(val) => onChange((d) => void (d.videoUrl = val))}
         placeholder="https://…/version.mp4"
         error={err(`${p}.videoUrl`)}
         help="MP4 under 1.5 MB. If this version has its own photo but no video, no video plays."

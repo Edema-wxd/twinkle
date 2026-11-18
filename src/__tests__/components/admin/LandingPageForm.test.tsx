@@ -98,7 +98,7 @@ describe('LandingPageForm', () => {
 
   it('will not save with problems, and says so', async () => {
     renderForm(config({ featured: [] }))
-    const video = screen.getByLabelText('Video link (optional)')
+    const video = screen.getByLabelText('Video (optional)')
     await userEvent.type(video, 'http://example.com/v.mp4')
     await userEvent.click(screen.getByRole('button', { name: 'Save landing page' }))
     expect(fetchMock).not.toHaveBeenCalled()

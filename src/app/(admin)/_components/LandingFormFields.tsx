@@ -1,7 +1,8 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { hasPlaceholder, type LandingImage } from '@/lib/landing/config'
+import { uploadFiles } from '@/lib/uploadthing'
 import { PhotoPicker } from './PhotoPicker'
 
 /**
@@ -201,6 +202,92 @@ interface ImageFieldProps {
 }
 
 /** A photo plus its description (alt text), which screen readers and Google use */
+/** Bigger than this and the hero slows the page down on phones */
+const VIDEO_MAX_BYTES = 1.5 * 1024 * 1024
+
+interface VideoFieldProps {
+  path: string
+  label: string
+  value: string | null
+  onChange: (value: string | null) => void
+  help?: ReactNode
+  error?: string
+  placeholder?: string
+}
+
+/** A hero video: upload an MP4 (kept under 1.5 MB) or paste an https link, with a small preview */
+export function VideoField({ path, label, value, onChange, help, error, placeholder }: VideoFieldProps) {
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const inputId = useId()
+
+  async function handleFile(file: File) {
+    setUploadError(null)
+    if (file.type !== 'video/mp4') return setUploadError('Please choose an MP4 video.')
+    if (file.size > VIDEO_MAX_BYTES) {
+      return setUploadError(`That video is ${(file.size / 1024 / 1024).toFixed(1)} MB. Keep it under 1.5 MB (shorter, or exported smaller) so the page loads fast.`)
+    }
+    setUploading(true)
+    try {
+      const [uploaded] = await uploadFiles('landingVideos', { files: [file] })
+      if (uploaded?.ufsUrl) onChange(uploaded.ufsUrl)
+      else setUploadError('Upload failed, please try again')
+    } catch (err) {
+      setUploadError(`Upload failed: ${err instanceof Error ? err.message : 'please try again'}`)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <TextField
+        path={path}
+        label={label}
+        value={value ?? ''}
+        onChange={(v) => onChange(v.trim() ? v : null)}
+        maxLength={1000}
+        placeholder={placeholder}
+        error={error}
+        help={help}
+      />
+      <div className="flex flex-wrap items-center gap-3">
+        <label
+          htmlFor={inputId}
+          className={`inline-flex min-h-9 cursor-pointer items-center rounded-lg border border-stone-600 px-3 text-sm text-stone-200 hover:border-gold ${uploading ? 'pointer-events-none opacity-50' : ''}`}
+        >
+          {uploading ? 'Uploading video…' : value ? 'Replace video' : 'Upload a video'}
+        </label>
+        <input
+          id={inputId}
+          type="file"
+          accept="video/mp4"
+          className="sr-only"
+          disabled={uploading}
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            e.target.value = ''
+            if (file) void handleFile(file)
+          }}
+        />
+        {value && !uploading && (
+          <button type="button" onClick={() => onChange(null)} className="text-sm text-stone-400 underline hover:text-white">
+            Remove video
+          </button>
+        )}
+      </div>
+      {uploadError && (
+        <p role="alert" className="text-xs text-red-400">
+          {uploadError}
+        </p>
+      )}
+      {value && /^https:\/\//.test(value) && (
+        <video src={value} muted loop playsInline autoPlay preload="metadata" className="h-32 w-auto rounded-lg border border-stone-600 bg-stone-900" />
+      )}
+    </div>
+  )
+}
+
 export function ImageField({ path, label, help, value, onChange, altError, purpose = 'body', previewClass }: ImageFieldProps) {
   return (
     <div className="space-y-2" id={fieldId(path)}>
