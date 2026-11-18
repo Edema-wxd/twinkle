@@ -143,6 +143,8 @@ export const promoCodes = pgTable('promo_codes', {
   discountValue: integer('discount_value').notNull().default(0), // % or ₦ amount; ignored for free_shipping
   maxUses: integer('max_uses'), // null = unlimited
   currentUses: integer('current_uses').notNull().default(0),
+  /** Smallest items subtotal (₦, before discount and delivery) the code works on; null or 0 = no minimum */
+  minOrder: integer('min_order'),
   expiresAt: timestamp('expires_at', { withTimezone: true }),
   isActive: boolean('is_active').notNull().default(true),
   /** Where the code came from: null = made in Admin, 'welcome' = issued by the landing page's email capture */

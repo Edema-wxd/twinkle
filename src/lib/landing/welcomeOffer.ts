@@ -15,8 +15,10 @@ export const WELCOME_OFFER_SOURCE = 'welcome'
 export type WelcomeOfferCode = {
   code: string
   percent: number
-  /** ISO date the code stops working */
+  /** ISO date-time the code stops working (hours after signup, see Admin → Ad landing page) */
   expiresAt: string
+  /** Smallest items subtotal (₦, before discount and delivery) the code works on; 0 = no minimum */
+  minOrder: number
 }
 
 export type SubscribeResponse = {

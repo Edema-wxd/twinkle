@@ -40,6 +40,22 @@ export type FeaturedProductConfig = {
 
 export type LandingImage = { url: string; alt: string }
 
+/**
+ * An alternative hero for testing ad creatives against each other. Each one has its
+ * own link, /shop-twinkles/<key>, so every ad can land on the hero that matches it.
+ * Empty headline/subhead and a missing image or video fall back to the main hero.
+ */
+export type HeroVariant = {
+  /** URL key: lowercase letters, numbers and hyphens, e.g. "gold-video" */
+  key: string
+  /** Name for the admin list only, e.g. "Gold video, November ads" */
+  label: string
+  image: LandingImage | null
+  videoUrl: string | null
+  headline: string
+  subhead: string
+}
+
 export type LandingConfig = {
   featured: FeaturedProductConfig[]
   /** Announcement bar text. Empty = built automatically from Admin → Shipping (free-delivery threshold, nationwide days). */
@@ -51,6 +67,8 @@ export type LandingConfig = {
     eyebrow: string
     headline: string
     subhead: string
+    /** Alternative heroes at /shop-twinkles/<key>, for testing ad creatives (max 10) */
+    variants: HeroVariant[]
   }
   finalCta: {
     image: LandingImage | null
@@ -76,8 +94,10 @@ export type LandingConfig = {
   welcomeOffer: {
     enabled: boolean
     percent: number
-    /** Days each issued one-use code stays valid */
-    expiryDays: number
+    /** Hours each issued one-use code stays valid */
+    expiryHours: number
+    /** Smallest items subtotal (₦, before discount and delivery) the code works on; 0 = no minimum */
+    minOrder: number
     /** Show the offer in a pop-up too (after 25 s, or exit intent on desktop). Off by default. */
     popup: boolean
   }
@@ -103,8 +123,8 @@ export const DEFAULT_LANDING_CONFIG: LandingConfig = {
     videoUrl: null,
     eyebrow: 'Handcrafted in Nigeria',
     headline: 'Loc beads that catch the light.',
-    subhead:
-      'Smooth, snag-free Twinkles in 24k gold, gold, silver and crystal. Slide on in seconds, wear for weeks. [confirm "wear for weeks" and snag-free claim]',
+    subhead: 'Twinkles in 24k gold, gold, silver and crystal. Made, not painted, so the colour never fades, even in the wash.',
+    variants: [],
   },
   finalCta: {
     image: null,
@@ -124,12 +144,13 @@ export const DEFAULT_LANDING_CONFIG: LandingConfig = {
     lagosCutoff: '',
     howToUrl: '',
   },
-  returnsLine: 'Wrong size? Unopened packs can be swapped within 7 days of delivery. [confirm]',
+  returnsLine: 'Wrong size? Unopened packs can be swapped within 7 days of delivery.',
   instagram: [],
   welcomeOffer: {
     enabled: true,
     percent: 10,
-    expiryDays: 14,
+    expiryHours: 6,
+    minOrder: 100_000,
     popup: false,
   },
   minReviewsToShowSection: 3,
@@ -162,24 +183,20 @@ export const DEFAULT_LANDING_FAQS: LandingFaq[] = [
     answer: 'No. The inside is smooth and polished so beads slide on without catching. [confirm]',
   },
   {
-    question: 'Will the colour fade?',
-    answer: 'The finish is fade-resistant. Wipe them with a soft dry cloth after wearing to keep the shine. [confirm]',
-  },
-  {
-    question: 'How do I care for them?',
-    answer: 'Remove before swimming in chlorine or salt water. Wipe with a soft dry cloth. Store in the pouch. [confirm]',
+    question: 'Will the colour fade? Do they need special care?',
+    answer: 'No and no. Twinkles are made in their colour, not painted, so they never fade, even in the wash. Wear them as you normally would.',
   },
   {
     question: 'How long does delivery take, and what does it cost?',
-    answer: 'Lagos delivery is same day in most areas; the rest of Nigeria takes 3 to 5 business days. You see the exact delivery fee at checkout, before you pay. [confirm]',
+    answer: 'Lagos delivery is same day in most areas; the rest of Nigeria takes 3 to 5 business days. You see the exact delivery fee at checkout, before you pay.',
   },
   {
     question: 'Can I return or exchange?',
-    answer: 'Unopened packs can be returned or swapped within 7 days of delivery. Wrong, damaged or faulty beads: tell us within 48 hours. See Returns & refunds for details. [confirm]',
+    answer: 'Unopened packs can be returned or swapped within 7 days of delivery. Wrong, damaged or faulty beads: tell us within 48 hours. See Returns & refunds for details.',
   },
   {
     question: 'How can I pay?',
-    answer: 'Card (Visa, Mastercard, Verve), bank transfer or USSD, all through Paystack. We never see your card details. [confirm Verve and other enabled channels]',
+    answer: 'Card (Visa, Mastercard, Verve), bank transfer or USSD, all through Paystack. We never see your card details.',
   },
 ]
 
@@ -218,6 +235,23 @@ function image(v: unknown): LandingImage | null {
   if (!isObj(v)) return null
   const u = url(v.url)
   return u ? { url: u, alt: str(v.alt, '', 200) } : null
+}
+
+/** Valid hero variant URL key */
+export const HERO_VARIANT_KEY = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/
+
+function heroVariant(v: unknown): HeroVariant | null {
+  if (!isObj(v)) return null
+  const key = str(v.key, '', 40).toLowerCase()
+  if (!HERO_VARIANT_KEY.test(key)) return null
+  return {
+    key,
+    label: str(v.label, '', 80),
+    image: image(v.image),
+    videoUrl: url(v.videoUrl),
+    headline: str(v.headline, '', 120),
+    subhead: str(v.subhead, '', 300),
+  }
 }
 
 function featured(v: unknown): FeaturedProductConfig | null {
@@ -271,6 +305,13 @@ export function parseLandingConfig(raw: unknown): LandingConfig {
       eyebrow: str(hero.eyebrow, d.hero.eyebrow, 80),
       headline: str(hero.headline, d.hero.headline, 120),
       subhead: str(hero.subhead, d.hero.subhead, 300),
+      variants: Array.isArray(hero.variants)
+        ? hero.variants
+            .map(heroVariant)
+            .filter((h): h is HeroVariant => h !== null)
+            .filter((h, i, all) => all.findIndex((o) => o.key === h.key) === i)
+            .slice(0, 10)
+        : [],
     },
     finalCta: {
       image: image(finalCta.image),
@@ -294,12 +335,38 @@ export function parseLandingConfig(raw: unknown): LandingConfig {
     welcomeOffer: {
       enabled: bool(offer.enabled, d.welcomeOffer.enabled),
       percent: int(offer.percent, d.welcomeOffer.percent, 1, 50),
-      expiryDays: int(offer.expiryDays, d.welcomeOffer.expiryDays, 1, 365),
+      expiryHours: int(offer.expiryHours, d.welcomeOffer.expiryHours, 1, 720),
+      minOrder: int(offer.minOrder, d.welcomeOffer.minOrder, 0, 10_000_000),
       popup: bool(offer.popup, d.welcomeOffer.popup),
     },
     minReviewsToShowSection: int(raw.minReviewsToShowSection, d.minReviewsToShowSection, 1, 50),
     minReviewsToShowRating: int(raw.minReviewsToShowRating, d.minReviewsToShowRating, 1, 1000),
     stockWarningAt: int(raw.stockWarningAt, d.stockWarningAt, 0, 1000),
+  }
+}
+
+export type ResolvedHero = Omit<LandingConfig['hero'], 'variants'> & {
+  /** The variant shown, or null for the main hero */
+  variantKey: string | null
+}
+
+/**
+ * The hero for /shop-twinkles/<key>: the variant's own image, video, headline and
+ * subhead, each falling back to the main hero when left empty. An unknown or
+ * missing key gives the main hero.
+ */
+export function resolveHero(config: LandingConfig, key?: string | null): ResolvedHero {
+  const { variants, ...main } = config.hero
+  const v = key ? variants.find((h) => h.key === key.toLowerCase()) : undefined
+  if (!v) return { ...main, variantKey: null }
+  return {
+    eyebrow: main.eyebrow,
+    image: v.image ?? main.image,
+    // A variant with its own image but no video shouldn't inherit the main video over it
+    videoUrl: v.videoUrl ?? (v.image ? null : main.videoUrl),
+    headline: v.headline || main.headline,
+    subhead: v.subhead || main.subhead,
+    variantKey: v.key,
   }
 }
 
