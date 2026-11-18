@@ -22,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ])
 
   // Audited 2026-04-01: all public routes present. /cart, /checkout, and /orders/ are intentionally excluded.
+  // So is the ad landing page (/shop-twinkles, its hero versions and /lp): it's noindex while ads are tested.
   const staticRoutes: MetadataRoute.Sitemap = [
     // The homepage is the shop (/catalog redirects to it)
     { url: BASE, changeFrequency: 'daily', priority: 1 },
