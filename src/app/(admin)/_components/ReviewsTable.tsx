@@ -1,6 +1,10 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Image from 'next/image'
+import { isLandingPhotoReview } from '@/lib/types/review'
+import { PhotoPicker } from './PhotoPicker'
+import { CITY_MAX, OnLandingBadge, PhotoPermissionField } from './ReviewPhotoFields'
 
 export interface ReviewRow {
   id: string
@@ -10,6 +14,9 @@ export interface ReviewRow {
   body: string
   rating: number
   created_at: string
+  photo_url: string | null
+  city: string | null
+  photo_permission: boolean
 }
 
 interface ReviewsTableProps {
@@ -23,6 +30,9 @@ export function ReviewsTable({ reviews: initial }: ReviewsTableProps) {
   const [editBody, setEditBody] = useState('')
   const [editRating, setEditRating] = useState(5)
   const [editHover, setEditHover] = useState(0)
+  const [editCity, setEditCity] = useState('')
+  const [editPhoto, setEditPhoto] = useState<string | null>(null)
+  const [editPermission, setEditPermission] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -37,6 +47,9 @@ export function ReviewsTable({ reviews: initial }: ReviewsTableProps) {
     setEditBody(review.body)
     setEditRating(review.rating)
     setEditHover(0)
+    setEditCity(review.city ?? '')
+    setEditPhoto(review.photo_url)
+    setEditPermission(review.photo_permission)
   }
 
   function cancelEdit() {
@@ -49,7 +62,14 @@ export function ReviewsTable({ reviews: initial }: ReviewsTableProps) {
         const res = await fetch(`/api/admin/reviews/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ author_name: editAuthor, reviewBody: editBody, rating: editRating }),
+          body: JSON.stringify({
+            author_name: editAuthor,
+            reviewBody: editBody,
+            rating: editRating,
+            city: editCity.trim() || null,
+            photo_url: editPhoto,
+            photo_permission: editPermission,
+          }),
         })
 
         if (!res.ok) {
@@ -61,7 +81,15 @@ export function ReviewsTable({ reviews: initial }: ReviewsTableProps) {
         setReviews((prev) =>
           prev.map((r) =>
             r.id === id
-              ? { ...r, author_name: editAuthor, body: editBody, rating: editRating }
+              ? {
+                  ...r,
+                  author_name: editAuthor,
+                  body: editBody,
+                  rating: editRating,
+                  city: editCity.trim() || null,
+                  photo_url: editPhoto,
+                  photo_permission: editPermission,
+                }
               : r
           )
         )
@@ -119,6 +147,7 @@ export function ReviewsTable({ reviews: initial }: ReviewsTableProps) {
             <tr className="border-b border-stone-700 bg-stone-800/60">
               <th className="text-left px-4 py-3 text-stone-400 font-medium">Product</th>
               <th className="text-left px-4 py-3 text-stone-400 font-medium">Author</th>
+              <th className="text-left px-4 py-3 text-stone-400 font-medium">Photo</th>
               <th className="text-left px-4 py-3 text-stone-400 font-medium w-64">Review</th>
               <th className="text-left px-4 py-3 text-stone-400 font-medium">Rating</th>
               <th className="text-left px-4 py-3 text-stone-400 font-medium">Date</th>
@@ -130,11 +159,36 @@ export function ReviewsTable({ reviews: initial }: ReviewsTableProps) {
               editingId === review.id ? (
                 <tr key={review.id} className="bg-stone-800/40">
                   <td className="px-4 py-3 text-stone-300 align-top">{review.product_name}</td>
-                  <td className="px-4 py-3 align-top">
+                  <td className="px-4 py-3 align-top space-y-2">
                     <input
                       value={editAuthor}
                       onChange={(e) => setEditAuthor(e.target.value)}
+                      aria-label="Author name"
                       className="w-full px-2 py-1 bg-stone-700 border border-stone-600 text-white rounded text-sm focus:outline-none focus:ring-1 focus:ring-gold"
+                    />
+                    <input
+                      value={editCity}
+                      onChange={(e) => setEditCity(e.target.value)}
+                      maxLength={CITY_MAX}
+                      placeholder="City, e.g. Lagos"
+                      aria-label="City"
+                      className="w-full px-2 py-1 bg-stone-700 border border-stone-600 text-white placeholder-stone-500 rounded text-sm focus:outline-none focus:ring-1 focus:ring-gold"
+                    />
+                  </td>
+                  <td className="px-4 py-3 align-top min-w-64 space-y-3">
+                    <PhotoPicker
+                      url={editPhoto}
+                      onChange={setEditPhoto}
+                      libraryTitle="Choose the customer's photo"
+                      purpose="product"
+                      previewClass="w-16 h-16"
+                      disabled={isPending}
+                    />
+                    <PhotoPermissionField
+                      id={`review-permission-${review.id}`}
+                      checked={editPermission}
+                      onChange={setEditPermission}
+                      hasPhoto={Boolean(editPhoto)}
                     />
                   </td>
                   <td className="px-4 py-3 align-top">
@@ -192,7 +246,26 @@ export function ReviewsTable({ reviews: initial }: ReviewsTableProps) {
               ) : (
                 <tr key={review.id} className="hover:bg-stone-800/30 transition-colors">
                   <td className="px-4 py-3 text-stone-300 align-top">{review.product_name}</td>
-                  <td className="px-4 py-3 text-white font-medium align-top">{review.author_name}</td>
+                  <td className="px-4 py-3 align-top">
+                    <span className="block text-white font-medium">{review.author_name}</span>
+                    {review.city && <span className="block text-xs text-stone-500">{review.city}</span>}
+                  </td>
+                  <td className="px-4 py-3 align-top">
+                    {review.photo_url ? (
+                      <div className="space-y-1.5">
+                        <div className="relative w-12 h-12 rounded-md overflow-hidden border border-stone-600">
+                          <Image src={review.photo_url} alt={`Photo from ${review.author_name}`} fill className="object-cover" sizes="48px" unoptimized />
+                        </div>
+                        {isLandingPhotoReview(review) ? (
+                          <OnLandingBadge />
+                        ) : (
+                          <span className="block text-[11px] text-stone-500">No permission yet</span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-stone-600">None</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-stone-400 align-top max-w-xs">
                     <span className="line-clamp-3">{review.body}</span>
                   </td>
