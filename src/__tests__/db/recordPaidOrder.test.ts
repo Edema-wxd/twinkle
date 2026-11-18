@@ -223,6 +223,18 @@ describe('recordPaidOrder (real database)', () => {
       expect((await db.select().from(promoCodes))[0].currentUses).toBe(1)
     })
 
+    it('lets only one of two simultaneous payments use a one-use code', async () => {
+      await db.insert(promoCodes).values({ code: 'ONCE', discountType: 'percentage', discountValue: 10, maxUses: 1 })
+      const items = () => [gold({ tierQty: 100, unitPrice: 28000, quantity: 4 })]
+      const results = await Promise.all([
+        recordPaidOrder(lagos('tw-r1', items(), 100800, { promo_code: 'ONCE' })),
+        recordPaidOrder(lagos('tw-r2', items(), 100800, { promo_code: 'ONCE' })),
+      ])
+      expect(results.map((r) => r?.status).sort()).toEqual(['paid', 'payment_review'])
+      expect(results.find((r) => r?.status === 'payment_review')?.paymentIssue).toMatch(/used up by another order at the same time/)
+      expect((await db.select().from(promoCodes))[0].currentUses).toBe(1)
+    })
+
     it('can be switched off in Admin → Shipping', async () => {
       await db.insert(settings).values({ key: 'shipping_free_lagos_over', value: '0' })
       const r = await recordPaidOrder(lagos('tw-f6', [gold({ tierQty: 100, unitPrice: 28000, quantity: 4 })], 112000))

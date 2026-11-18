@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { db, orders, orderItems, abandonedOrders, products, promoCodes } from '@/db'
 import { getShippingInfo, quoteShipping, formatNaira } from '@/lib/checkout/shippingInfo'
@@ -318,6 +318,28 @@ export async function recordPaidOrder(charge: ChargeInput): Promise<RecordedOrde
   } catch (e) {
     console.error('[payments] Failed to take stock:', e)
   }
+
+  // Count the promo code's use. Atomic, like stock: two payments landing at once can't
+  // both use a one-use code (e.g. a landing page welcome code); the second is held.
+  // Done before the items are written so a later failure can't lose the count.
+  if (priced.promoCode) {
+    try {
+      const claimed = await db
+        .update(promoCodes)
+        .set({ currentUses: sql`${promoCodes.currentUses} + 1` })
+        .where(and(eq(promoCodes.code, priced.promoCode), or(isNull(promoCodes.maxUses), lt(promoCodes.currentUses, promoCodes.maxUses))))
+        .returning({ id: promoCodes.id })
+      if (claimed.length === 0) {
+        const text = `Promo code ${priced.promoCode} was used up by another order at the same time, so this order shouldn't have had its discount.`
+        finalIssue = [finalIssue, text].filter(Boolean).join(' ')
+        await db.update(orders).set({ status: PAYMENT_REVIEW_STATUS, paymentIssue: finalIssue }).where(eq(orders.id, inserted.id))
+        console.warn('[payments] Promo code used up, order held for review', charge.reference)
+      }
+    } catch (e) {
+      console.error('[payments] Failed to count promo usage:', e)
+    }
+  }
+
   // Cached shop pages show stock, so refresh the ones this order touched
   try {
     revalidatePath('/')
@@ -340,17 +362,6 @@ export async function recordPaidOrder(charge: ChargeInput): Promise<RecordedOrde
       lineTotal: (l.serverUnitPrice ?? l.unitPrice) * l.quantity,
     })),
   )
-
-  if (priced.promoCode) {
-    try {
-      await db
-        .update(promoCodes)
-        .set({ currentUses: sql`${promoCodes.currentUses} + 1` })
-        .where(eq(promoCodes.code, priced.promoCode))
-    } catch (e) {
-      console.error('[payments] Failed to increment promo usage:', e)
-    }
-  }
 
   try {
     await db
