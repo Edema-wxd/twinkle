@@ -89,7 +89,7 @@ export function WelcomePopup({ offer }: { offer: LandingConfig['welcomeOffer'] }
   if (!wanted || closed) return null
 
   return (
-    <div className={`fixed inset-0 z-[75] ${open ? '' : 'invisible'}`}>
+    <div aria-hidden={!open || undefined} className={`fixed inset-0 z-[75] ${open ? '' : 'invisible'}`}>
       <div aria-hidden="true" onClick={close} className="absolute inset-0 bg-forest/50" />
       <div
         ref={panelRef}

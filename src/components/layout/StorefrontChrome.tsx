@@ -6,6 +6,9 @@ import { Footer } from './Footer'
 import { WhatsAppButton } from '@/components/WhatsAppButton'
 import { LANDING_PATH } from '@/lib/landing/config'
 
+/** The ad landing page and its hero versions: /shop-twinkles and /shop-twinkles/<key> */
+const LANDING_ROUTE = new RegExp(`^${LANDING_PATH}(/[^/]+)?/?$`)
+
 export function StorefrontChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   if (pathname.startsWith('/admin')) {
@@ -19,9 +22,10 @@ export function StorefrontChrome({ children }: { children: React.ReactNode }) {
       Skip to content
     </a>
   )
-  // Ad landing page: its layout (src/app/shop-twinkles) brings the announcement bar,
-  // the reduced header (logo + cart), <main>, the slim footer and its own WhatsApp button
-  if (pathname === LANDING_PATH || pathname.startsWith(LANDING_PATH + '/')) {
+  // Ad landing page and its hero versions (/shop-twinkles/<key>): its layout brings the
+  // announcement bar, the reduced header (logo + cart), <main>, the slim footer and its
+  // own WhatsApp button. Deeper paths are 404s, which get the normal chrome.
+  if (LANDING_ROUTE.test(pathname)) {
     return (
       <>
         {skipLink}

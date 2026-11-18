@@ -20,7 +20,8 @@ export async function landingMetadata(heroKey: string | null): Promise<Metadata>
     description: LANDING_DESCRIPTION,
     robots: { index: false, follow: true },
     alternates: { canonical: LANDING_PATH },
-    openGraph: { title: LANDING_TITLE, description: LANDING_DESCRIPTION, url: LANDING_PATH, type: 'website', images },
+    // The whole object replaces the root layout's, so siteName and locale are repeated here
+    openGraph: { title: LANDING_TITLE, description: LANDING_DESCRIPTION, url: LANDING_PATH, type: 'website', siteName: 'Twinkle Locs', locale: 'en_NG', images },
     twitter: { card: 'summary_large_image', title: LANDING_TITLE, description: LANDING_DESCRIPTION, images },
   }
 }

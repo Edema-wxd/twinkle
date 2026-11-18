@@ -243,7 +243,7 @@ export function ProductCard({ product, initial, stockWarningAt }: Props) {
                         >
                           {on && <CheckIcon className={`h-4 w-4 ${c.id === 'blonde' ? 'text-charcoal' : 'text-white'}`} />}
                         </span>
-                        <span className={`text-center font-body text-[11px] leading-tight ${on ? 'font-semibold text-forest' : 'text-charcoal/80'}`}>{c.label}</span>
+                        <span className={`text-center font-body text-[13px] leading-tight ${on ? 'font-semibold text-forest' : 'text-charcoal/80'}`}>{c.label}</span>
                       </button>
                     )
                   })}

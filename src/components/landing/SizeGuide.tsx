@@ -90,7 +90,7 @@ export function SizeGuideSheet({ guide, open, onClose }: { guide: Guide; open: b
   }
 
   return (
-    <div className={`fixed inset-0 z-[70] ${open ? '' : 'pointer-events-none'}`}>
+    <div aria-hidden={!open || undefined} className={`fixed inset-0 z-[70] ${open ? '' : 'pointer-events-none'}`}>
       <div
         aria-hidden="true"
         onClick={onClose}
