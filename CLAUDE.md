@@ -8,6 +8,8 @@ E-commerce storefront for Twinkle Locs, a Nigerian loc bead accessories brand. B
 - **Guest checkout only** — no customer accounts in v1
 - **International shipping** = WhatsApp contact-for-quote flow, not automated
 - **Admin panel** is built into the app at `/admin` (not a separate service)
+- **The homepage `/` is the shop** (product grid); `/catalog` redirects to `/`, product pages stay at `/catalog/<slug>`
+- **Ad landing page** lives at `/shop-twinkles`, is edited in Admin → Ad landing page, and its content types are in `src/lib/landing/config.ts`
 
 ## Tech stack
 
@@ -19,7 +21,7 @@ E-commerce storefront for Twinkle Locs, a Nigerian loc bead accessories brand. B
 | Database | Neon Postgres via `@neondatabase/serverless` |
 | ORM | Drizzle ORM — schema at `src/db/schema.ts` |
 | Auth | better-auth — session checked via `auth.api.getSession()` in server components/API routes |
-| Payments | Paystack (`@paystack/inline-js`) — webhook at `/api/paystack/webhook` |
+| Payments | Paystack (`@paystack/inline-js`), webhook at `/api/webhooks/paystack` |
 | File uploads | UploadThing — router at `src/app/api/uploadthing/` |
 | Email | Resend — sent from API routes, not server components |
 | Rich text | Tiptap (blog editor) |
@@ -31,6 +33,7 @@ E-commerce storefront for Twinkle Locs, a Nigerian loc bead accessories brand. B
 ```
 src/
   app/
+    (home)/          # Homepage = the shop (product grid)
     (shop)/          # Customer-facing storefront routes
     (admin)/         # Admin panel routes (auth-protected layout)
     (marketing)/     # Static/marketing pages
@@ -64,13 +67,13 @@ Schema changes go in `src/db/schema.ts` only — never hand-edit migration SQL.
 ## Payments (Paystack)
 
 - Checkout is initialised client-side with `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY`
-- Payment confirmation happens via a signed webhook (`PAYSTACK_SECRET_KEY`) at `/api/paystack/webhook`
+- Payment confirmation happens via a signed webhook (`PAYSTACK_SECRET_KEY`) at `/api/webhooks/paystack` (`src/app/api/webhooks/paystack/route.ts`)
 - Order status is written to the DB only after webhook verification — never trust client-side confirmation alone
 
 ## Design system
 
-- **Fonts:** Halimun (hero/display), Raleway (body), Inter (UI) — all self-hosted under `public/fonts/`
-- **Palette:** deep gold, cocoa, cream, forest green, terracotta — defined as CSS custom properties in `globals.css`
+- **Fonts:** Halimun (`font-display`) and Mistrully (`font-accent-display`, used for digits) self-hosted under `public/fonts/`; Montserrat (`font-heading`/`font-body`) via `next/font/google`. All loaded in `src/lib/fonts.ts`
+- **Palette:** forest, gold (plus `gold-light` for text on dark, `gold-deep` for text on light), cream, charcoal, stone; defined as CSS custom properties in `globals.css` (cocoa is legacy, admin only)
 - **Aesthetic:** Afro-luxury + Bold Cultural
 
 ## Common commands
