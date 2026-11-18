@@ -1,6 +1,20 @@
 import { UTApi } from 'uploadthing/server'
-import { db, blogPosts, products, aboutSections } from '@/db'
+import { isNotNull } from 'drizzle-orm'
+import { db, blogPosts, products, aboutSections, reviews } from '@/db'
 import { fileKeyFromUploadthingUrl } from '@/lib/uploadthing/server'
+import { getLandingConfig } from '@/lib/landing/config.server'
+import { SIZE_GUIDE_SIZES, type LandingConfig, type LandingImage } from '@/lib/landing/config'
+
+/** Every image the ad landing page uses (heroes, size guide, final band, Instagram grid) */
+function landingImages(c: LandingConfig): LandingImage[] {
+  return [
+    c.hero.image,
+    ...c.hero.variants.map((v) => v.image),
+    c.finalCta.image,
+    ...SIZE_GUIDE_SIZES.map((s) => c.sizeGuide.photos[s]),
+    ...c.instagram,
+  ].filter((i): i is LandingImage => i !== null)
+}
 
 /**
  * Every photo already uploaded, so a cover image can be reused instead of
@@ -71,10 +85,17 @@ function idFor(url: string): string {
 }
 
 async function usedImages(): Promise<{ url: string; usage: MediaUsage }[]> {
-  const [posts, prods, pages] = await Promise.all([
+  const [posts, prods, pages, landing, reviewPhotos] = await Promise.all([
     db.select({ id: blogPosts.id, title: blogPosts.title, featuredImage: blogPosts.featuredImage, body: blogPosts.body }).from(blogPosts),
     db.select({ id: products.id, name: products.name, image: products.image, images: products.images }).from(products),
     db.select({ id: aboutSections.id, title: aboutSections.title, imageUrl: aboutSections.imageUrl }).from(aboutSections),
+    getLandingConfig(),
+    // Fails soft until the review photo column exists in the database
+    db
+      .select({ authorName: reviews.authorName, photoUrl: reviews.photoUrl })
+      .from(reviews)
+      .where(isNotNull(reviews.photoUrl))
+      .catch(() => [] as { authorName: string; photoUrl: string | null }[]),
   ])
 
   const out: { url: string; usage: MediaUsage }[] = []
@@ -90,6 +111,12 @@ async function usedImages(): Promise<{ url: string; usage: MediaUsage }[]> {
   }
   for (const s of pages) {
     if (s.imageUrl) out.push({ url: s.imageUrl, usage: { kind: 'page', label: s.title, href: '/admin/pages' } })
+  }
+  for (const img of landingImages(landing)) {
+    out.push({ url: img.url, usage: { kind: 'page', label: 'Ad landing page', href: '/admin/landing-page' } })
+  }
+  for (const r of reviewPhotos) {
+    if (r.photoUrl) out.push({ url: r.photoUrl, usage: { kind: 'page', label: `Review by ${r.authorName}`, href: '/admin/reviews' } })
   }
   // Only real web URLs (skip data: URIs and relative paths a pasted post might contain)
   return out.filter((x) => /^https:\/\//i.test(x.url.trim())).map((x) => ({ ...x, url: x.url.trim() }))

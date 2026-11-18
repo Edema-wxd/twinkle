@@ -4,7 +4,7 @@
  */
 export function PaymentMethods({ className = '' }: { className?: string }) {
   return (
-    <ul aria-label="Pay with Visa, Mastercard, bank transfer or USSD" className={`flex flex-wrap items-center justify-center gap-1.5 ${className}`}>
+    <ul aria-label="Pay with Visa, Mastercard, Verve, bank transfer or USSD" className={`flex flex-wrap items-center justify-center gap-1.5 ${className}`}>
       <li>
         <Badge label="Visa">
           <svg viewBox="0 0 48 16" className="h-3.5 w-auto" aria-hidden="true">
@@ -18,6 +18,13 @@ export function PaymentMethods({ className = '' }: { className?: string }) {
             <circle cx="12" cy="10" r="8" fill="#EB001B" />
             <circle cx="20" cy="10" r="8" fill="#F79E1B" />
             <path d="M16 3.07a8 8 0 010 13.86 8 8 0 010-13.86z" fill="#FF5F00" />
+          </svg>
+        </Badge>
+      </li>
+      <li>
+        <Badge label="Verve">
+          <svg viewBox="0 0 52 16" className="h-3.5 w-auto" aria-hidden="true">
+            <text x="26" y="12.5" textAnchor="middle" fontFamily="Arial, Helvetica, sans-serif" fontSize="14" fontWeight="700" fill="#00425F">verve</text>
           </svg>
         </Badge>
       </li>

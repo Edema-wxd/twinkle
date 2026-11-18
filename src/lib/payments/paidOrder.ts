@@ -4,6 +4,7 @@ import { db, orders, orderItems, abandonedOrders, products, promoCodes } from '@
 import { getShippingInfo, quoteShipping, formatNaira } from '@/lib/checkout/shippingInfo'
 import { freeDeliveryApplies } from '@/lib/checkout/freeDelivery'
 import { meetsMinOrder, minOrderOf } from '@/lib/promo/minOrder'
+import { LANDING_PATH } from '@/lib/landing/config'
 import type { ProductVariant } from '@/lib/types/product'
 import type { OrderEmailItem } from '@/lib/notifications/customerEmail'
 import { aggregateNeeds, getStockMap, takeStock, withStock } from '@/lib/stock'
@@ -344,6 +345,8 @@ export async function recordPaidOrder(charge: ChargeInput): Promise<RecordedOrde
   try {
     revalidatePath('/')
     for (const slug of new Set(priced.slugs)) revalidatePath(`/catalog/${slug}`)
+    // The ad landing page (and its hero versions) shows "Only N packs left"
+    revalidatePath(LANDING_PATH, 'layout')
   } catch {
     /* outside a request context (tests/scripts) */
   }

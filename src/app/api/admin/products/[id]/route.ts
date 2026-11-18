@@ -150,6 +150,7 @@ export async function PUT(
     }
 
     revalidatePath('/')
+    revalidatePath('/llms.txt') // lists every product with its live price
     revalidatePath(`/catalog/${data.slug}`)
     revalidateLandingPage()
     return NextResponse.json(data)
@@ -193,6 +194,7 @@ export async function DELETE(
     }
 
     revalidatePath('/')
+    revalidatePath('/llms.txt') // lists every product with its live price
     revalidateLandingPage()
     return NextResponse.json({ success: true })
   } catch (err) {

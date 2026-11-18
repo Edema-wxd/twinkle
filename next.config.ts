@@ -39,6 +39,8 @@ const nextConfig: NextConfig = {
               // Without frame-src it fell back to default-src 'self' and was blocked.
               "frame-src 'self' https://checkout.paystack.com https://standard.paystack.co https://news.google.com https://www.google.com",
               "font-src 'self' https://fonts.gstatic.com",
+              // Landing page hero videos uploaded to UploadThing (default-src 'self' would block them)
+              "media-src 'self' blob: https://*.ufs.sh https://utfs.io",
               "frame-ancestors 'none'",
             ].join("; "),
           },
