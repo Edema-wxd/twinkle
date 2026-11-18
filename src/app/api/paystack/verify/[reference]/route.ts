@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { recordPaidOrder } from '@/lib/payments/paidOrder'
+import { reportPurchaseIfNew, shouldSendServerPurchase } from '@/lib/tracking/server'
 
 type PaystackVerifyResponse = {
   status: boolean
@@ -92,6 +93,13 @@ export async function GET(
 
   if (!recorded) {
     return NextResponse.json({ error: 'Missing required metadata to build order', reference }, { status: 400 })
+  }
+
+  // Server-side Purchase for Meta/TikTok, if this call (not the webhook) created the order.
+  // Once only, and only with the buyer's consent (checked inside), after the response.
+  if (shouldSendServerPurchase(recorded)) {
+    const { metadata, ip_address } = payload.data
+    after(() => reportPurchaseIfNew(recorded, { reference, metadata, ipAddress: ip_address ?? null }))
   }
 
   return NextResponse.json({ ok: true, reference, orderId: recorded.orderId, status: recorded.status })
