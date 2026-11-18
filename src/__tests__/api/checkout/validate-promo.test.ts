@@ -115,6 +115,14 @@ describe('POST /api/checkout/validate-promo — code lookup', () => {
     expect(body.error).toMatch(/limit/i)
   })
 
+  it('says a one-use code (like a welcome code) has already been used', async () => {
+    setupPromo({ ...basePromo, maxUses: 1, currentUses: 1 })
+    const res = await POST(makeRequest({ code: 'TWINKLE-7KQ2MX', subtotal: 150000, shippingCost: 3000 }))
+    const body = await res.json()
+    expect(body.valid).toBe(false)
+    expect(body.error).toBe('This code has already been used')
+  })
+
   it('accepts a code with currentUses below maxUses', async () => {
     setupPromo({ ...basePromo, maxUses: 10, currentUses: 9 })
     const res = await POST(makeRequest({ code: 'FREESHIP', subtotal: 5000, shippingCost: 3000 }))
@@ -180,5 +188,45 @@ describe('POST /api/checkout/validate-promo — discount calculation', () => {
     const body = await res.json()
     // The mock doesn't filter by code value, so it always returns the promo
     expect(body.valid).toBe(true)
+  })
+})
+
+// ─── minimum order ────────────────────────────────────────────────────────────
+
+describe('POST /api/checkout/validate-promo: minimum order', () => {
+  const welcome = { ...basePromo, code: 'TWINKLE-7KQ2MX', discountType: 'percentage', discountValue: 10, maxUses: 1, minOrder: 100000 }
+
+  it('refuses a code when the items come to less than its minimum, saying what the minimum is', async () => {
+    setupPromo(welcome)
+    const res = await POST(makeRequest({ code: 'TWINKLE-7KQ2MX', subtotal: 99999, shippingCost: 3000 }))
+    const body = await res.json()
+    expect(body.valid).toBe(false)
+    expect(body.error).toBe('This code works on orders of ₦100,000 or more (before delivery).')
+  })
+
+  it('counts the items only: delivery does not lift a bag over the minimum', async () => {
+    setupPromo(welcome)
+    const res = await POST(makeRequest({ code: 'TWINKLE-7KQ2MX', subtotal: 98000, shippingCost: 5000 }))
+    expect((await res.json()).valid).toBe(false)
+  })
+
+  it('accepts a bag exactly at the minimum', async () => {
+    setupPromo(welcome)
+    const res = await POST(makeRequest({ code: 'TWINKLE-7KQ2MX', subtotal: 100000, shippingCost: 3000 }))
+    const body = await res.json()
+    expect(body.valid).toBe(true)
+    expect(body.discountAmount).toBe(10000)
+  })
+
+  it('applies to any code that has one, not only welcome codes', async () => {
+    setupPromo({ ...basePromo, minOrder: 50000 })
+    const res = await POST(makeRequest({ code: 'FREESHIP', subtotal: 20000, shippingCost: 3000 }))
+    expect((await res.json()).error).toMatch(/₦50,000 or more/)
+  })
+
+  it.each([null, 0])('treats a minimum of %s as no minimum', async (minOrder) => {
+    setupPromo({ ...basePromo, minOrder })
+    const res = await POST(makeRequest({ code: 'FREESHIP', subtotal: 100, shippingCost: 3000 }))
+    expect((await res.json()).valid).toBe(true)
   })
 })

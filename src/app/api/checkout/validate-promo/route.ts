@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { promoCodes } from '@/db'
 import { eq } from 'drizzle-orm'
+import { meetsMinOrder, minOrderMessage } from '@/lib/promo/minOrder'
 
 type RequestBody = {
   code: string
@@ -42,7 +43,14 @@ export async function POST(req: NextRequest) {
   }
 
   if (promo.maxUses !== null && promo.currentUses >= promo.maxUses) {
-    return NextResponse.json({ valid: false, error: 'This promo code has reached its usage limit' })
+    // One-use codes (like the landing page's welcome codes) read better as "used"
+    const error = promo.maxUses === 1 ? 'This code has already been used' : 'This promo code has reached its usage limit'
+    return NextResponse.json({ valid: false, error })
+  }
+
+  // subtotal = the items, before any discount and before delivery
+  if (!meetsMinOrder(promo, subtotal)) {
+    return NextResponse.json({ valid: false, error: minOrderMessage(promo.minOrder ?? 0) })
   }
 
   let discountAmount = 0

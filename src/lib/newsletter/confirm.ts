@@ -1,8 +1,11 @@
 import { and, eq, gte, isNull, lt, sql } from 'drizzle-orm'
 import { db, emailLogs, newsletterSubscribers } from '@/db'
 import { sendEmail } from '@/lib/email/client'
-import { renderNewsletter } from './template'
+import { escapeHtml } from '@/lib/email/orderTemplate'
+import type { WelcomeOfferCode } from '@/lib/landing/welcomeOffer'
+import { renderNewsletter, type NewsletterContent } from './template'
 import { emailToken, siteUrl } from './unsubscribe'
+import { describeExpiry, offerTerms, shopTwinklesUrl, welcomeCodeBlockHtml } from './welcomeCodeEmail'
 
 /**
  * Double opt-in. Signing up saves the person unconfirmed and emails them a
@@ -24,8 +27,33 @@ export function confirmUrl(email: string): string {
   return `${siteUrl()}/newsletter/confirm?${new URLSearchParams({ e, t: emailToken('confirm', e) })}`
 }
 
-/** Email the confirmation link. Never throws. */
-export async function sendConfirmationEmail(email: string, firstName: string): Promise<'sent' | 'recent' | 'throttled' | 'failed'> {
+/** The confirmation email; with a welcome code, the code is in it too (usable before they confirm). */
+function confirmationContent(to: string, offer?: WelcomeOfferCode): NewsletterContent {
+  if (!offer) {
+    return {
+      subject: 'Confirm your Twinkle Locs newsletter sign-up',
+      preheader: 'One tap and you’re in.',
+      bodyHtml: `<p>Hi {name},</p><p>Thanks for joining the Twinkle Locs newsletter. Tap the button below to confirm it’s you, and we’ll send you new drops, loc care guides and the occasional offer.</p>`,
+      ctaLabel: 'Confirm my email',
+      ctaUrl: confirmUrl(to),
+    }
+  }
+  const now = new Date()
+  const { within } = describeExpiry(new Date(offer.expiresAt), now)
+  return {
+    subject: `Confirm your Twinkle Locs sign-up (your ${offer.percent}% code is inside)`,
+    preheader: `Your code ${offer.code} works for ${within}.`,
+    bodyHtml:
+      `<p>Hi {name},</p><p>Thanks for joining Twinkle Locs. Here’s your welcome code:</p>${welcomeCodeBlockHtml(offer, now)}` +
+      `<p>${escapeHtml(offerTerms(offer, now))} <a href="${escapeHtml(shopTwinklesUrl())}">Shop Twinkles</a></p>` +
+      `<p>One more thing: tap the button below to confirm your email, and we’ll send you new drops, loc care guides and the occasional offer. Your code works either way.</p>`,
+    ctaLabel: 'Confirm my email',
+    ctaUrl: confirmUrl(to),
+  }
+}
+
+/** Email the confirmation link (and the welcome code, when there is one). Never throws. */
+export async function sendConfirmationEmail(email: string, firstName: string, offer?: WelcomeOfferCode): Promise<'sent' | 'recent' | 'throttled' | 'failed'> {
   const to = email.trim().toLowerCase()
   try {
     const hourAgo = new Date(Date.now() - 60 * 60 * 1000)
@@ -43,13 +71,7 @@ export async function sendConfirmationEmail(email: string, firstName: string): P
     }
 
     const { subject, html, text } = renderNewsletter(
-      {
-        subject: 'Confirm your Twinkle Locs newsletter sign-up',
-        preheader: 'One tap and you’re in.',
-        bodyHtml: `<p>Hi {name},</p><p>Thanks for joining the Twinkle Locs newsletter. Tap the button below to confirm it’s you, and we’ll send you new drops, loc care guides and the occasional offer.</p>`,
-        ctaLabel: 'Confirm my email',
-        ctaUrl: confirmUrl(to),
-      },
+      confirmationContent(to, offer),
       firstName,
       'Someone (hopefully you) entered this address to join the Twinkle Locs newsletter. If it wasn’t you, ignore this email and you won’t hear from us.',
     )
