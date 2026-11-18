@@ -3,6 +3,7 @@ import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { products } from '@/db'
 import { eq } from 'drizzle-orm'
+import { revalidateLandingPage } from '../../../_lib/revalidateLanding'
 
 export async function PATCH(
   _req: NextRequest,
@@ -43,5 +44,7 @@ export async function PATCH(
     )
   }
 
+  // Hidden products drop off the ad landing page
+  revalidateLandingPage()
   return NextResponse.json({ is_active: newValue })
 }

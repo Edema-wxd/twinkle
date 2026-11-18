@@ -6,6 +6,7 @@ import { faqs } from '@/db'
 import { eq } from 'drizzle-orm'
 import { toFaqDto } from '@/lib/content'
 import { FaqForm } from '../../../../_components/FaqForm'
+import { LANDING_FAQ_CATEGORY } from '@/lib/landing/config'
 
 export const metadata = {
   title: 'Edit FAQ — Twinkle Locs Admin',
@@ -35,7 +36,11 @@ export default async function EditFaqPage({
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-3xl">
       <div>
-        <Link href="/admin/faqs" className="text-sm text-stone-400 hover:text-white transition-colors">&larr; All FAQs</Link>
+        {faq.category === LANDING_FAQ_CATEGORY ? (
+          <Link href="/admin/landing-page#landing-faqs" className="text-sm text-stone-400 hover:text-white transition-colors">&larr; Ad landing page</Link>
+        ) : (
+          <Link href="/admin/faqs" className="text-sm text-stone-400 hover:text-white transition-colors">&larr; All FAQs</Link>
+        )}
         <h1 className="mt-3 font-heading text-2xl font-bold text-white">Edit FAQ</h1>
         <p className="text-stone-400 text-sm mt-1 truncate">{faq.question}</p>
       </div>

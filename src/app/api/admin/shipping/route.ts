@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
+import { revalidateLandingPage } from '../_lib/revalidateLanding'
 import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { settings } from '@/db'
@@ -71,6 +72,8 @@ export async function PUT(req: NextRequest) {
     revalidatePath('/shipping')
     revalidatePath('/')
     revalidatePath('/llms.txt')
+    // The ad landing page's announcement bar and delivery card
+    revalidateLandingPage()
     return NextResponse.json({ updated: rows.map((r) => r.key) })
   } catch (err) {
     console.error('Failed to upsert shipping settings:', err)

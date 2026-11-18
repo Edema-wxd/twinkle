@@ -3,11 +3,14 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Faq } from '@/types/db'
+import { LANDING_FAQ_CATEGORY } from '@/lib/landing/config'
 import { RichTextEditor } from './RichTextEditor'
 
 interface FaqFormProps {
   faq?: Faq
   categories?: string[]
+  /** Category to start a new FAQ in (e.g. from /admin/faqs?category=Landing%20page) */
+  defaultCategory?: string
   /** Called after a successful create (used by the inline "Add FAQ" panel). */
   onCreated?: () => void
 }
@@ -15,13 +18,20 @@ interface FaqFormProps {
 const inputClass =
   'w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold'
 
-export function FaqForm({ faq, categories = [], onCreated }: FaqFormProps) {
+/** Where a saved FAQ shows, for the confirmation message */
+function liveOn(category: string) {
+  return category.trim() === LANDING_FAQ_CATEGORY ? 'the ad landing page' : '/faq'
+}
+
+export function FaqForm({ faq, categories = [], defaultCategory = '', onCreated }: FaqFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   const isEdit = !!faq
 
-  const [category, setCategory] = useState(faq?.category ?? '')
+  const [category, setCategory] = useState(faq?.category ?? defaultCategory)
+  // Landing page questions stay on the ad landing page (never on /faq or the home page)
+  const isLanding = category.trim() === LANDING_FAQ_CATEGORY
   const [question, setQuestion] = useState(faq?.question ?? '')
   const [answer, setAnswer] = useState(faq?.answer ?? '')
   const [isFeatured, setIsFeatured] = useState(faq?.is_featured ?? false)
@@ -54,7 +64,7 @@ export function FaqForm({ faq, categories = [], onCreated }: FaqFormProps) {
             category: category.trim(),
             question: question.trim(),
             answer: answer.trim(),
-            is_featured: isFeatured,
+            is_featured: isFeatured && !isLanding,
             // New FAQs go to the end of their category
             ...(isEdit ? {} : { display_order: 9999 }),
           }),
@@ -67,7 +77,7 @@ export function FaqForm({ faq, categories = [], onCreated }: FaqFormProps) {
         }
 
         if (isEdit) {
-          showToast('success', 'FAQ updated, live on /faq')
+          showToast('success', `FAQ updated, live on ${liveOn(category)}`)
           router.refresh()
         } else {
           // Keep the category so several questions can be added in a row
@@ -75,7 +85,7 @@ export function FaqForm({ faq, categories = [], onCreated }: FaqFormProps) {
           setAnswer('')
           setIsFeatured(false)
           setEditorKey((k) => k + 1)
-          showToast('success', 'FAQ added, live on /faq')
+          showToast('success', `FAQ added, live on ${liveOn(category)}`)
           onCreated?.()
           router.refresh()
         }
@@ -180,13 +190,19 @@ export function FaqForm({ faq, categories = [], onCreated }: FaqFormProps) {
         <p className="text-xs text-stone-500">Answers also appear in Google results, so lead with the direct answer.</p>
       </div>
 
-      <label className="flex items-start gap-3 cursor-pointer">
-        <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="mt-0.5 w-4 h-4 accent-gold" />
-        <span>
-          <span className="block text-sm text-stone-200">Show on the home page</span>
-          <span className="block text-xs text-stone-500">Featured questions appear in the &ldquo;Good to know&rdquo; section. Pick the 3 to 6 that stop people buying.</span>
-        </span>
-      </label>
+      {isLanding ? (
+        <p className="text-xs text-stone-500">
+          This question only shows on the ad landing page, not on /faq or the home page. Drag it in the FAQs list to change its order.
+        </p>
+      ) : (
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="mt-0.5 w-4 h-4 accent-gold" />
+          <span>
+            <span className="block text-sm text-stone-200">Show on the home page</span>
+            <span className="block text-xs text-stone-500">Featured questions appear in the &ldquo;Good to know&rdquo; section. Pick the 3 to 6 that stop people buying.</span>
+          </span>
+        </label>
+      )}
 
       <div className="flex items-center gap-3 pt-1">
         <button

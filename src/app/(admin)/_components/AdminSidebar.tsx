@@ -20,6 +20,7 @@ const NAV_LINKS = [
 
 const CONTENT_LINKS = [
   { href: '/admin/pages', label: 'About Page', exact: false },
+  { href: '/admin/landing-page', label: 'Ad landing page', exact: false },
   { href: '/admin/faqs', label: 'FAQs', exact: false },
   { href: '/admin/blog', label: 'Blog', exact: false },
   { href: '/admin/shipping', label: 'Shipping Info', exact: false },
