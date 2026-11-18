@@ -6,8 +6,10 @@ import { BUSINESS } from '@/lib/config/business';
 import { CartLineItem, lineKey } from '@/components/cart/CartLineItem';
 import { UndoRemoveBar } from '@/components/cart/UndoRemoveBar';
 import { FreeDeliveryNudge } from '@/components/cart/FreeDeliveryNudge';
+import { DeliveryFromNote } from '@/components/cart/DeliveryFromNote';
 import { PaymentMethods } from '@/components/checkout/PaymentMethods';
 import { useRemoveWithUndo } from '@/lib/cart/useRemoveWithUndo';
+import { trackEvent } from '@/lib/tracking/events';
 
 export default function CartPage() {
   const { state, dispatch } = useCart();
@@ -17,6 +19,7 @@ export default function CartPage() {
     (sum, item) => sum + item.unitPrice * item.quantity,
     0
   );
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   function handleUpdateQty(key: string, qty: number) {
     dispatch({ type: 'UPDATE_QTY', payload: { key, qty } });
@@ -87,9 +90,7 @@ export default function CartPage() {
                   ₦{subtotal.toLocaleString()}
                 </span>
               </div>
-              <p className="font-body text-xs text-charcoal/50 mt-1 mb-3">
-                Shipping calculated at checkout
-              </p>
+              <DeliveryFromNote className="font-body text-xs text-charcoal/60 mt-1 mb-3" />
               <FreeDeliveryNudge subtotal={subtotal} className="mb-4" />
 
               <hr className="border-charcoal/10 mb-4" />
@@ -108,6 +109,7 @@ export default function CartPage() {
 
               <Link
                 href="/checkout"
+                onClick={() => trackEvent({ name: 'InitiateCheckout', value: subtotal, numItems: totalItems })}
                 className="bg-gold text-forest font-heading font-semibold py-3 px-6 rounded-lg hover:bg-forest hover:text-cream transition-colors w-full text-center block mt-4"
               >
                 Checkout

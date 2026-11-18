@@ -8,8 +8,10 @@ import { lineKey } from '@/lib/cart/cartReducer';
 import { CartLineItem } from './CartLineItem';
 import { UndoRemoveBar } from './UndoRemoveBar';
 import { FreeDeliveryNudge } from './FreeDeliveryNudge';
+import { DeliveryFromNote } from './DeliveryFromNote';
 import { PaymentMethods } from '@/components/checkout/PaymentMethods';
 import { useRemoveWithUndo } from '@/lib/cart/useRemoveWithUndo';
+import { trackEvent } from '@/lib/tracking/events';
 
 export function CartDrawer() {
   const { state, dispatch } = useCart();
@@ -151,16 +153,17 @@ export function CartDrawer() {
               ₦{subtotal.toLocaleString()}
             </span>
           </div>
-          <p className="font-body text-xs text-charcoal/50 mb-3">
-            Shipping calculated at checkout
-          </p>
+          <DeliveryFromNote className="font-body text-xs text-charcoal/60 mb-3" />
           <FreeDeliveryNudge subtotal={subtotal} className="mb-4" />
 
           {/* Checkout CTA */}
           {items.length > 0 ? (
             <Link
               href="/checkout"
-              onClick={() => dispatch({ type: 'CLOSE_DRAWER' })}
+              onClick={() => {
+                trackEvent({ name: 'InitiateCheckout', value: subtotal, numItems: totalItems });
+                dispatch({ type: 'CLOSE_DRAWER' });
+              }}
               className="bg-gold text-forest font-heading font-semibold py-3 rounded-lg hover:bg-forest hover:text-cream transition-colors w-full text-center block"
             >
               Checkout
