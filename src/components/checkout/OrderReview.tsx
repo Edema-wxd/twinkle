@@ -8,6 +8,7 @@ import type { CustomerDetails } from './CheckoutForm';
 import { PaystackButton } from './PaystackButton';
 import { amountToFreeDelivery, freeDeliveryApplies, naira } from '@/lib/checkout/freeDelivery';
 import { getZoneIdForArea, getZoneById } from '@/lib/checkout/shippingZones';
+import { checkoutAdMetadata } from '@/lib/tracking/checkout';
 
 interface OrderReviewProps {
   items: CartItem[];
@@ -222,6 +223,8 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
     promo_code: appliedPromo?.code ?? null,
     discount_amount: subtotalDiscount,
     discount_type: appliedPromo?.discountType ?? null,
+    // Ad attribution: utm (which ad), consent, and with consent the pixel ids for the server-side Purchase
+    ...checkoutAdMetadata(),
     custom_fields: [
       {
         display_name: 'Customer Name',

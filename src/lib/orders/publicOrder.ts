@@ -14,6 +14,8 @@ export type PublicOrderStatus = 'payment_review' | 'paid' | 'processing' | 'ship
 
 export type PublicOrderItem = {
   id: string
+  /** For the ad pixels' Purchase content ids */
+  product_id: string
   product_name: string
   variant_name: string
   tier_qty: number
@@ -82,6 +84,7 @@ export async function getPublicOrder(reference: string): Promise<PublicOrder | n
     total: row.total,
     items: row.orderItems.map((i) => ({
       id: i.id,
+      product_id: i.productId,
       product_name: i.productName,
       variant_name: i.variantName,
       tier_qty: i.tierQty,

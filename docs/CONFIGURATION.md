@@ -124,3 +124,27 @@ What the client guarantees:
 - **Reliable status emails:** emails triggered by admin status changes run in `after()`, so Vercel doesn't freeze them mid-send.
 
 Admin → **Emails** shows the setup check, a **Send test email** button, delivery status per email, and a **Needs attention** filter for failures, bounces and spam complaints. The new-order alert goes to the `email` setting in Admin → Settings, or the support address if that's empty.
+
+## Ad tracking (Meta Pixel, TikTok Pixel)
+
+Everything here is optional and **off when unset**: with no pixel ID there is no cookie banner, no pixel script and nothing is sent to Meta or TikTok. Each platform is independent, so you can turn on Meta only, TikTok only, or both.
+
+| Variable | Where to find it | What it does |
+|---|---|---|
+| `NEXT_PUBLIC_META_PIXEL_ID` | Meta Events Manager → Data sources → your dataset (pixel) → Settings → **Dataset ID** (digits only) | Turns on the Meta Pixel and the cookie banner. |
+| `META_CAPI_ACCESS_TOKEN` | Same Settings page → **Conversions API** → **Generate access token** | Server-side `Purchase` through the Conversions API. Needs the pixel ID too. Server only, never exposed to the browser. |
+| `META_TEST_EVENT_CODE` | Events Manager → your dataset → **Test events** tab (e.g. `TEST12345`) | Optional. Server events show up under Test events. Remove it once you've checked, or live purchases keep landing there. |
+| `NEXT_PUBLIC_TIKTOK_PIXEL_ID` | TikTok Ads Manager → Tools → **Events** → Web events → your pixel → **Pixel ID** (e.g. `C4ABC...`) | Turns on the TikTok Pixel and the cookie banner. |
+| `TIKTOK_EVENTS_ACCESS_TOKEN` | Same pixel → **Settings** → **Events API** → **Generate access token** | Server-side `CompletePayment` through the Events API 2.0. Needs the pixel ID too. Server only. |
+| `TIKTOK_TEST_EVENT_CODE` | Your pixel → **Test events** tab | Optional, as for Meta. Remove it once you've checked. |
+
+`NEXT_PUBLIC_*` values are built into the browser code, so redeploy after changing them.
+
+How it behaves:
+- **Consent first.** The pixels load only after the visitor presses **Accept** on the cookie banner (Nigeria Data Protection Act). The choice is kept in the `tl_consent` cookie for 180 days, and can be changed on `/privacy`. Declining clears the pixels' cookies.
+- **Events.** PageView on every page, plus ViewContent, SelectVariant, AddToCart, InitiateCheckout, Purchase (TikTok: CompletePayment), Lead (TikTok: SubmitForm) and Contact, all from `trackEvent()` in `src/lib/tracking/events.ts`. Values are in NGN; content ids are product ids.
+- **Server-side Purchase.** When a paid order is first recorded (by the Paystack webhook or the verify call, whichever comes first), `src/lib/tracking/server.ts` sends it to Meta and TikTok after the response, once, and only if the buyer accepted at checkout. Email and phone are SHA-256 hashed. The browser Purchase on the order page uses the same event id (the Paystack reference), so each sale counts once. Failures are logged as `[tracking]` and never affect the order.
+- **Ad links (UTM).** `utm_source`, `utm_medium`, `utm_campaign`, `utm_content` and `utm_term` from the landing URL are kept in the first-party `tl_utm` cookie for 30 days (last click wins), sent with the Paystack metadata at checkout, and shown under **Ad source** on the admin order page. This works without pixels or consent.
+- **CSP.** `next.config.ts` allows `connect.facebook.net`, `www.facebook.com`, `analytics.tiktok.com` and `analytics-ipv6.tiktokw.us` for the pixels.
+
+To test: set the pixel IDs and test event codes, accept the banner, place a Paystack test order, and check the Test events tabs. The browser and server Purchase should appear as one deduplicated event.

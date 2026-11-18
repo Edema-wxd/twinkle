@@ -8,6 +8,7 @@ import { eq, and } from 'drizzle-orm'
 import { Order, OrderItem, Json } from '@/types/db'
 import { OrderStatusSelect } from '../../../../_components/OrderStatusSelect'
 import { deliveryAreaFromPayload, deliveryPlace } from '@/lib/orders/deliveryPlace'
+import { utmFromPayload, utmRows } from '@/lib/orders/adSource'
 import { ReviewReminderButton } from '../../../../_components/ReviewReminderButton'
 
 type FullOrder = Order & { order_items: OrderItem[] }
@@ -101,6 +102,9 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
       line_total: item.lineTotal,
     })),
   }
+
+  // Which ad link the buyer arrived from (recorded at checkout, read back from the payment record)
+  const adSource = utmRows(utmFromPayload(result.paystackPayload))
 
   const subtotal = order.order_items.reduce(
     (sum, item) => sum + item.line_total,
@@ -234,6 +238,25 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
             </p>
           </div>
         </div>
+      </section>
+
+      {/* Ad source: UTM tags from the ad link */}
+      <section aria-labelledby="ad-source-h" className="bg-stone-900 rounded-lg p-6 space-y-4">
+        <h2 id="ad-source-h" className="text-lg font-semibold text-white border-b border-stone-700 pb-3">
+          Ad source
+        </h2>
+        {adSource.length > 0 ? (
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            {adSource.map(([label, value]) => (
+              <div key={label}>
+                <dt className="text-stone-400 text-xs uppercase tracking-wide mb-1">{label}</dt>
+                <dd className="text-white break-words">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <p className="text-sm text-stone-400">Not from a tagged ad link</p>
+        )}
       </section>
 
       {/* Section 2 — Line Items */}

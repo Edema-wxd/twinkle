@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { BUSINESS } from '@/lib/config/business'
 import { PolicyPage } from '@/components/PolicyPage'
+import { ConsentChoice } from '@/components/tracking/ConsentChoice'
 
 const title = 'Privacy Policy | Twinkle Locs'
 const description =
@@ -78,6 +79,14 @@ export default function PrivacyPage() {
                 <strong>Emails we send:</strong> our email provider can tell us whether an email was delivered, bounced or opened, so
                 we know your receipt and updates reached you.
               </p>
+              <p>
+                <strong>Ads (only if you accept ad cookies):</strong> which pages you view, what you add to your bag and what you buy,
+                shared with Meta and TikTok so we can see which of our ads work. See <a href="#cookies">Cookies</a>. [confirm]
+              </p>
+              <p>
+                <strong>Ad links:</strong> if you arrive from one of our ads, the campaign tags in the link (for example, which ad you
+                tapped) are saved with your order, so we know which ads lead to sales. [confirm]
+              </p>
             </>
           ),
         },
@@ -88,8 +97,8 @@ export default function PrivacyPage() {
             <ul>
               <li><strong>To fulfil your order</strong> (a contract with you): order, payment and delivery details.</li>
               <li><strong>Legal obligations:</strong> keeping sales records for tax and accounting.</li>
-              <li><strong>Legitimate interests:</strong> preventing fraud, following up an unfinished checkout, and improving the shop.</li>
-              <li><strong>Your consent:</strong> the newsletter and published reviews. You can withdraw consent at any time.</li>
+              <li><strong>Legitimate interests:</strong> preventing fraud, following up an unfinished checkout, improving the shop, and knowing which of our ad links lead to sales [confirm].</li>
+              <li><strong>Your consent:</strong> the newsletter, published reviews and ad cookies (Meta and TikTok) [confirm]. You can withdraw consent at any time.</li>
             </ul>
           ),
         },
@@ -106,6 +115,12 @@ export default function PrivacyPage() {
                 <li><strong>Vercel</strong> (website hosting) and <strong>Neon</strong> (our database), which store the website and its data.</li>
                 <li><strong>UploadThing</strong>, which hosts our product photos.</li>
                 <li><strong>WhatsApp (Meta)</strong>, when you choose to message us there.</li>
+                <li>
+                  <strong>Meta</strong> (Facebook, Instagram) and <strong>TikTok</strong>, only if you accept ad cookies: what you view
+                  and buy on our site and, when you buy, your email address and phone number in hashed (scrambled) form with your IP
+                  address and browser type, so they can tell us which ads led to a sale. They use it under their own privacy policies.
+                  [confirm]
+                </li>
                 <li>
                   <strong>Google</strong>: blog posts include a Google button for adding us as a preferred source, which loads a
                   script from Google when you view the post.
@@ -127,6 +142,10 @@ export default function PrivacyPage() {
               <li><strong>Unfinished checkouts:</strong> deleted automatically after 90 days, or sooner if you ask us.</li>
               <li><strong>Newsletter:</strong> until you unsubscribe. Unsubscribing deletes your details from the list. If you never confirm your sign-up, we delete it after 7 days.</li>
               <li><strong>Reviews:</strong> while they&apos;re published, or until you ask us to remove yours.</li>
+              <li>
+                <strong>Your ad cookie choice:</strong> 180 days, then we ask again. <strong>Ad link tags:</strong> 30 days in your
+                browser, then with your order record. [confirm]
+              </li>
             </ul>
           ),
         },
@@ -155,10 +174,29 @@ export default function PrivacyPage() {
           id: 'cookies',
           title: 'Cookies and your browser',
           body: (
-            <p>
-              We don&apos;t use advertising or tracking cookies. Your bag is saved in your own browser so it&apos;s still there when
-              you come back; clearing your browser data removes it. Our staff admin area uses a login cookie, which shoppers never get.
-            </p>
+            <>
+              <p>
+                Your bag is saved in your own browser so it&apos;s still there when you come back; clearing your browser data removes
+                it. Our staff admin area uses a login cookie, which shoppers never get.
+              </p>
+              <p>
+                <strong>Ad cookies, only if you accept:</strong> we advertise on Facebook, Instagram and TikTok. If you press Accept on
+                our cookie banner, the Meta Pixel and TikTok Pixel load on this site. They set cookies and tell Meta and TikTok which
+                pages you view and what you add to your bag or buy, so we can see which of our ads work. When you buy, our server also
+                sends them a record of the purchase with your email address and phone number in hashed (scrambled) form, your IP
+                address and your browser type. If you decline, or don&apos;t answer, none of this happens and the shop works exactly
+                the same. [confirm]
+              </p>
+              <p>
+                <strong>Ad links:</strong> when you arrive from one of our ads, the link&apos;s campaign tags are kept in a cookie on
+                this site for 30 days and saved with your order. They say which ad you came from, not who you are, and we don&apos;t
+                share them. [confirm]
+              </p>
+              <p>
+                <strong>Change your choice:</strong> we remember it in a cookie for 180 days. You can change it here at any time. [confirm]
+              </p>
+              <ConsentChoice />
+            </>
           ),
         },
         {
