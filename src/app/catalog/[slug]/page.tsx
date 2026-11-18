@@ -13,6 +13,7 @@ import { RelatedProducts } from '@/components/product/RelatedProducts'
 import { productDescriptionHtml, productDescriptionText } from '@/lib/product-description'
 import { popularChoice } from '@/lib/products/popularChoice'
 import { getShippingInfo } from '@/lib/checkout/shippingInfo'
+import { fromPrice, naira } from '@/components/product/storeCopy'
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>
@@ -20,15 +21,16 @@ interface ProductDetailPageProps {
 
 // Hand-written SEO copy for key product pages, keyed by slug.
 // Falls back to the product name / DB description for everything else.
-const PRODUCT_SEO: Record<string, { title: string; description?: string }> = {
+// `from` is the live lowest price ("₦15,500"), or null when the product has none.
+const PRODUCT_SEO: Record<string, { title: string; description?: (from: string | null) => string }> = {
   'gold-twinkles': {
     title: 'Gold Loc Beads - Packs of 50-200 | Twinkle Locs',
-    description:
-      'Gold-toned loc beads, handcrafted in Nigeria. Fade-resistant finish. Packs of 50, 100, 150, or 200. Sizes 2mm, 4mm, 6mm. From NGN 15,500.',
+    description: (from) =>
+      `Gold-toned loc beads, handcrafted in Nigeria. Fade-resistant finish. Packs of 50, 100, 150, or 200. Sizes 2mm, 4mm, 6mm.${from ? ` From ${from}.` : ''}`,
   },
   'silver-twinkles': {
     title: 'Silver Loc Beads - Packs of 50-200 | Twinkle Locs',
-    description:
+    description: () =>
       'Silver-toned loc beads, handcrafted in Nigeria. Packs of 50, 100, 150, or 200. Sizes 2mm, 4mm, 6mm. Order online or via WhatsApp.',
   },
 }
@@ -48,6 +50,8 @@ export async function generateMetadata({
       image: productsTable.image,
       images: productsTable.images,
       slug: productsTable.slug,
+      priceMin: productsTable.priceMin,
+      variants: productsTable.variants,
     })
     .from(productsTable)
     .where(eq(productsTable.slug, slug))
@@ -56,7 +60,8 @@ export async function generateMetadata({
   if (!row) return {}
 
   const seo = PRODUCT_SEO[row.slug]
-  const description = seo?.description ?? (row.seoDescription ?? productDescriptionText(row.description)).slice(0, 155)
+  const from = fromPrice({ price_min: row.priceMin, variants: row.variants as unknown as ProductVariant[] })
+  const description = seo?.description?.(from === null ? null : naira(from)) ?? (row.seoDescription ?? productDescriptionText(row.description)).slice(0, 155)
   const ogImage = (row.images && row.images.length > 0 ? row.images[0] : null) ?? row.image
 
   return {
@@ -239,6 +244,8 @@ export default async function ProductDetailPage({
     images: r.images?.length ? r.images : undefined,
   })))
 
+  const shipping = await shippingPromise
+
   return (
     <div className="bg-cream min-h-screen">
       <script
@@ -273,7 +280,9 @@ export default async function ProductDetailPage({
           rating={summariseRatings(reviews.map((r) => r.rating))}
           addOn={shearsProduct}
           popular={await popularPromise}
-          freeLagosOver={(await shippingPromise).freeLagosOver}
+          freeLagosOver={shipping.freeLagosOver}
+          lagosFrom={shipping.lagosFrom}
+          otherDays={shipping.otherDays}
         />
       </div>
 
