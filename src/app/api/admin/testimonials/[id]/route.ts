@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { getAdminSession } from '@/lib/auth/server'
 import { db, testimonials } from '@/db'
 import { eq } from 'drizzle-orm'
@@ -33,6 +34,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     .returning()
 
   if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  revalidatePath('/about') // testimonials show on the About page
   return NextResponse.json(row)
 }
 
@@ -42,5 +44,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   const { id } = await params
   await db.delete(testimonials).where(eq(testimonials.id, id))
+  revalidatePath('/about')
   return NextResponse.json({ success: true })
 }

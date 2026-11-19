@@ -207,7 +207,7 @@ export default function AdminTestimonialsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-display text-2xl text-white">Testimonials</h1>
-          <p className="text-sm text-stone-400 mt-1">Shown on the homepage carousel</p>
+          <p className="text-sm text-stone-400 mt-1">Shown at the bottom of the About page</p>
         </div>
         {!adding && (
           <button

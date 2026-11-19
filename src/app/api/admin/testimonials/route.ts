@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { getAdminSession } from '@/lib/auth/server'
 import { db, testimonials } from '@/db'
 import { asc } from 'drizzle-orm'
@@ -33,5 +34,6 @@ export async function POST(req: NextRequest) {
     displayOrder: typeof display_order === 'number' ? display_order : 0,
   }).returning()
 
+  revalidatePath('/about') // testimonials show on the About page
   return NextResponse.json(row, { status: 201 })
 }

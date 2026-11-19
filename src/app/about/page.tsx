@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
-import { db, aboutSections as aboutSectionsTable } from '@/db'
-import { asc } from 'drizzle-orm'
+import { db, aboutSections as aboutSectionsTable, testimonials as testimonialsTable } from '@/db'
+import { asc, eq } from 'drizzle-orm'
+import { TestimonialsSection, type Testimonial } from '@/components/about/TestimonialsSection'
 import { AboutSection } from '@/components/about/AboutSection'
 import { AboutStickyNav } from '@/components/about/AboutStickyNav'
 import { AboutSection as AboutSectionType } from '@/types/db'
@@ -62,6 +63,20 @@ export default async function AboutPage() {
     console.error('Failed to fetch about_sections:', err)
   }
 
+  // Customer testimonials (Admin → Testimonials); the section hides itself when there are none
+  let testimonials: Testimonial[] = []
+  try {
+    testimonials = (
+      await db
+        .select({ id: testimonialsTable.id, name: testimonialsTable.name, quote: testimonialsTable.quote })
+        .from(testimonialsTable)
+        .where(eq(testimonialsTable.isActive, true))
+        .orderBy(asc(testimonialsTable.displayOrder))
+    )
+  } catch (err) {
+    console.error('Failed to fetch testimonials:', err)
+  }
+
   // Map Drizzle camelCase to snake_case shape expected by AboutSection component
   const sections: AboutSectionType[] =
     rows.length > 0
@@ -90,6 +105,10 @@ export default async function AboutPage() {
             <AboutSection key={section.id} section={section} />
           ))}
         </div>
+      </div>
+
+      <div className="mt-24">
+        <TestimonialsSection testimonials={testimonials} />
       </div>
     </div>
   )
