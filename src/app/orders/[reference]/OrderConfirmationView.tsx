@@ -5,6 +5,7 @@ import type { PublicOrder, PublicOrderStatus } from '@/lib/orders/publicOrder';
 import { THREAD_COLOURS } from '@/lib/cart/threadColours';
 import { BUSINESS } from '@/lib/config/business';
 import { deliveryPlace } from '@/lib/orders/deliveryPlace';
+import { PurchaseTracker } from './PurchaseTracker';
 
 interface OrderConfirmationViewProps {
   order: PublicOrder;
@@ -64,6 +65,8 @@ export function OrderConfirmationView({ order }: OrderConfirmationViewProps) {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
+      {/* Ad pixels: browser Purchase, once, when the buyer accepted ad cookies */}
+      <PurchaseTracker order={order} />
       {/* Header: reflects where the order is now */}
       <div className="flex flex-col items-center text-center">
         <div

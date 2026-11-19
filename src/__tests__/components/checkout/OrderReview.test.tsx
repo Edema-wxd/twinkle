@@ -240,6 +240,61 @@ describe('OrderReview — promo code (errors)', () => {
   })
 })
 
+// ─── promo code: bag changes after applying ──────────────────────────────────
+
+describe('OrderReview: promo code re-checked when the bag changes', () => {
+  const tenPercent = (subtotal: number) =>
+    json({ valid: true, discountType: 'percentage', discountAmount: subtotal / 10, shippingSaving: 0, message: `Discount of ₦${(subtotal / 10).toLocaleString()} applied!` })
+
+  function renderWith(items: CartItem[]) {
+    const props = { customerDetails, onBack: vi.fn(), onPaymentSuccess: vi.fn() }
+    const view = render(
+      <CartProvider>
+        <OrderReview items={items} {...props} />
+      </CartProvider>,
+    )
+    return (next: CartItem[]) =>
+      view.rerender(
+        <CartProvider>
+          <OrderReview items={next} {...props} />
+        </CartProvider>,
+      )
+  }
+
+  it('works the discount out again for the new bag', async () => {
+    const user = userEvent.setup()
+    promo = () => tenPercent(10000)
+    const rerender = renderWith(cartItems)
+    await waitFor(() => screen.getByText('₦3,000'))
+    await user.type(screen.getByPlaceholderText('Promo code'), 'TEN')
+    await user.click(screen.getByRole('button', { name: /apply/i }))
+    await waitFor(() => expect(screen.getByText('−₦1,000')).toBeDefined())
+
+    promo = () => tenPercent(15000)
+    checkCart = () => json({ lines: [{ status: 'ok', unitPrice: 5000, available: null }] })
+    rerender([{ ...cartItems[0], quantity: 3 }])
+    await waitFor(() => expect(screen.getByText('−₦1,500')).toBeDefined())
+    const lastPromoCall = mockFetch.mock.calls.filter(([u]) => String(u).includes('validate-promo')).at(-1) as unknown as [string, RequestInit]
+    expect(JSON.parse(String(lastPromoCall[1].body))).toMatchObject({ code: 'TEN', subtotal: 15000 })
+  })
+
+  it('takes the code off with the reason when the bag falls under its minimum', async () => {
+    const user = userEvent.setup()
+    promo = () => tenPercent(10000)
+    const rerender = renderWith(cartItems)
+    await waitFor(() => screen.getByText('₦3,000'))
+    await user.type(screen.getByPlaceholderText('Promo code'), 'WELCOME')
+    await user.click(screen.getByRole('button', { name: /apply/i }))
+    await waitFor(() => expect(screen.getByText('−₦1,000')).toBeDefined())
+
+    promo = () => json({ valid: false, error: 'This code works on orders of ₦10,000 or more (before delivery).' })
+    rerender([{ ...cartItems[0], quantity: 1 }])
+    await waitFor(() => expect(screen.getByText(/Your bag changed, so code WELCOME was removed: This code works on orders of ₦10,000 or more/)).toBeDefined())
+    expect(screen.queryByText('−₦1,000')).toBeNull()
+    await waitFor(() => expect(payButton().disabled).toBe(false))
+  })
+})
+
 // ─── back button ──────────────────────────────────────────────────────────────
 
 describe('OrderReview — back button', () => {

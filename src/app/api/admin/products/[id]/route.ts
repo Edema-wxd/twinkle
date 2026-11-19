@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
+import { revalidateLandingPage } from '../../_lib/revalidateLanding'
 import { getAdminSession } from '@/lib/auth/server'
 import { pruneStock, setStock } from '@/lib/stock'
 import { db } from '@/db'
@@ -149,7 +150,9 @@ export async function PUT(
     }
 
     revalidatePath('/')
+    revalidatePath('/llms.txt') // lists every product with its live price
     revalidatePath(`/catalog/${data.slug}`)
+    revalidateLandingPage()
     return NextResponse.json(data)
   } catch (err: unknown) {
     console.error('Failed to update product:', err)
@@ -191,6 +194,8 @@ export async function DELETE(
     }
 
     revalidatePath('/')
+    revalidatePath('/llms.txt') // lists every product with its live price
+    revalidateLandingPage()
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Failed to delete product:', err)

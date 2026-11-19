@@ -116,6 +116,7 @@ export async function POST(req: NextRequest) {
     }
 
     revalidatePath('/')
+    revalidatePath('/llms.txt') // lists every product with its live price
     return NextResponse.json(data, { status: 201 })
   } catch (err: unknown) {
     console.error('Failed to create product:', err)

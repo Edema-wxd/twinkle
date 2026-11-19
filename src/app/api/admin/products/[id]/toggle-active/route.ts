@@ -3,6 +3,8 @@ import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { products } from '@/db'
 import { eq } from 'drizzle-orm'
+import { revalidatePath } from 'next/cache'
+import { revalidateLandingPage } from '../../../_lib/revalidateLanding'
 
 export async function PATCH(
   _req: NextRequest,
@@ -43,5 +45,9 @@ export async function PATCH(
     )
   }
 
+  // Hidden products drop off the shop, llms.txt and the ad landing page
+  revalidatePath('/')
+  revalidatePath('/llms.txt')
+  revalidateLandingPage()
   return NextResponse.json({ is_active: newValue })
 }

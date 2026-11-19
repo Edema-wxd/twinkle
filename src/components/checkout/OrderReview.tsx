@@ -8,6 +8,7 @@ import type { CustomerDetails } from './CheckoutForm';
 import { PaystackButton } from './PaystackButton';
 import { amountToFreeDelivery, freeDeliveryApplies, naira } from '@/lib/checkout/freeDelivery';
 import { getZoneIdForArea, getZoneById } from '@/lib/checkout/shippingZones';
+import { checkoutAdMetadata } from '@/lib/tracking/checkout';
 
 interface OrderReviewProps {
   items: CartItem[];
@@ -100,6 +101,8 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
     discountAmount: number;
     shippingSaving: number;
     message: string;
+    /** The items subtotal the discount was worked out for; re-checked when the bag changes */
+    checkedFor: number;
   } | null>(null);
 
   const zone =
@@ -107,15 +110,16 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
       ? getZoneById(getZoneIdForArea(customerDetails.lga) ?? 0)
       : undefined;
 
-  async function applyPromo() {
-    if (!promoInput.trim() || shippingCost === null) return;
+  /** Check a code against this bag; applies it, or removes it with the reason. `rechecking` = it was already applied. */
+  async function checkPromo(code: string, rechecking: boolean) {
+    if (!code || shippingCost === null) return;
     setPromoLoading(true);
     setPromoError(null);
     try {
       const res = await fetch('/api/checkout/validate-promo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: promoInput.trim(), subtotal, shippingCost }),
+        body: JSON.stringify({ code, subtotal, shippingCost }),
       });
       const data = await res.json() as {
         valid: boolean;
@@ -126,24 +130,45 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
         message?: string;
       };
       if (!data.valid) {
-        setPromoError(data.error ?? 'Invalid promo code');
+        const reason = data.error ?? 'Invalid promo code';
+        setPromoError(rechecking ? `Your bag changed, so code ${code.toUpperCase()} was removed: ${reason}` : reason);
         setAppliedPromo(null);
       } else {
         setAppliedPromo({
-          code: promoInput.trim().toUpperCase(),
+          code: code.toUpperCase(),
           discountType: data.discountType!,
           discountAmount: data.discountAmount!,
           shippingSaving: data.shippingSaving!,
           message: data.message!,
+          checkedFor: subtotal,
         });
         setPromoError(null);
       }
     } catch {
-      setPromoError('Could not validate promo code. Please try again.');
+      if (rechecking) {
+        // Can't confirm the discount for the new bag: take it off rather than risk a mismatched charge
+        setAppliedPromo(null);
+        setPromoInput(code);
+        setPromoError('Your bag changed and we could not re-check your code. Please apply it again.');
+      } else {
+        setPromoError('Could not validate promo code. Please try again.');
+      }
     } finally {
       setPromoLoading(false);
     }
   }
+
+  function applyPromo() {
+    return checkPromo(promoInput.trim(), false);
+  }
+
+  // A percentage discount or a minimum order depends on the bag: re-check an applied code whenever the bag changes
+  const promoIsStale = appliedPromo !== null && appliedPromo.checkedFor !== subtotal;
+  useEffect(() => {
+    if (promoIsStale && !promoLoading && appliedPromo) void checkPromo(appliedPromo.code, true);
+    // Re-runs after each check until the code matches the current bag (it may change mid-check).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- checkPromo is recreated every render
+  }, [promoIsStale, promoLoading, subtotal, shippingCost]);
 
   function removePromo() {
     setAppliedPromo(null);
@@ -186,9 +211,9 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
   }, [customerDetails.state, customerDetails.lga, shippingAttempt]);
 
   const subtotalDiscount = appliedPromo?.discountType !== 'free_shipping' ? (appliedPromo?.discountAmount ?? 0) : 0;
-  // Same rule the server charges by (lib/checkout/freeDelivery.ts)
-  const freeByThreshold = freeDeliveryApplies(customerDetails.state, subtotal - subtotalDiscount, freeOver);
-  const toFree = amountToFreeDelivery(customerDetails.state, subtotal - subtotalDiscount, freeOver);
+  // Same rule the server charges by (lib/checkout/freeDelivery.ts): items before any discount
+  const freeByThreshold = freeDeliveryApplies(customerDetails.state, subtotal, freeOver);
+  const toFree = amountToFreeDelivery(customerDetails.state, subtotal, freeOver);
   const shippingIsFree = appliedPromo?.discountType === 'free_shipping' || freeByThreshold;
   const effectiveShipping = shippingIsFree ? 0 : (shippingCost ?? 0);
   const total = subtotal - subtotalDiscount + effectiveShipping;
@@ -222,6 +247,8 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
     promo_code: appliedPromo?.code ?? null,
     discount_amount: subtotalDiscount,
     discount_type: appliedPromo?.discountType ?? null,
+    // Ad attribution: utm (which ad), consent, and with consent the pixel ids for the server-side Purchase
+    ...checkoutAdMetadata(),
     custom_fields: [
       {
         display_name: 'Customer Name',
@@ -475,7 +502,7 @@ export function OrderReview({ items, customerDetails, onBack, onPaymentSuccess }
               setReference(newReference());
               setPaymentError('Payment was not completed. You have not been charged, tap Pay to try again.');
             }}
-            disabled={shippingCost === null || promoLoading || blockedLines.length > 0 || checkFailed}
+            disabled={shippingCost === null || promoLoading || promoIsStale || blockedLines.length > 0 || checkFailed}
           />
         </div>
       </div>

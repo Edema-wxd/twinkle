@@ -25,6 +25,17 @@ export const ourFileRouter = {
       return { url: file.ufsUrl }
     }),
 
+  // Ad landing page hero loops: short muted MP4s. The page asks for under 1.5 MB so it loads fast on 4G.
+  landingVideos: f({ 'video/mp4': { maxFileSize: '2MB', maxFileCount: 1 } })
+    .middleware(async () => {
+      const session = await getAdminSession()
+      if (!session) throw new UploadThingError('Unauthorized')
+      return { userId: session.user.id }
+    })
+    .onUploadComplete(async ({ file }) => {
+      return { url: file.ufsUrl }
+    }),
+
   // Several images at once: Markdown imports and drag-and-drop into the blog editor
   blogImages: f({ image: { maxFileSize: '8MB', maxFileCount: 20 } })
     .middleware(async () => {

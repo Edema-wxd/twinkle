@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { reviews } from '@/db'
+import { parsePhotoFields } from './photoFields'
+import { revalidateLandingPage } from '../_lib/revalidateLanding'
 
 export async function POST(req: NextRequest) {
   // Auth check — validate against auth server (not just local JWT)
@@ -47,18 +49,26 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  const photo = parsePhotoFields(body as Record<string, unknown>)
+  if (!photo.ok) {
+    return NextResponse.json({ error: photo.error }, { status: 400 })
+  }
+
   try {
     const [data] = await db.insert(reviews).values({
       productId: product_id.trim(),
       authorName: author_name.trim(),
       body: reviewBody.trim(),
       rating,
+      ...photo.fields,
     }).returning()
 
     if (!data) {
       return NextResponse.json({ error: 'Failed to save review' }, { status: 500 })
     }
 
+    // Photo reviews with permission show on the ad landing page
+    revalidateLandingPage()
     return NextResponse.json(data, { status: 201 })
   } catch (err) {
     console.error('Failed to insert review:', err)

@@ -1,8 +1,10 @@
-import { and, eq, gte, inArray, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { db, orders, orderItems, abandonedOrders, products, promoCodes } from '@/db'
 import { getShippingInfo, quoteShipping, formatNaira } from '@/lib/checkout/shippingInfo'
 import { freeDeliveryApplies } from '@/lib/checkout/freeDelivery'
+import { meetsMinOrder, minOrderOf } from '@/lib/promo/minOrder'
+import { LANDING_PATH } from '@/lib/landing/config'
 import type { ProductVariant } from '@/lib/types/product'
 import type { OrderEmailItem } from '@/lib/notifications/customerEmail'
 import { aggregateNeeds, getStockMap, takeStock, withStock } from '@/lib/stock'
@@ -191,6 +193,9 @@ export async function priceOrder(meta: CheckoutMetadata): Promise<PricedOrder> {
       !(promo.maxUses !== null && promo.currentUses >= promo.maxUses)
     if (!usable) {
       problems.push(`Promo code ${code} was used but isn't valid any more (inactive, expired or used up).`)
+    } else if (!meetsMinOrder(promo, subtotal)) {
+      // Checkout refuses this too; checking again here means a tampered or stale bag can't get the discount
+      problems.push(`Promo code ${code} needs ${formatNaira(minOrderOf(promo))} of items before delivery, but the order has ${formatNaira(subtotal)}.`)
     } else {
       promoCode = promo.code
       if (promo.discountType === 'free_shipping') shipping = 0
@@ -199,8 +204,8 @@ export async function priceOrder(meta: CheckoutMetadata): Promise<PricedOrder> {
     }
   }
 
-  // Free Lagos delivery over the threshold (same rule checkout shows the customer)
-  if (freeDeliveryApplies(meta.customer_details.state, subtotal - discount, info.freeLagosOver)) shipping = 0
+  // Free Lagos delivery over the threshold, on the items before any discount (same rule checkout shows the customer)
+  if (freeDeliveryApplies(meta.customer_details.state, subtotal, info.freeLagosOver)) shipping = 0
 
   return { lines, slugs: rows.map((r) => r.slug), subtotal, discount, promoCode, shipping, total: subtotal - discount + shipping, problems }
 }
@@ -314,10 +319,34 @@ export async function recordPaidOrder(charge: ChargeInput): Promise<RecordedOrde
   } catch (e) {
     console.error('[payments] Failed to take stock:', e)
   }
+
+  // Count the promo code's use. Atomic, like stock: two payments landing at once can't
+  // both use a one-use code (e.g. a landing page welcome code); the second is held.
+  // Done before the items are written so a later failure can't lose the count.
+  if (priced.promoCode) {
+    try {
+      const claimed = await db
+        .update(promoCodes)
+        .set({ currentUses: sql`${promoCodes.currentUses} + 1` })
+        .where(and(eq(promoCodes.code, priced.promoCode), or(isNull(promoCodes.maxUses), lt(promoCodes.currentUses, promoCodes.maxUses))))
+        .returning({ id: promoCodes.id })
+      if (claimed.length === 0) {
+        const text = `Promo code ${priced.promoCode} was used up by another order at the same time, so this order shouldn't have had its discount.`
+        finalIssue = [finalIssue, text].filter(Boolean).join(' ')
+        await db.update(orders).set({ status: PAYMENT_REVIEW_STATUS, paymentIssue: finalIssue }).where(eq(orders.id, inserted.id))
+        console.warn('[payments] Promo code used up, order held for review', charge.reference)
+      }
+    } catch (e) {
+      console.error('[payments] Failed to count promo usage:', e)
+    }
+  }
+
   // Cached shop pages show stock, so refresh the ones this order touched
   try {
     revalidatePath('/')
     for (const slug of new Set(priced.slugs)) revalidatePath(`/catalog/${slug}`)
+    // The ad landing page (and its hero versions) shows "Only N packs left"
+    revalidatePath(LANDING_PATH, 'layout')
   } catch {
     /* outside a request context (tests/scripts) */
   }
@@ -336,17 +365,6 @@ export async function recordPaidOrder(charge: ChargeInput): Promise<RecordedOrde
       lineTotal: (l.serverUnitPrice ?? l.unitPrice) * l.quantity,
     })),
   )
-
-  if (priced.promoCode) {
-    try {
-      await db
-        .update(promoCodes)
-        .set({ currentUses: sql`${promoCodes.currentUses} + 1` })
-        .where(eq(promoCodes.code, priced.promoCode))
-    } catch (e) {
-      console.error('[payments] Failed to increment promo usage:', e)
-    }
-  }
 
   try {
     await db

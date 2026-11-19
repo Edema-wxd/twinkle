@@ -1,6 +1,7 @@
 import { UTApi } from 'uploadthing/server'
 import { sql } from 'drizzle-orm'
 import { db } from '@/db'
+import { LANDING_SETTINGS_KEY } from '@/lib/landing/config'
 
 const utapi = new UTApi()
 
@@ -29,16 +30,24 @@ export function fileKeyFromUploadthingUrl(url: string): string | null {
  */
 async function keyInUse(key: string): Promise<boolean> {
   const pattern = `%${key.replace(/[\\%_]/g, (c) => `\\${c}`)}%`
-  const res = await db.execute(sql`
-    SELECT
-      EXISTS (SELECT 1 FROM blog_posts WHERE featured_image LIKE ${pattern} OR body LIKE ${pattern})
-      OR EXISTS (SELECT 1 FROM products WHERE image LIKE ${pattern} OR array_to_string(images, ' ') LIKE ${pattern})
-      OR EXISTS (SELECT 1 FROM about_sections WHERE image_url LIKE ${pattern})
-      AS used
-  `)
-  const rows = (Array.isArray(res) ? res : (res as { rows?: unknown[] }).rows ?? []) as { used?: boolean }[]
-  // If the answer is unclear, keep the file: a stray file costs storage, a missing one breaks the site
-  return rows[0]?.used !== false
+  try {
+    const res = await db.execute(sql`
+      SELECT
+        EXISTS (SELECT 1 FROM blog_posts WHERE featured_image LIKE ${pattern} OR body LIKE ${pattern})
+        OR EXISTS (SELECT 1 FROM products WHERE image LIKE ${pattern} OR array_to_string(images, ' ') LIKE ${pattern})
+        OR EXISTS (SELECT 1 FROM about_sections WHERE image_url LIKE ${pattern})
+        OR EXISTS (SELECT 1 FROM settings WHERE key = ${LANDING_SETTINGS_KEY} AND value LIKE ${pattern})
+        OR EXISTS (SELECT 1 FROM reviews WHERE photo_url LIKE ${pattern})
+        AS used
+    `)
+    const rows = (Array.isArray(res) ? res : (res as { rows?: unknown[] }).rows ?? []) as { used?: boolean }[]
+    // If the answer is unclear, keep the file: a stray file costs storage, a missing one breaks the site
+    return rows[0]?.used !== false
+  } catch (err) {
+    // e.g. a column not added to the database yet: keep the file
+    console.error('[uploadthing] Could not check whether a file is in use, keeping it:', err)
+    return true
+  }
 }
 
 /**

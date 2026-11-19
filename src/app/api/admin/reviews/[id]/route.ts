@@ -3,6 +3,9 @@ import { getAdminSession } from '@/lib/auth/server'
 import { db } from '@/db'
 import { reviews } from '@/db'
 import { eq } from 'drizzle-orm'
+import { isUuid } from '@/lib/content-api'
+import { parsePhotoFields } from '../photoFields'
+import { revalidateLandingPage } from '../../_lib/revalidateLanding'
 
 export async function PUT(
   req: NextRequest,
@@ -45,6 +48,15 @@ export async function PUT(
     )
   }
 
+  const photo = parsePhotoFields(body as Record<string, unknown>)
+  if (!photo.ok) {
+    return NextResponse.json({ error: photo.error }, { status: 400 })
+  }
+
+  if (!isUuid(id)) {
+    return NextResponse.json({ error: 'Review not found' }, { status: 404 })
+  }
+
   try {
     const [data] = await db
       .update(reviews)
@@ -52,6 +64,7 @@ export async function PUT(
         authorName: author_name.trim(),
         body: (reviewBody as string).trim(),
         rating,
+        ...photo.fields,
       })
       .where(eq(reviews.id, id))
       .returning()
@@ -60,6 +73,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Review not found' }, { status: 404 })
     }
 
+    revalidateLandingPage()
     return NextResponse.json(data)
   } catch (err) {
     console.error('Failed to update review:', err)
@@ -75,9 +89,11 @@ export async function DELETE(
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
+  if (!isUuid(id)) return new NextResponse(null, { status: 204 })
 
   try {
     await db.delete(reviews).where(eq(reviews.id, id))
+    revalidateLandingPage()
     return new NextResponse(null, { status: 204 })
   } catch (err) {
     console.error('Failed to delete review:', err)

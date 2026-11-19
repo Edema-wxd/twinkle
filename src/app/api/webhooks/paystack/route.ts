@@ -11,6 +11,7 @@ import {
 import { sendAdminOrderEmail } from '@/lib/notifications/adminOrderEmail'
 import { sendCustomerEmail, tryClaimStatusEmail, releaseStatusEmailClaim } from '@/lib/notifications/customerEmail'
 import { forwardSubscriptionEvent } from '@/lib/paystack/forwardSubscriptionEvent'
+import { reportPurchaseIfNew, shouldSendServerPurchase } from '@/lib/tracking/server'
 
 // ── Paystack webhook payload types ──────────────────────────────────────────
 
@@ -101,6 +102,13 @@ async function handleChargeSuccess(data: PaystackChargeData) {
   if (!recorded) {
     console.error('[webhook] Missing metadata fields for reference:', data.reference)
     return
+  }
+
+  // Server-side Purchase for Meta/TikTok: only when this call created the order (so
+  // retries and the verify route never send it twice), and only with the buyer's
+  // consent (checked inside). After the response, so Paystack isn't kept waiting.
+  if (shouldSendServerPurchase(recorded)) {
+    after(() => reportPurchaseIfNew(recorded, { reference: data.reference, metadata: data.metadata, ipAddress: data.ip_address }))
   }
 
   const orderId = recorded.orderId

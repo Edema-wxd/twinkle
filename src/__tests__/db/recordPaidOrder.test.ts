@@ -194,15 +194,45 @@ describe('recordPaidOrder (real database)', () => {
       expect((await db.select().from(orders))[0]).toMatchObject({ subtotal: 112000, shippingCost: 0, total: 112000 })
     })
 
-    it('still charges delivery below it, and a promo that takes the items under it counts', async () => {
+    it('still charges delivery below it, and judges it on the items before any promo discount', async () => {
       expect((await recordPaidOrder(lagos('tw-f2', [gold({ tierQty: 100, unitPrice: 28000, quantity: 3 })], 84000 + zone.defaultFee)))?.status).toBe('paid')
       await db.insert(promoCodes).values({ code: 'TEN', discountType: 'percentage', discountValue: 10 })
-      // ₦112,000 - 10% = ₦100,800: still over, so free
+      // ₦112,000 - 10% = ₦100,800: free
       expect((await recordPaidOrder(lagos('tw-f3', [gold({ tierQty: 100, unitPrice: 28000, quantity: 4 })], 100800, { promo_code: 'TEN' })))?.status).toBe('paid')
-      // ₦99,000 - 10% = ₦89,100: under, so delivery is charged and paying without it is held
-      const items = [gold({ tierQty: 100, unitPrice: 28000, quantity: 3 }), gold({ unitPrice: 15000, quantity: 1, threadColour: 'red' })]
-      expect((await recordPaidOrder(lagos('tw-f4', items, 89100, { promo_code: 'TEN' })))?.status).toBe('payment_review')
-      expect((await recordPaidOrder(lagos('tw-f5', items, 89100 + zone.defaultFee, { promo_code: 'TEN' })))?.status).toBe('paid')
+      // ₦101,000 of items, ₦90,900 after 10%: the code doesn't cost them free delivery
+      const over = [gold({ tierQty: 100, unitPrice: 28000, quantity: 2 }), gold({ unitPrice: 15000, quantity: 3, threadColour: 'red' })]
+      expect((await recordPaidOrder(lagos('tw-f4', over, 90900, { promo_code: 'TEN' })))?.status).toBe('paid')
+      expect((await db.select().from(orders).where(eq(orders.paystackReference, 'tw-f4')))[0]).toMatchObject({ subtotal: 101000, shippingCost: 0, total: 90900 })
+      // ₦99,000 of items is under the threshold with or without the code, so delivery is charged and paying without it is held
+      const under = [gold({ tierQty: 100, unitPrice: 28000, quantity: 3 }), gold({ unitPrice: 15000, quantity: 1, threadColour: 'red' })]
+      expect((await recordPaidOrder(lagos('tw-f5', under, 89100, { promo_code: 'TEN' })))?.status).toBe('payment_review')
+      expect((await recordPaidOrder(lagos('tw-f6', under, 89100 + zone.defaultFee, { promo_code: 'TEN' })))?.status).toBe('paid')
+    })
+
+    it("refuses a code's discount when the items are under its minimum order", async () => {
+      await db.insert(promoCodes).values({ code: 'WELCOME', discountType: 'percentage', discountValue: 10, maxUses: 1, minOrder: 100_000 })
+      const under = [gold({ tierQty: 100, unitPrice: 28000, quantity: 3 }), gold({ unitPrice: 15000, quantity: 1, threadColour: 'red' })]
+      // ₦99,000 of items: paying the discounted price is held for review, no use is counted
+      const held = await recordPaidOrder(lagos('tw-m1', under, 89100 + zone.defaultFee, { promo_code: 'WELCOME' }))
+      expect(held).toMatchObject({ status: 'payment_review' })
+      expect(held?.paymentIssue).toContain('needs ₦100,000 of items')
+      expect((await db.select().from(promoCodes))[0].currentUses).toBe(0)
+      // ₦112,000 of items: discount and free delivery both apply
+      const ok = await recordPaidOrder(lagos('tw-m2', [gold({ tierQty: 100, unitPrice: 28000, quantity: 4 })], 100800, { promo_code: 'WELCOME' }))
+      expect(ok).toMatchObject({ status: 'paid', paymentIssue: null })
+      expect((await db.select().from(promoCodes))[0].currentUses).toBe(1)
+    })
+
+    it('lets only one of two simultaneous payments use a one-use code', async () => {
+      await db.insert(promoCodes).values({ code: 'ONCE', discountType: 'percentage', discountValue: 10, maxUses: 1 })
+      const items = () => [gold({ tierQty: 100, unitPrice: 28000, quantity: 4 })]
+      const results = await Promise.all([
+        recordPaidOrder(lagos('tw-r1', items(), 100800, { promo_code: 'ONCE' })),
+        recordPaidOrder(lagos('tw-r2', items(), 100800, { promo_code: 'ONCE' })),
+      ])
+      expect(results.map((r) => r?.status).sort()).toEqual(['paid', 'payment_review'])
+      expect(results.find((r) => r?.status === 'payment_review')?.paymentIssue).toMatch(/used up by another order at the same time/)
+      expect((await db.select().from(promoCodes))[0].currentUses).toBe(1)
     })
 
     it('can be switched off in Admin → Shipping', async () => {

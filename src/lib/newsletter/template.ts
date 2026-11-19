@@ -91,7 +91,9 @@ export function renderNewsletter(
   footer?: string,
 ): { subject: string; html: string; text: string } {
   const subject = fillName(content.subject, firstName).replace(/\s+/g, ' ').trim()
-  const body = styleBody(fillName(content.bodyHtml, firstName))
+  // The name is whatever was typed into the public sign-up form, so it goes into HTML escaped
+  const htmlName = firstName ? escapeHtml(firstName) : firstName
+  const body = styleBody(fillName(content.bodyHtml, htmlName))
   const preheader = fillName(content.preheader ?? '', firstName).trim()
   const cta = content.ctaLabel?.trim() ? { label: content.ctaLabel.trim(), url: absoluteUrl(content.ctaUrl) } : null
   const hero = content.heroImageUrl && /^https:\/\//i.test(content.heroImageUrl) ? content.heroImageUrl : null
@@ -142,7 +144,7 @@ export function renderNewsletter(
 </body>
 </html>`
 
-  const textBody = newsletterHtmlToText(fillName(content.bodyHtml, firstName))
+  const textBody = newsletterHtmlToText(fillName(content.bodyHtml, htmlName))
   const text = [
     preheader,
     textBody,

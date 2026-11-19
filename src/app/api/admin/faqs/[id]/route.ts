@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { faqs } from '@/db'
 import { eq } from 'drizzle-orm'
 import { revalidateFaqs } from '@/lib/content-api'
+import { revalidateLandingPage } from '../../_lib/revalidateLanding'
 
 export async function PUT(
   req: NextRequest,
@@ -68,6 +69,8 @@ export async function PUT(
   try {
     await db.update(faqs).set(updatePayload).where(eq(faqs.id, id))
     revalidateFaqs()
+    // "Landing page" FAQs show on the ad landing page
+    revalidateLandingPage()
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('Failed to update FAQ:', err)
@@ -101,6 +104,8 @@ export async function DELETE(
   try {
     await db.delete(faqs).where(eq(faqs.id, id))
     revalidateFaqs()
+    // "Landing page" FAQs show on the ad landing page
+    revalidateLandingPage()
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('Failed to delete FAQ:', err)

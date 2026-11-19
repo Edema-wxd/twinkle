@@ -11,6 +11,8 @@ import { StarRating, type RatingSummary } from './StarRating'
 import { ShearsAddOn } from './ShearsAddOn'
 import type { PopularChoice } from '@/lib/products/popularChoice'
 import { freeDeliveryLine } from '@/lib/checkout/freeDelivery'
+import { trackEvent } from '@/lib/tracking/events'
+import { deliveryLine } from './storeCopy'
 
 interface ProductDetailClientProps {
   product: Product
@@ -24,6 +26,9 @@ interface ProductDetailClientProps {
   popular?: PopularChoice
   /** Free Lagos delivery threshold (0 = no offer) */
   freeLagosOver?: number
+  /** Cheapest Lagos delivery zone fee and the nationwide delivery time, from Admin → Shipping */
+  lagosFrom?: number
+  otherDays?: string
 }
 
 /** Thread colour picked for people who don't choose one (the best seller once there are sales) */
@@ -36,7 +41,7 @@ const MATERIAL_BADGE: Record<ProductMaterial, string> = {
   Tools: 'bg-forest/20 text-forest',
 }
 
-export function ProductDetailClient({ product, descriptionHtml, rating, addOn, popular, freeLagosOver = 0 }: ProductDetailClientProps) {
+export function ProductDetailClient({ product, descriptionHtml, rating, addOn, popular, freeLagosOver = 0, lagosFrom = 0, otherDays = '' }: ProductDetailClientProps) {
   const { dispatch } = useCart()
 
   // Start on the best-selling size and pack that's in stock, so the shopper can add straight away
@@ -115,6 +120,7 @@ export function ProductDetailClient({ product, descriptionHtml, rating, addOn, p
         quantity: 1,
       },
     })
+    trackEvent({ name: 'AddToCart', contentIds: [product.id], contentName: product.name, value: displayPrice, quantity: 1 })
     setJustAdded(true)
     window.setTimeout(() => setJustAdded(false), 2500)
   }
@@ -311,7 +317,13 @@ export function ProductDetailClient({ product, descriptionHtml, rating, addOn, p
           )}
           <ul className="mt-4 grid gap-1.5 font-body text-xs text-charcoal/75">
             {freeLagosOver > 0 && <li className="font-semibold text-green-800">{freeDeliveryLine(freeLagosOver)}</li>}
-            <li>Delivery across Lagos and nationwide, <a href="/shipping" className="underline decoration-gold underline-offset-2 text-forest">see rates</a></li>
+            {lagosFrom > 0 && otherDays ? (
+              <li>
+                {deliveryLine(lagosFrom, otherDays)} (<a href="/shipping" className="underline decoration-gold underline-offset-2 text-forest">see rates</a>)
+              </li>
+            ) : (
+              <li>Delivery across Lagos and nationwide, <a href="/shipping" className="underline decoration-gold underline-offset-2 text-forest">see rates</a></li>
+            )}
             <li>Secure checkout with Paystack</li>
             <li>Questions? <a href={BUSINESS.whatsapp.url(`Hi! I have a question about ${product.name}`)} target="_blank" rel="noopener noreferrer" className="underline decoration-gold underline-offset-2 text-forest">Ask us on WhatsApp</a></li>
           </ul>

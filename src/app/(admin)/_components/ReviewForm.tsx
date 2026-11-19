@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { PhotoPicker } from './PhotoPicker'
+import { PhotoPermissionField, CITY_MAX } from './ReviewPhotoFields'
 
 interface ProductOption {
   id: string
@@ -17,6 +19,9 @@ export function ReviewForm({ products }: ReviewFormProps) {
   const [body, setBody] = useState('')
   const [rating, setRating] = useState(5)
   const [hoverRating, setHoverRating] = useState(0)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [city, setCity] = useState('')
+  const [photoPermission, setPhotoPermission] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -38,6 +43,9 @@ export function ReviewForm({ products }: ReviewFormProps) {
             author_name: authorName.trim(),
             body: body.trim(),
             rating,
+            photo_url: photoUrl,
+            city: city.trim() || null,
+            photo_permission: photoPermission,
           }),
         })
 
@@ -54,6 +62,9 @@ export function ReviewForm({ products }: ReviewFormProps) {
         setBody('')
         setRating(5)
         setHoverRating(0)
+        setPhotoUrl(null)
+        setCity('')
+        setPhotoPermission(false)
       } catch {
         showToast('error', 'Network error — please try again')
       }
@@ -164,6 +175,36 @@ export function ReviewForm({ products }: ReviewFormProps) {
           </span>
         </div>
       </div>
+
+      {/* City */}
+      <div className="space-y-1.5">
+        <label htmlFor="review-city" className="block text-sm font-medium text-stone-300">
+          City <span className="font-normal text-stone-500">(optional)</span>
+        </label>
+        <input
+          id="review-city"
+          type="text"
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          maxLength={CITY_MAX}
+          placeholder="e.g. Lagos"
+          className="w-full px-3 py-2 bg-stone-800 border border-stone-600 text-white placeholder-stone-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gold"
+        />
+        <p className="text-xs text-stone-500">Shown after their first name on the ad landing page, e.g. &ldquo;Adaeze, Lagos&rdquo;.</p>
+      </div>
+
+      {/* Customer photo */}
+      <div className="space-y-1.5">
+        <p className="text-sm font-medium text-stone-300">
+          Customer photo <span className="font-normal text-stone-500">(optional)</span>
+        </p>
+        <PhotoPicker url={photoUrl} onChange={setPhotoUrl} libraryTitle="Choose the customer's photo" purpose="product" />
+        <p className="text-xs text-stone-500">
+          Their photo of their locs with the beads in. It&rsquo;s shown square, so keep the beads near the middle.
+        </p>
+      </div>
+
+      <PhotoPermissionField id="review-permission" checked={photoPermission} onChange={setPhotoPermission} hasPhoto={Boolean(photoUrl)} />
 
       {/* Submit */}
       <button

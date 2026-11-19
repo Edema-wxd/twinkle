@@ -5,6 +5,7 @@ import Link from 'next/link'
 import type { Product } from '@/lib/types/product'
 import { useCart } from '@/lib/cart/CartContext'
 import { packFits } from '@/lib/stockDisplay'
+import { trackEvent } from '@/lib/tracking/events'
 
 /**
  * "Add loc shears" row under Add to cart on bead pages. One tap adds them
@@ -36,6 +37,7 @@ export function ShearsAddOn({ shears }: { shears: Product }) {
         quantity: 1,
       },
     })
+    trackEvent({ name: 'AddToCart', contentIds: [shears.id], contentName: shears.name, value: price!, quantity: 1 })
   }
 
   return (

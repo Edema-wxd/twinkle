@@ -105,6 +105,12 @@ export const reviews = pgTable('reviews', {
   authorName: text('author_name').notNull(),
   body: text('body').notNull(),
   rating: integer('rating').notNull(), // CHECK (rating BETWEEN 1 AND 5) — added via raw SQL after push
+  /** Customer's photo of their locs (UploadThing URL), for the ad landing page's review carousel */
+  photoUrl: text('photo_url'),
+  /** Shown after the first name, e.g. "Adaeze, Lagos" */
+  city: text('city'),
+  /** The customer gave written permission to show their photo and first name publicly */
+  photoPermission: boolean('photo_permission').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -137,8 +143,14 @@ export const promoCodes = pgTable('promo_codes', {
   discountValue: integer('discount_value').notNull().default(0), // % or ₦ amount; ignored for free_shipping
   maxUses: integer('max_uses'), // null = unlimited
   currentUses: integer('current_uses').notNull().default(0),
+  /** Smallest items subtotal (₦, before discount and delivery) the code works on; null or 0 = no minimum */
+  minOrder: integer('min_order'),
   expiresAt: timestamp('expires_at', { withTimezone: true }),
   isActive: boolean('is_active').notNull().default(true),
+  /** Where the code came from: null = made in Admin, 'welcome' = issued by the landing page's email capture */
+  source: text('source'),
+  /** Who a one-use welcome code was issued to (lowercased email), so the same person gets the same code back */
+  issuedToEmail: text('issued_to_email'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

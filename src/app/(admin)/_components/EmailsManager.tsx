@@ -164,6 +164,8 @@ const TEMPLATE_NAMES: Record<string, string> = {
   shipped: 'Order Shipped',
   delivered: 'Order Delivered',
   review_reminder: 'Review Reminder',
+  newsletter_confirm: 'Newsletter: confirm sign-up',
+  welcome_code: 'Welcome code (landing page)',
 }
 
 function formatDate(iso: string) {

@@ -28,6 +28,13 @@ describe('renderNewsletter', () => {
     expect(renderNewsletter(content, '').subject).toBe('New gold beads, there')
   })
 
+  it('escapes the name in the HTML (it comes from the public sign-up form) and keeps it readable in the text', () => {
+    const r = renderNewsletter(content, '<a href="https://evil.example">Claim</a>')
+    expect(r.html).not.toContain('href="https://evil.example"')
+    expect(r.html).toContain('Hi &lt;a href=&quot;https://evil.example&quot;&gt;Claim&lt;/a&gt;,')
+    expect(r.text).toContain('Hi <a href="https://evil.example">Claim</a>,')
+  })
+
   it('has a slot for the unsubscribe link in both parts', () => {
     const r = renderNewsletter(content, 'Ada')
     expect(r.html).toContain(`href="${UNSUBSCRIBE_PLACEHOLDER}"`)
